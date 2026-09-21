@@ -192,11 +192,10 @@
              + COLS.map(function(c){
                  var id=idFor(w,g,c[0]);
                  var on=!!STATE.checks[id];
-                 var by=STATE.who[id];
                  return '<span class="cell"><input type="checkbox" class="box" data-id="'+esc(id)+'"'
                       + (on?" checked":"")
-                      + (on&&by?' title="'+esc(c[1]+" pulled by "+by)+'"':"")
-                      + ' aria-label="'+esc(c[1]+", "+g.date+" "+g.opp)+'"></span>';
+                      + ' aria-label="'+esc(c[1]+", "+g.date+" "+g.opp)+'">'
+                      + whoTag(id,c[1])+'</span>';
                }).join("")
              + '</div>'
              + detailPanel(w,g)
@@ -283,14 +282,40 @@
 
   /* ---------- live data ---------- */
   function applyRow(row){
-    if(row.checked){ STATE.checks[row.id]=1; STATE.who[row.id]=row.updated_by||""; }
+    if(row.checked){ STATE.checks[row.id]=1; STATE.who[row.id]={by:row.updated_by||"",at:row.updated_at||null}; }
     else { delete STATE.checks[row.id]; delete STATE.who[row.id]; }
   }
   async function loadChecks(){
-    var r=await sb.from("checks").select("id,checked,updated_by");
+    var r=await sb.from("checks").select("id,checked,updated_by,updated_at");
     if(r.error) throw r.error;
     STATE.checks={}; STATE.who={};
     (r.data||[]).forEach(applyRow);
+  }
+  function initials(name){
+    name=String(name||"").trim();
+    if(!name) return "";
+    if(name.length<=3&&name.indexOf(" ")<0) return name.toUpperCase();
+    var parts=name.split(/[\s.]+/).filter(Boolean);
+    if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+    return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+  }
+  function shortDate(iso){
+    if(!iso) return "";
+    var d=new Date(iso); if(isNaN(d)) return "";
+    return d.toLocaleDateString("en-US",{month:"short",day:"numeric"})+" "+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+  }
+  function whoTag(id,label){
+    var w=STATE.checks[id]?STATE.who[id]:null;
+    if(!w||!w.by) return '<span class="who-tag" aria-hidden="true"></span>';
+    var tip=(label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" \u00b7 "+shortDate(w.at):"");
+    return '<span class="who-tag on" title="'+esc(tip)+'">'+esc(initials(w.by))+'</span>';
+  }
+  function refreshTag(box){
+    var cell=box.parentNode; if(!cell) return;
+    var old=cell.querySelector(".who-tag");
+    var label=(box.getAttribute("aria-label")||"").split(",")[0];
+    var tmp=document.createElement("span"); tmp.innerHTML=whoTag(box.getAttribute("data-id"),label);
+    if(old) cell.replaceChild(tmp.firstChild,old); else cell.appendChild(tmp.firstChild);
   }
   function boxFor(id){
     var all=root.querySelectorAll("input.box");
@@ -302,12 +327,17 @@
     var b=e.target;
     if(!b.classList||!b.classList.contains("box")) return;
     var id=b.getAttribute("data-id"), on=b.checked;
-    if(on){ STATE.checks[id]=1; STATE.who[id]=lsGet("fpb_who")||""; } else { delete STATE.checks[id]; delete STATE.who[id]; }
+    if(on){ STATE.checks[id]=1; STATE.who[id]={by:lsGet("fpb_who")||"",at:new Date().toISOString()}; } else { delete STATE.checks[id]; delete STATE.who[id]; }
+    refreshTag(b);
     patch(b);
     var ok=await saveCheck(id,on);
+    if(ok&&on&&STATE.checks[id]){
+      STATE.who[id]={by:lsGet("fpb_who")||"",at:new Date().toISOString()};
+      var sx=boxFor(id); if(sx) refreshTag(sx);
+    }
     if(!ok){
       if(on){ delete STATE.checks[id]; delete STATE.who[id]; } else STATE.checks[id]=1;
-      var bx=boxFor(id); if(bx){ bx.checked=!on; patch(bx); } else render();
+      var bx=boxFor(id); if(bx){ bx.checked=!on; refreshTag(bx); patch(bx); } else render();
     }
   });
   root.addEventListener("click",function(e){
@@ -389,7 +419,7 @@
       var bx=boxFor(row.id);
       if(bx){
         bx.checked=!!row.checked;
-        if(row.checked&&row.updated_by) bx.title=row.updated_by; else bx.removeAttribute("title");
+        refreshTag(bx);
         patch(bx);
       } else if(!onlyLeft){ updateTotals(); } else render();
     })
