@@ -215,26 +215,29 @@
   }
 
   function updateTotals(){
-    var total=0, done=0, oppDone=0, gamesOpen=0, opps=0;
+    var total=0, done=0, oppDone=0, gamesOpen=0, opps=0, playedGames=0, avail=0, pulledPlayed=0;
     DATA.weeks.forEach(function(w){
       var t=weekTotal(w), d=weekDone(w);
       total+=t; done+=d;
       if(t>0){ opps++; if(d===t) oppDone++; }
+      /* only games already played count: nobody can pull a game that has not happened */
       w.games.forEach(function(g){
-        if(!g.ha) return;
-        if(!COLS.every(function(c){ return STATE.checks[idFor(w,g,c[0])]; })) gamesOpen++;
+        if(!g.ha||!played(g)) return;
+        playedGames++;
+        var got=COLS.filter(function(c){ return STATE.checks[idFor(w,g,c[0])]; }).length;
+        avail+=COLS.length; pulledPlayed+=got;
+        if(got<COLS.length) gamesOpen++;
       });
     });
-    var games=0;
-    DATA.weeks.forEach(function(w){ games+=filmGames(w).length; });
     setNum("pdone",done);
     var pt=document.getElementById("ptot"); if(pt) pt.textContent=total;
-    setNum("sCut",done); setNum("sOpp",oppDone); setNum("sGame",gamesOpen);
+    setNum("sCut",pulledPlayed); setNum("sOpp",oppDone); setNum("sGame",gamesOpen);
     var ot=document.getElementById("sOppT"); if(ot) ot.textContent=opps;
-    var ct=document.getElementById("sCutT"); if(ct) ct.textContent=total;
-    setBar("bCut",total?done/total:0);
+    var ct=document.getElementById("sCutT"); if(ct) ct.textContent=avail;
+    setBar("bCut",avail?pulledPlayed/avail:0);
     setBar("bOpp",opps?oppDone/opps:0);
-    setBar("bGame",games?(games-gamesOpen)/games:0);
+    var gt=document.getElementById("sGameT"); if(gt) gt.textContent=playedGames;
+    setBar("bGame",playedGames?(playedGames-gamesOpen)/playedGames:0);
   }
 
   function weekByNum(n){ var r=null; DATA.weeks.forEach(function(x){ if(x.week===n) r=x; }); return r; }
@@ -500,6 +503,14 @@
     }).join("");
   }
 
+  /* Easter egg: click "Bye Week" for its history. Deliberately looks like plain text. */
+  var BYE_TXT="Bye Week", BYE_ALT="This used to be called an open date but got changed to Bye Week at the request of Roscoe Ludena";
+  var BYE_EGG='<span class="byeegg">'+BYE_TXT+'</span>';
+  document.addEventListener("click",function(e){
+    var t=e.target.closest&&e.target.closest(".byeegg"); if(!t) return;
+    e.stopPropagation();
+    t.textContent=t.textContent===BYE_TXT?BYE_ALT:BYE_TXT;
+  },true);
   var PRINT_SVG='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2M4.5 9.5h7v4h-7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
   var CARET_R='<svg class="rexp" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2 8.5 6 4.5 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var CARET_D='<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -575,12 +586,13 @@
     if(tot===0&&!w.post){
       var bye=w.site==="BYE";
       return '<section class="slim"><b>Week '+esc(w.week)+'</b>'
-        + '<span class="slim-name">'+(bye?"Bye week":(w.site==="A"?"at ":"vs ")+esc(w.opp))+' \u00b7 '+esc(w.date)+'</span>'
+        + '<span class="slim-name">'+(bye?BYE_EGG:(w.site==="A"?"at ":"vs ")+esc(w.opp))+' \u00b7 '+esc(w.date)+'</span>'
         + tulResult(w)
         + '<em>'+esc(clean(w.note||"No opponent film."))+'</em></section>';
     }
     /* Finished weeks fold up on their own unless someone opens them. */
-    var isShut=Object.prototype.hasOwnProperty.call(shut,String(w.week))?shut[w.week]:complete;
+    var tk=w.post?null:tulaneKick(w), pastWeek=!!(tk&&tk.at.getTime()+GAME_LEN<Date.now());
+    var isShut=Object.prototype.hasOwnProperty.call(shut,String(w.week))?shut[w.week]:(complete||pastWeek);
     var due=dueLevel(w);
 
     var badge=LOGOS[w.opp], mono=w.mono||"";
@@ -613,7 +625,7 @@
         if(!g.ha){
           if(onlyLeft) return;
           body+='<div class="row open"><span class="rdate">'+esc(g.date)+'</span>'
-             +  '<span class="ropp">Open date</span><span></span>'
+             +  '<span class="ropp">'+BYE_EGG+'</span><span></span>'
              +  '<span></span><span></span><span></span><span class="allc"></span></div>';
           return;
         }

@@ -871,6 +871,30 @@ dialog.login,dialog.hist,dialog.cands{border-radius:3px}
   .wprint{display:none}
 }
 
+
+/* ---- toolbar as its own dark bar under the header ---- */
+.toolbar{background:#17221c !important;border-bottom:0;box-shadow:0 2px 8px -4px rgba(0,0,0,.35)}
+.tools .btn{color:rgba(255,255,255,.78)}
+.tools .btn:hover{color:#fff;border-bottom-color:rgba(255,255,255,.4)}
+.tools .btn[aria-pressed="true"]{color:#fff;border-bottom-color:var(--tsky)}
+.tools .btn:disabled{color:rgba(255,255,255,.78)}
+.tsep{background:rgba(255,255,255,.2)}
+.tright .sync{color:rgba(255,255,255,.7)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .toolbar{background:#050806 !important;box-shadow:0 1px 0 #24302a}}
+.byeegg{cursor:default;user-select:none;-webkit-tap-highlight-color:transparent}
+.cbody > .row.open,.cbody > .row.open:hover{cursor:default;background:transparent !important}
+/* ---- loop button ---- */
+.song .btn{white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.totals{gap:30px}
+.sbar{width:128px}
+.song-bar{width:80px}
+.tot.pace > span{max-width:230px}
+.song .song-loop{padding:4px;line-height:0;border:0 !important;background:none !important;color:rgba(255,255,255,.55)}
+.song .song-loop:hover{color:#fff}
+.song .song-loop[aria-pressed="true"]{color:var(--tsky)}
+.song-loop svg{width:15px;height:15px}
+@media print{.toolbar{display:none !important}}
+
 /* ---- phone ---- */
 @media (max-width:720px){
   :root{--stick:0px}
@@ -990,13 +1014,14 @@ dialog.login,dialog.hist,dialog.cands{border-radius:3px}
     </div>
     <div class="ondeck" id="ondeck" aria-label="On deck"></div>
     <div class="totals">
-      <div class="tot"><b><span id="sCut">0</span><small> / <span id="sCutT">0</span></small></b><span>cutups pulled</span><i class="sbar"><i id="bCut"></i></i></div>
+      <div class="tot"><b><span id="sCut">0</span><small> / <span id="sCutT">0</span></small></b><span>cutups pulled from played games</span><i class="sbar"><i id="bCut"></i></i></div>
       <div class="tot"><b><span id="sOpp">0</span><small> / <span id="sOppT">0</span></small></b><span>opponents done</span><i class="sbar"><i id="bOpp"></i></i></div>
-      <div class="tot"><b><span id="sGame">0</span></b><span>games still open</span><i class="sbar"><i id="bGame"></i></i></div>
+      <div class="tot"><b><span id="sGame">0</span><small> / <span id="sGameT">0</span></small></b><span>played games still open</span><i class="sbar"><i id="bGame"></i></i></div>
       <div class="tot pace" id="pace" hidden></div>
       <div class="song">
         <button class="btn" id="songBtn" aria-pressed="false" aria-label="Play Tulane All The Way"><svg id="songIcon" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 0l9 5-9 5z"/></svg><span>Fight Song</span></button>
         <div class="song-bar" id="songBar" role="slider" aria-label="Song position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><i id="songFill"></i></div>
+        <button class="btn song-loop" id="songLoop" type="button" aria-pressed="false" aria-label="Loop the fight song" title="Loop"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 7V6a2 2 0 0 1 2-2h7.5M10.5 1.8 12.8 4l-2.3 2.2M13 9v1a2 2 0 0 1-2 2H3.5M5.5 14.2 3.2 12l2.3-2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <span class="song-time" id="songTime">0:00</span>
         <audio id="songAudio" src="tulane-all-the-way.mp3" preload="none"></audio>
       </div>
@@ -1088,8 +1113,8 @@ dialog.login,dialog.hist,dialog.cands{border-radius:3px}
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="config.js?v=12"></script>
+<script src="app.js?v=12"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
@@ -1103,6 +1128,10 @@ dialog.login,dialog.hist,dialog.cands{border-radius:3px}
   b.addEventListener("click",function(){if(a.paused){a.play()}else{a.pause()}});
   a.addEventListener("play",paint);a.addEventListener("pause",paint);
   a.addEventListener("ended",function(){a.currentTime=0;paint()});
+  var lp=document.getElementById("songLoop");
+  function setLoop(on){ a.loop=on; lp.setAttribute("aria-pressed",String(on)); lp.title=on?"Loop is on":"Loop"; try{localStorage.setItem("fpb_loop",on?"1":"0")}catch(e){} }
+  try{ setLoop(localStorage.getItem("fpb_loop")==="1"); }catch(e){ setLoop(false); }
+  lp.addEventListener("click",function(){ setLoop(!a.loop); });
   a.addEventListener("timeupdate",function(){var d=a.duration||0,p=d?a.currentTime/d*100:0;
     fill.style.width=p+"%";bar.setAttribute("aria-valuenow",Math.round(p));
     t.textContent=fmt(a.currentTime)+(d?" / "+fmt(d):"")});
