@@ -9,6 +9,13 @@
   mount.appendChild(document.getElementById("shell").content.cloneNode(true));
 
   var root=document.getElementById("root");
+  /* Column headers stick right under the toolbar, whatever height it wraps to. */
+  function setStick(){
+    var t=document.querySelector(".toolbar"); if(!t) return;
+    var st=getComputedStyle(t).position==="sticky";
+    document.documentElement.style.setProperty("--stick",(st?t.offsetHeight:0)+"px");
+  }
+  setStick(); window.addEventListener("resize",setStick);
   var STATE={checks:{},who:{}};
   var DATA={weeks:[],logos:{}}, LOGOS={};
   var sb=null, onlyLeft=false, allShut=false, shut={}, openGames={}, byGame=false;
@@ -20,6 +27,37 @@
 
   function esc(s){ return String(s).replace(/[&<>"']/g,function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  /* No long dashes in notes: "A, dash, b" becomes "A. B" */
+  function clean(t){ return String(t||"").replace(/\s*\u2014\s*(\w?)/g,function(m,c){ return ". "+(c?c.toUpperCase():""); }); }
+  var RM=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
+  /* Numbers count up to their new value instead of jumping. */
+  function setNum(id,v){
+    var el=document.getElementById(id); if(!el) return;
+    var from=Number(el.getAttribute("data-v")); if(isNaN(from)) from=0;
+    el.setAttribute("data-v",v);
+    if(RM||from===v){ el.textContent=v; return; }
+    var t0=performance.now(), D=500;
+    (function step(t){
+      if(el.getAttribute("data-v")!==String(v)) return;
+      var p=Math.min(1,(t-t0)/D), e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(from+(v-from)*e);
+      if(p<1) requestAnimationFrame(step);
+    })(t0);
+  }
+  function setBar(id,frac){ var el=document.getElementById(id); if(el) el.style.width=Math.round(Math.max(0,Math.min(1,frac||0))*100)+"%"; }
+  /* Tulane's own result for a week, if the data has it: w.fin = {res:"W",us:35,them:10} */
+  function tulResult(w){
+    if(!w||!w.fin||w.fin.us==null) return "";
+    var r=String(w.fin.res||(w.fin.us>w.fin.them?"W":"L")).toUpperCase();
+    return '<span class="tres '+(r==="W"?"w":"l")+'"><b>'+r+'</b> '+w.fin.us+"\u2013"+w.fin.them+'</span>';
+  }
+  function tulRecord(){
+    if(DATA.meta&&DATA.meta.tulRec) return String(DATA.meta.tulRec);
+    var wn=0, ln=0, any=false;
+    DATA.weeks.forEach(function(w){ if(w.fin&&w.fin.us!=null){ any=true; var r=String(w.fin.res||(w.fin.us>w.fin.them?"W":"L")).toUpperCase(); if(r==="W") wn++; else ln++; } });
+    return any?wn+"-"+ln:"";
+  }
+
   /* Stable id: survives rows being added or reordered in data.json. */
   function idFor(w,g,c){
     if(w.post){
@@ -87,7 +125,8 @@
 
   function kickCell(o){
     if(o.fin){
-      return '<span class="kcell final"><span class="kick">'+esc(o.fin.res)+" "
+      var wl=String(o.fin.res||"").toUpperCase();
+      return '<span class="kcell final"><span class="kick"><b class="wl '+(wl==="W"?"w":wl==="L"?"l":"t")+'">'+esc(wl)+'</b>'
            + o.fin.us+"–"+o.fin.them+'</span>'
            + (o.tv?'<span class="net">'+esc(o.tv)+'</span>':'<span class="net">Final</span>')+'</span>';
     }
@@ -126,14 +165,19 @@
         if(!COLS.every(function(c){ return STATE.checks[idFor(w,g,c[0])]; })) gamesOpen++;
       });
     });
-    document.getElementById("pdone").textContent=done;
+    var games=0;
+    DATA.weeks.forEach(function(w){ games+=filmGames(w).length; });
+    setNum("pdone",done);
     document.getElementById("ptot").textContent=total;
     var pct=total?Math.round(done/total*100):0;
     document.getElementById("pfill").style.width=pct+"%";
     document.getElementById("pbar").setAttribute("aria-valuenow",String(pct));
-    document.getElementById("sCut").textContent=done;
-    document.getElementById("sOpp").textContent=oppDone+" / "+opps;
-    document.getElementById("sGame").textContent=gamesOpen;
+    setNum("sCut",done); setNum("sOpp",oppDone); setNum("sGame",gamesOpen);
+    var ot=document.getElementById("sOppT"); if(ot) ot.textContent=opps;
+    var ct=document.getElementById("sCutT"); if(ct) ct.textContent=total;
+    setBar("bCut",total?done/total:0);
+    setBar("bOpp",opps?oppDone/opps:0);
+    setBar("bGame",games?(games-gamesOpen)/games:0);
   }
 
   function weekByNum(n){ var r=null; DATA.weeks.forEach(function(x){ if(x.week===n) r=x; }); return r; }
@@ -278,7 +322,9 @@
       row.classList.toggle("rdone", all.length>0 && all.every(function(i){ return i.checked; }));
     }
     var tot=weekTotal(w), dn=weekDone(w), complete=tot>0&&dn===tot;
-    var c=card.querySelector(".count"); if(c) c.textContent=dn+"/"+tot;
+    var c=card.querySelector(".count");
+    if(c){ c.innerHTML="<b>"+dn+"</b>/"+tot; if(!RM){ c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); } }
+    var lv=dueLevel(w); if(lv) card.setAttribute("data-due",lv); else card.removeAttribute("data-due");
     var p=card.querySelector(".pill");
     if(p){
       p.className="pill "+(complete?"p-done":dn===0?"p-none":"p-part");
@@ -300,24 +346,66 @@
     return '<span class="count-down'+(txt==="Live now"?" live":"")+'" data-count="'+k.at.getTime()+'" data-timed="'+(k.timed?1:0)+'"'+(txt?"":" hidden")+'>'+esc(txt)+'</span>';
   }
 
+  /* ---------- how far behind: shared by the cards, next 3, and the spotlight ---------- */
+  function behind(w){
+    var k=tulaneKick(w); if(!k) return null;
+    var days=Math.max(0,Math.ceil((k.at.getTime()-Date.now())/86400000));
+    var left=0, ready=0, future=0, cutsLeft=0;
+    w.games.forEach(function(g){
+      if(!g.ha) return;
+      var n=COLS.filter(function(c){ return !STATE.checks[idFor(w,g,c[0])]; }).length;
+      if(!n) return;
+      left++; cutsLeft+=n;
+      if(played(g)) ready++; else future++;
+    });
+    var level=left===0?"ok":(days<=7&&ready>0)?"hot":(days<=14&&ready>2)?"warm":"ok";
+    return {k:k,days:days,left:left,ready:ready,future:future,cutsLeft:cutsLeft,level:level};
+  }
+  /* Colored bar on each upcoming card: green on track, gold getting close, red due now. */
+  function dueLevel(w){
+    if(w.post||!weekTotal(w)) return "";
+    var k=tulaneKick(w); if(!k||k.at.getTime()+GAME_LEN<Date.now()) return "";
+    var b=behind(w); if(!b||b.left===0) return "";
+    return b.level;
+  }
+  function dayName(k){
+    try{ return k.at.toLocaleDateString("en-US",{weekday:"short",timeZone:"America/Chicago"}); }catch(e){ return ""; }
+  }
+  /* ---------- header spotlight + phone quick bar: the next Tulane game ---------- */
+  function renderSpot(){
+    var spot=document.getElementById("spot"), quick=document.getElementById("quickGo");
+    var w=upcomingWeeks()[0];
+    if(!w){ if(spot) spot.hidden=true; var qq=document.getElementById("quick"); if(qq) qq.hidden=true; return; }
+    var b=behind(w), k=b.k, txt=countdownText(k), badge=LOGOS[w.opp];
+    var name=(w.site==="A"?"at ":w.site==="N"?"vs ":"vs ")+esc(w.opp);
+    if(spot){
+      spot.hidden=false; spot.setAttribute("data-jump",w.week);
+      spot.style.setProperty("--team",w.c1||"#888");
+      spot.innerHTML='<span class="spot-lbl">Next up \u00b7 Week '+esc(w.week)+'</span>'
+        + '<span class="spot-main">'+(badge?'<img src="'+badge+'" alt="" width="34" height="34">':"")+'<b>'+name+'</b></span>'
+        + '<span class="spot-when">'+[dayName(k)+" "+esc(w.date),esc(w.t||"Time TBD"),esc(w.tv||"")].filter(Boolean).join(" \u00b7 ")+'</span>'
+        + '<span class="spot-count'+(txt==="Live now"?" live":"")+'" data-count="'+k.at.getTime()+'" data-timed="'+(k.timed?1:0)+'"'+(txt?"":" hidden")+'>'+esc(txt)+'</span>'
+        + '<span class="spot-left">'+(b.left?b.left+(b.left===1?" game":" games")+" still to cut":"All film pulled")+'</span>';
+    }
+    if(quick){
+      document.getElementById("quick").hidden=false;
+      quick.setAttribute("data-jump",w.week);
+      quick.innerHTML=(badge?'<img src="'+badge+'" alt="" width="30" height="30">':"")
+        + '<span class="q-txt"><b>Next: '+name+'</b><small>'+(b.left?b.left+(b.left===1?" game":" games")+" left":"All pulled")
+        + " \u00b7 "+(b.days===0?"game day":b.days+(b.days===1?" day":" days"))+'</small></span><span class="q-go">Go</span>';
+    }
+  }
+
   /* ---------- next 3 opponents: how far behind are we ---------- */
   function renderWorkload(){
+    renderSpot();
     var box=document.getElementById("workload"); if(!box) return;
     var next=upcomingWeeks().slice(0,3);
     if(!next.length){ box.innerHTML=""; box.hidden=true; return; }
     box.hidden=false;
     var html='<div class="wl-head"><span>Next 3 opponents</span><span class="wl-sub">games still to cut</span></div><div class="wl-grid">';
     next.forEach(function(w){
-      var k=tulaneKick(w), days=Math.max(0,Math.ceil((k.at.getTime()-Date.now())/86400000));
-      var left=0, ready=0, future=0, cutsLeft=0;
-      w.games.forEach(function(g){
-        if(!g.ha) return;
-        var n=COLS.filter(function(c){ return !STATE.checks[idFor(w,g,c[0])]; }).length;
-        if(!n) return;
-        left++; cutsLeft+=n;
-        if(played(g)) ready++; else future++;
-      });
-      var level=left===0?"ok":(days<=7&&ready>0)?"hot":(days<=14&&ready>2)?"warm":"ok";
+      var b=behind(w), days=b.days, left=b.left, ready=b.ready, future=b.future, cutsLeft=b.cutsLeft, level=b.level;
       var badge=LOGOS[w.opp];
       html+='<button class="wl-card wl-'+level+'" data-jump="'+w.week+'">'
         + '<span class="wl-top">'+(badge?'<img src="'+badge+'" alt="" width="22" height="22">':"")
@@ -339,8 +427,9 @@
     return COLS.map(function(c){
       var id=idFor(w,g,c[0]);
       var on=!!STATE.checks[id];
+      var wt=whoTip(id,c[1]);
       return '<span class="cell"><input type="checkbox" class="box" data-id="'+esc(id)+'"'
-           + (on?" checked":"")
+           + (on?" checked":"")+(wt?' title="'+esc(wt)+'"':"")
            + ' aria-label="'+esc(c[1]+", "+g.date+" "+g.opp)+'">'
            + whoTag(id,c[1])+'</span>';
     }).join("");
@@ -398,6 +487,19 @@
     var tot=weekTotal(w), dn=weekDone(w);
     var complete=tot>0&&dn===tot;
     if(onlyLeft&&(complete||(tot===0&&!w.post))) return "";
+    /* Weeks with no film (opener, bye) are one slim line. */
+    if(tot===0&&!w.post){
+      var bye=w.site==="BYE";
+      return '<section class="card slim'+(bye?" bye":"")+'" style="--team:'+esc(w.c1||"#888")+';--team2:'+esc(w.c2||"#bbb")+'">'
+        + '<div class="slimrow"><span class="wk"><small>Week</small><b>'+esc(w.week)+'</b></span>'
+        + '<span class="slim-name">'+(bye?"Bye week":(w.site==="A"?"at ":"")+esc(w.opp))+'</span>'
+        + '<span class="slim-when">'+esc(w.date)+(bye?"":' <span class="site'+(w.site==="A"?" away":"")+'">'+(w.site==="A"?"Away":"Home")+'</span>')+'</span>'
+        + tulResult(w)
+        + '<span class="slim-note">'+esc(clean(w.note||"No opponent film."))+'</span></div></section>';
+    }
+    /* Finished weeks fold up on their own unless someone opens them. */
+    var isShut=Object.prototype.hasOwnProperty.call(shut,String(w.week))?shut[w.week]:complete;
+    var due=dueLevel(w);
 
     var badge=LOGOS[w.opp], mono=w.mono||"";
     var mark = badge
@@ -423,7 +525,7 @@
         + '</div>';
     }
     if(tot===0){
-      body+='<div class="note">'+esc(w.note||(w.post?"No games on file yet.":"No opponent film this week."))+'</div>';
+      body+='<div class="note">'+esc(clean(w.note||(w.post?"No games on file yet.":"No opponent film this week.")))+'</div>';
     } else {
       body+=headRow();
       w.games.forEach(function(g,gi){
@@ -438,20 +540,22 @@
       });
     }
 
-    return '<section class="card'+(complete?" done":"")+(shut[w.week]?" shut":"")+(w.post?" postcard":"")+'">'
-       + '<button class="chead" data-wk="'+esc(w.week)+'" aria-expanded="'+(shut[w.week]?"false":"true")+'"'
-       + ' style="--team:'+esc(w.c1||"#888")+';--pct:'+(tot?Math.round(dn/tot*100):0)+'%">'
-       + '<span class="wk">'+(w.post?"Post":"Wk "+w.week)+'</span>'
+    return '<section class="card'+(complete?" done":"")+(isShut?" shut":"")+(w.post?" postcard":"")+'"'+(due?' data-due="'+due+'"':"")+'>'
+       + '<button class="chead" data-wk="'+esc(w.week)+'" aria-expanded="'+(isShut?"false":"true")+'"'
+       + ' style="--team:'+esc(w.c1||"#888")+';--team2:'+esc(w.c2||"#bbb")+';--pct:'+(tot?Math.round(dn/tot*100):0)+'%'
+       + (badge?";--logo:url("+badge+")":"")+'">'
+       + '<span class="wk"><small>'+(w.post?"Post":"Week")+'</small><b>'+(w.post?"&#9733;":esc(w.week))+'</b></span>'
        + mark
        + '<span class="who"><p class="opp">'+(!w.post&&w.site==="A"?"at ":"")+esc(w.opp)
-       + (w.rec?' <span class="rec">('+esc(w.rec.replace("-","–"))+')</span>':"")+'</p>'
+       + (w.rec?' <span class="rec">'+esc(w.rec.replace("-","–"))+'</span>':"")+'</p>'
        + '<span class="when">'+(w.post?esc(w.event)+(w.date?" · "+esc(w.date):""):esc(w.date))+' '+siteTag
        + (w.t?'<span class="kick">'+esc(w.t)+'</span>':"")
        + (w.tv?'<span class="net">'+esc(w.tv)+'</span>':"")
        + (w.post?"":countdownSpan(w))
+       + tulResult(w)
        + '</span></span>'
        + '<span class="cstat">'
-       + (tot?'<span class="count">'+dn+"/"+tot+"</span>":"")
+       + (tot?'<span class="ring" aria-hidden="true"></span><span class="count"><b>'+dn+"</b>/"+tot+"</span>":"")
        + pill
        + CARET_D
        + "</span></button>"
@@ -671,6 +775,11 @@
     var d=new Date(iso); if(isNaN(d)) return "";
     return d.toLocaleDateString("en-US",{month:"short",day:"numeric"})+" "+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
   }
+  function whoTip(id,label){
+    var w=STATE.checks[id]?STATE.who[id]:null;
+    if(!w||!w.by) return "";
+    return (label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):"");
+  }
   function whoTag(id,label){
     var w=STATE.checks[id]?STATE.who[id]:null;
     if(!w||!w.by) return '<span class="who-tag" aria-hidden="true"></span>';
@@ -683,6 +792,7 @@
     var label=(box.getAttribute("aria-label")||"").split(",")[0];
     var tmp=document.createElement("span"); tmp.innerHTML=whoTag(box.getAttribute("data-id"),label);
     if(old) cell.replaceChild(tmp.firstChild,old); else cell.appendChild(tmp.firstChild);
+    var wt=whoTip(box.getAttribute("data-id"),label); if(wt) box.title=wt; else box.removeAttribute("title");
   }
   /* The same game can show twice (for example a postseason card), so update every copy. */
   function boxesFor(id){
@@ -798,9 +908,22 @@
     }
     var h=e.target.closest(".chead");
     if(!h) return;
-    var wk=h.getAttribute("data-wk");
-    shut[wk]=!shut[wk];
-    render();
+    var wk=h.getAttribute("data-wk"), card=h.closest(".card"), body=card&&card.querySelector(".cbody");
+    var closing=!card.classList.contains("shut");
+    shut[wk]=closing;
+    h.setAttribute("aria-expanded",String(!closing));
+    if(RM||!body||!body.animate){ card.classList.toggle("shut",closing); return; }
+    if(closing){
+      body.style.overflow="hidden";
+      var a=body.animate([{height:body.offsetHeight+"px",opacity:1},{height:"0px",opacity:0}],{duration:190,easing:"cubic-bezier(.4,0,.2,1)"});
+      a.onfinish=function(){ card.classList.add("shut"); body.style.overflow=""; };
+    } else {
+      card.classList.remove("shut");
+      body.style.overflow="hidden";
+      var hh=body.offsetHeight;
+      var b2=body.animate([{height:"0px",opacity:0},{height:hh+"px",opacity:1}],{duration:240,easing:"cubic-bezier(.2,.8,.3,1)"});
+      b2.onfinish=function(){ body.style.overflow=""; };
+    }
   });
 
   /* ---------- keyboard: arrows move between boxes, Space ticks, A = whole game ---------- */
@@ -865,7 +988,7 @@
     if(k==="z"&&!e.shiftKey){ e.preventDefault(); undo(); }
     else if(k==="y"||(k==="z"&&e.shiftKey)){ e.preventDefault(); redo(); }
   });
-  root.parentNode.addEventListener("click",function(e){
+  document.addEventListener("click",function(e){
     var j=e.target.closest&&e.target.closest("[data-jump]"); if(!j) return;
     var wk=j.getAttribute("data-jump"); shut[wk]=false; byGame=false; render();
     var h=root.querySelector('.chead[data-wk="'+wk+'"]');
@@ -993,6 +1116,11 @@
     showNotice("Could not load the schedule. Refresh the page.");
     return;
   }
+  var rec=tulRecord(), rc=document.getElementById("tulRec");
+  if(rc&&rec){ rc.textContent="Tulane "+rec.replace("-","\u2013"); rc.hidden=false; }
+  function stampPrint(){ var pd=document.getElementById("printDate"); if(pd) pd.textContent=new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}); }
+  stampPrint(); window.addEventListener("beforeprint",stampPrint);
+  var qt=document.getElementById("quickTop"); if(qt) qt.addEventListener("click",function(){ window.scrollTo({top:0,behavior:RM?"auto":"smooth"}); });
   render();
   syncUndoButtons();
   setInterval(tick,30000);
