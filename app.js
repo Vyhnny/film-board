@@ -13,7 +13,7 @@
   function setStick(){
     var t=document.querySelector(".toolbar"); if(!t) return;
     var st=getComputedStyle(t).position==="sticky";
-    document.documentElement.style.setProperty("--stick",(st?t.offsetHeight:0)+"px");
+    document.documentElement.style.setProperty("--stick",(st?Math.ceil(t.getBoundingClientRect().height):0)+"px");
   }
   setStick(); window.addEventListener("resize",setStick);
   var STATE={checks:{},who:{}};
@@ -95,40 +95,100 @@
     return '<div class="fact"><dt>'+label+'</dt><dd'+(cls?' class="'+cls+'"':"")+'>'+value+'</dd></div>';
   }
 
+  /* ---------- conference lookups (data.json "conf": {team:[conference,"FBS"|"FCS"]}) ---------- */
+  function confOf(team){ var c=DATA.conf&&DATA.conf[team]; return c?{name:c[0],lvl:c[1]||""}:null; }
+  function confLabel(team){ var c=confOf(team); return c?c.name+(c.lvl==="FCS"?" (FCS)":""):""; }
+  function sameConf(a,b){ var x=confOf(a), y=confOf(b); return !!(x&&y&&x.name===y.name&&x.name!=="Independent"); }
+
+  /* Team colors for the score bug: Tulane opponents have c1/c2 in the data; everyone else
+     gets a color sampled from their logo when the board loads. */
+  var TEAMCOL={};
+  function teamColors(team){
+    var w=OPPWEEK[team]; if(w&&w.c1) return {c1:w.c1,c2:w.c2||"#999"};
+    return TEAMCOL[team]||{c1:"#3a3f3c",c2:"#8a918c"};
+  }
+  function sampleLogo(team,src){
+    return new Promise(function(done){
+      var im=new Image(); var t=setTimeout(done,1500);
+      im.onload=function(){
+        try{
+          var c=document.createElement("canvas"); c.width=c.height=24;
+          var x=c.getContext("2d"); x.drawImage(im,0,0,24,24);
+          var d=x.getImageData(0,0,24,24).data, bins={}, best=null;
+          for(var i=0;i<d.length;i+=4){
+            var r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];
+            if(a<200) continue;
+            var mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+            if(mx>215&&mn>200) continue;               /* skip white */
+            var k=(r>>5)+","+(g>>5)+","+(b>>5);
+            var e=bins[k]||(bins[k]={n:0,r:0,g:0,b:0,sat:mx-mn});
+            e.n++; e.r+=r; e.g+=g; e.b+=b;
+          }
+          Object.keys(bins).forEach(function(k){ var e=bins[k], sc=e.n*(1+e.sat/255); if(!best||sc>best.sc){ best=e; best.sc=sc; } });
+          if(best){
+            var r1=best.r/best.n, g1=best.g/best.n, b1=best.b/best.n;
+            var lum=(0.299*r1+0.587*g1+0.114*b1)/255;
+            if(lum>0.55){ var f=0.55/lum; r1*=f; g1*=f; b1*=f; }   /* keep white text readable */
+            TEAMCOL[team]={c1:"rgb("+Math.round(r1)+","+Math.round(g1)+","+Math.round(b1)+")",c2:"rgba(255,255,255,.35)"};
+          }
+        }catch(e){}
+        clearTimeout(t); done();
+      };
+      im.onerror=function(){ clearTimeout(t); done(); };
+      im.src=src;
+    });
+  }
+  function sampleAllLogos(){
+    return Promise.all(Object.keys(LOGOS).map(function(t){ return OPPWEEK[t]?null:sampleLogo(t,LOGOS[t]); }));
+  }
+  function coverLine(note,w){
+    var parts=String(note||"").split(" / "), out="";
+    if(parts[0]){
+      var who=parts[0].replace(/\s[+-]?\d+(\.\d+)?\s/," ").replace(/\s+covered.*$/i,"").trim();
+      var push=/push/i.test(parts[0]);
+      out+='<span class="tag '+(push?"neu":who===w.opp?"good":"bad")+'">'+esc(push?"Push":who+" covered")+'</span>';
+    }
+    if(parts.length>1) out+='<span class="tag neu">'+esc(parts.slice(1).join(" / "))+'</span>';
+    return out;
+  }
+  var PIN='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 11s4-3.8 4-6.5A4 4 0 0 0 2 4.5C2 7.2 6 11 6 11Z" fill="currentColor"/></svg>';
+
+  /* The panel under a game when it is opened. */
+  function tile(label,value,sub,cls){
+    return '<div class="tile'+(cls?" "+cls:"")+'"><dt>'+label+'</dt><dd>'+value+(sub?'<small>'+sub+'</small>':"")+'</dd></div>';
+  }
   function detailPanel(w,g){
-    var where=g.ven
-      ? esc(g.ven)+(g.loc?'<span class="sep">/</span>'+esc(g.loc):"")
-      : "Not on file";
-    var line, played=!!g.fin;
-    if(played&&g.fin.cl){
-      line='<span class="num">'+esc(g.fin.cl)+'</span>'
-         + (g.fin.ou?'<span class="sep">/</span>O/U <span class="num">'+esc(g.fin.ou)+'</span>':"")
-         + '<span class="sep">/</span><span class="stamp">closing</span>';
-    } else if(g.ln){
-      line='<span class="num">'+esc(g.ln.o)+'</span>'
-         + (g.ln.ou?'<span class="sep">/</span>O/U <span class="num">'+esc(g.ln.ou)+'</span>':"")
-         + '<span class="sep">/</span><span class="stamp">'+esc(g.ln.as||"opening")+'</span>';
+    var html='<div class="detail">', f=g.fin;
+    if(f){
+      var won=String(f.res).toUpperCase()==="W";
+      var a=teamColors(w.opp), b=teamColors(g.opp), la=LOGOS[w.opp], lb=LOGOS[g.opp];
+      html+='<div class="bug">'
+        + '<span class="t'+(won?"":" lose")+'" style="--tc:'+esc(a.c1)+';--tc2:'+esc(a.c2)+'">'+(la?'<img src="'+la+'" alt="">':"")+esc(shortName(w.opp))+'<b>'+f.us+'</b></span>'
+        + '<span class="t'+(won?" lose":"")+'" style="--tc:'+esc(b.c1)+';--tc2:'+esc(b.c2)+'">'+(lb?'<img src="'+lb+'" alt="">':"")+esc(shortName(g.opp))+'<b>'+f.them+'</b></span>'
+        + '<span class="fin">Final</span></div>';
+      if(f.cl||f.ou) html+='<p class="line">Closed <b>'+(f.cl?esc(f.cl):"no spread")+'</b>'+(f.ou?', O/U <b>'+esc(f.ou)+'</b>':"")+'.'+coverLine(f.note,w)+'</p>';
+      else html+='<p class="line muted">No closing line on file.</p>';
     } else {
-      line="None posted";
+      var k=kickoff(g.date,g.t);
+      html+='<div class="big">'+[(k?dayName(k)+", ":"")+esc(String(g.date).replace(/\s*\(.*?\)/,"")),g.t?esc(g.t):"Time TBD",g.tv?esc(g.tv):""].filter(Boolean).join(" \u00b7 ")+'</div>';
+      html+=g.ln
+        ? '<p class="line">Line <b>'+esc(g.ln.o)+'</b>'+(g.ln.ou?', O/U <b>'+esc(g.ln.ou)+'</b>':"")+(g.ln.as?' <span class="muted">('+esc(g.ln.as)+')</span>':"")+'</p>'
+        : '<p class="line muted">No line posted yet. It usually posts the week of the game.</p>';
     }
-    var html='<dl class="detail">'+fact("Venue",where,g.ven?"":"none");
-    if(played){
-      var f=g.fin;
-      html+=fact("Final",
-          esc(w.opp)+' <span class="num">'+f.us+'</span>'
-        + '<span class="sep">/</span>'+esc(g.opp)+' <span class="num">'+f.them+'</span>'
-        + (f.note?'<span class="sep">/</span><span class="stamp">'+esc(f.note)+'</span>':""));
+    if(g.ven) html+='<div class="venue">'+PIN+esc(g.ven)+(g.loc?", "+esc(g.loc):"")+'</div>';
+    if(f){
+      var url=(f.box||g.box)||("https://www.google.com/search?q="+encodeURIComponent(w.opp+" vs "+g.opp+" "+g.date+" "+seasonYear()+" box score espn"));
+      html+='<a class="boxlink" href="'+esc(url)+'" target="_blank" rel="noopener">'+((f.box||g.box)?"ESPN box score":"Find the box score")+' \u2197</a>';
     }
-    html+=fact(played?"Closing line":"Line",line,(played?g.fin.cl:g.ln)?"":"none");
-    return html+'</dl>';
+    return html+'</div>';
   }
 
   function kickCell(o){
     if(o.fin){
       var wl=String(o.fin.res||"").toUpperCase();
       return '<span class="kcell final"><span class="kick"><b class="wl '+(wl==="W"?"w":wl==="L"?"l":"t")+'">'+esc(wl)+'</b>'
-           + o.fin.us+"–"+o.fin.them+'</span>'
-           + (o.tv?'<span class="net">'+esc(o.tv)+'</span>':'<span class="net">Final</span>')+'</span>';
+           + o.fin.us+"\u2013"+o.fin.them+'</span>'
+           + '<span class="net">'+(o.tv?esc(o.tv):"Final")+'</span></span>';
     }
     if(!o.t&&!o.tv) return '<span class="kcell tbd"><span class="kick">TBD</span></span>';
     return '<span class="kcell"><span class="kick">'+esc(o.t||"Time TBD")+liveBadge(o)+'</span>'
@@ -168,10 +228,7 @@
     var games=0;
     DATA.weeks.forEach(function(w){ games+=filmGames(w).length; });
     setNum("pdone",done);
-    document.getElementById("ptot").textContent=total;
-    var pct=total?Math.round(done/total*100):0;
-    document.getElementById("pfill").style.width=pct+"%";
-    document.getElementById("pbar").setAttribute("aria-valuenow",String(pct));
+    var pt=document.getElementById("ptot"); if(pt) pt.textContent=total;
     setNum("sCut",done); setNum("sOpp",oppDone); setNum("sGame",gamesOpen);
     var ot=document.getElementById("sOppT"); if(ot) ot.textContent=opps;
     var ct=document.getElementById("sCutT"); if(ct) ct.textContent=total;
@@ -327,8 +384,8 @@
     var lv=dueLevel(w); if(lv) card.setAttribute("data-due",lv); else card.removeAttribute("data-due");
     var p=card.querySelector(".pill");
     if(p){
-      p.className="pill "+(complete?"p-done":dn===0?"p-none":"p-part");
-      p.textContent=complete?"Complete":dn===0?"Not started":(tot-dn)+" left";
+      p.className="pill "+(complete?"p-done":"p-part");
+      p.textContent=complete?"All pulled":(tot-dn)+" left";
     }
     card.classList.toggle("done",complete);
     var hd=card.querySelector(".chead");
@@ -358,8 +415,30 @@
       left++; cutsLeft+=n;
       if(played(g)) ready++; else future++;
     });
-    var level=left===0?"ok":(days<=7&&ready>0)?"hot":(days<=14&&ready>2)?"warm":"ok";
-    return {k:k,days:days,left:left,ready:ready,future:future,cutsLeft:cutsLeft,level:level};
+    var due=dueAt(w), hrs=due?(due.getTime()-Date.now())/3600000:null;
+    /* red: due within a day or late; gold: due within 4 days */
+    var level=cutsLeft===0||hrs===null?"ok":hrs<=24?"hot":hrs<=96?"warm":"ok";
+    var perDay=cutsLeft&&hrs>0?Math.ceil(cutsLeft/Math.max(1,hrs/24)):0;
+    return {k:k,days:days,left:left,ready:ready,future:future,cutsLeft:cutsLeft,level:level,due:due,hrs:hrs,perDay:perDay};
+  }
+  /* Film goal: every cutup for an opponent done by Monday 8:00 AM CT of game week. */
+  var DUE_HOUR=8;
+  function dueAt(w){
+    var p=parseDay(w.date); if(!p) return null;
+    var d=new Date(Date.UTC(p.y,p.mo,p.d)); var back=(d.getUTCDay()+6)%7;   /* days since Monday */
+    d.setUTCDate(d.getUTCDate()-back);
+    return ctDate(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),DUE_HOUR,0);
+  }
+  function dueText(b){
+    if(!b||!b.due) return "";
+    var d=b.due.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"America/Chicago"});
+    return d+", 8 AM";
+  }
+  function paceText(b){
+    if(!b) return "";
+    if(!b.cutsLeft) return "All pulled";
+    if(b.hrs<=0) return "Past due";
+    return b.perDay+" a day";
   }
   /* Colored bar on each upcoming card: green on track, gold getting close, red due now. */
   function dueLevel(w){
@@ -391,34 +470,37 @@
       document.getElementById("quick").hidden=false;
       quick.setAttribute("data-jump",w.week);
       quick.innerHTML=(badge?'<img src="'+badge+'" alt="" width="30" height="30">':"")
-        + '<span class="q-txt"><b>Next: '+name+'</b><small>'+(b.left?b.left+(b.left===1?" game":" games")+" left":"All pulled")
-        + " \u00b7 "+(b.days===0?"game day":b.days+(b.days===1?" day":" days"))+'</small></span><span class="q-go">Go</span>';
+        + '<span class="q-txt"><b>Next: '+name+'</b><small>'+(b.cutsLeft?b.cutsLeft+(b.cutsLeft===1?" cutup":" cutups")+" \u00b7 "+(b.hrs<=0?"past due":"due "+dueText(b)):"All pulled")+'</small></span><span class="q-go">Go</span>';
     }
+  }
+
+  function renderPace(){
+    var el=document.getElementById("pace"); if(!el) return;
+    var w=upcomingWeeks().filter(function(x){ return weekTotal(x)>0; })[0];
+    if(!w){ el.hidden=true; return; }
+    var b=behind(w); el.hidden=false;
+    el.className="tot pace pace-"+(b.cutsLeft?b.level:"ok");
+    el.innerHTML='<b>'+(b.cutsLeft?(b.hrs<=0?"Late":b.perDay+'<small> / day</small>'):"Done")+'</b>'
+      + '<span>'+(b.cutsLeft?(b.hrs<=0?b.cutsLeft+" "+esc(shortName(w.opp))+" cutups past due":"to finish "+esc(shortName(w.opp))+" by "+dueText(b)):esc(shortName(w.opp))+" is all pulled")+'</span>';
   }
 
   /* ---------- next 3 opponents: how far behind are we ---------- */
   function renderWorkload(){
-    renderSpot();
-    var box=document.getElementById("workload"); if(!box) return;
+    renderSpot(); renderPace();
+    var box=document.getElementById("ondeck"); if(!box) return;
     var next=upcomingWeeks().slice(0,3);
-    if(!next.length){ box.innerHTML=""; box.hidden=true; return; }
-    box.hidden=false;
-    var html='<div class="wl-head"><span>Next 3 opponents</span><span class="wl-sub">games still to cut</span></div><div class="wl-grid">';
-    next.forEach(function(w){
-      var b=behind(w), days=b.days, left=b.left, ready=b.ready, future=b.future, cutsLeft=b.cutsLeft, level=b.level;
-      var badge=LOGOS[w.opp];
-      html+='<button class="wl-card wl-'+level+'" data-jump="'+w.week+'">'
-        + '<span class="wl-top">'+(badge?'<img src="'+badge+'" alt="" width="22" height="22">':"")
-        + '<span class="wl-opp">'+(w.site==="A"?"at ":"")+esc(w.opp)+'</span>'
-        + '<span class="wl-wk">Wk '+w.week+'</span></span>'
-        + '<span class="wl-num"><b>'+left+'</b> '+(left===1?"game":"games")+' left</span>'
-        + '<span class="wl-detail">'+(left===0?"All cut":ready+" ready now \u00b7 "+future+" not played yet")+'</span>'
-        + '<span class="wl-detail">'+cutsLeft+' cutups \u00b7 '+(days===0?"game day":days+(days===1?" day":" days")+" out")+'</span>'
-        + '</button>';
-    });
-    box.innerHTML=html+'</div>';
+    if(!next.length){ box.innerHTML=""; return; }
+    box.innerHTML=next.map(function(w,i){
+      var b=behind(w), badge=LOGOS[w.opp], k=b.k, txt=i===0?countdownText(k):"";
+      var lbl=i===0?'Next up \u00b7 <span data-count="'+k.at.getTime()+'" data-timed="'+(k.timed?1:0)+'">'+esc(txt)+'</span>':"Week "+esc(w.week);
+      return '<button type="button" class="od od-'+(b.left?b.level:"ok")+'" data-jump="'+w.week+'">'
+        + (badge?'<img src="'+badge+'" alt="">':"")
+        + '<span><span class="lbl">'+lbl+'</span><b>'+(w.site==="A"?"at ":"")+esc(w.opp)+'</b>'
+        + '<small>'+(b.cutsLeft?b.cutsLeft+(b.cutsLeft===1?" cutup":" cutups")+" \u00b7 "+(b.hrs<=0?"past due":paceText(b)):"All pulled")+'</small></span></button>';
+    }).join("");
   }
 
+  var PRINT_SVG='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2M4.5 9.5h7v4h-7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
   var CARET_R='<svg class="rexp" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2 8.5 6 4.5 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var CARET_D='<svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var CHECK_SVG='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2 5 8.6 9.5 3.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -464,21 +546,23 @@
     return '<div class="game'+(openGames[gkey]?" open":"")+'" data-g="'+esc(gkey)+'">'
        + '<div class="row'+(rdone?" rdone":"")+'">'
        + '<span class="rdate">'+esc(g.date)+'</span>'
-       + '<span class="ropp"><span class="opw">'+rowMark(g)+'<span class="rname">'
+       + '<span class="ropp"><span class="opw">'+rowMark(g)+'<span class="rtext"><span class="rname">'
        + (g.ha==="A"?"at ":"")+esc(g.opp)+'</span>'
+       + (!w.post&&!sameConf(w.opp,g.opp)&&confOf(g.opp)?'<span class="cf">'+esc(confOf(g.opp).name+(confOf(g.opp).lvl==="FCS"?" \u00b7 FCS":""))+'</span>':"")+'</span>'
        + alsoChip(w,g,"also-d")
        + CARET_R
        + '</span>'+phoneSub(g,alsoChip(w,g,"also-p"))+'</span>'
-       + '<span class="rha '+(g.ha==="A"?"a":"h")+'">'+(g.ha==="A"?"AWAY":"HOME")+'</span>'
        + kickCell(g)
        + boxCells(w,g)
        + allBtn(w,g)
        + '</div>'
-       + detailPanel(w,g).replace(/<\/dl>$/,'<div class="fact fact-act">'+detailAll(w,g)+'</div></dl>')
+       + detailPanel(w,g).replace(/<\/div>$/,'<div class="fact-act">'+detailAll(w,g)+'</div></div>')
        + '</div>';
   }
-  function headRow(){
-    return '<div class="rhead"><span>Date</span><span>Opponent</span><span>Site</span><span>Kick / TV</span>'
+  function headRow(w){
+    var badge=w&&LOGOS[w.opp];
+    return '<div class="rhead"><span class="rh-wk">'+(w&&!w.post?"Wk "+esc(w.week):"Date")+'</span>'
+       + '<span class="rh-team">'+(badge?'<img src="'+badge+'" alt="">':"")+(w?esc(w.opp):"Opponent")+'</span><span>Result / Kick</span>'
        + COLS.map(function(c){ return "<span>"+c[1]+"</span>"; }).join("")
        + '<span class="allc">All</span></div>';
   }
@@ -490,12 +574,10 @@
     /* Weeks with no film (opener, bye) are one slim line. */
     if(tot===0&&!w.post){
       var bye=w.site==="BYE";
-      return '<section class="card slim'+(bye?" bye":"")+'" style="--team:'+esc(w.c1||"#888")+';--team2:'+esc(w.c2||"#bbb")+'">'
-        + '<div class="slimrow"><span class="wk"><small>Week</small><b>'+esc(w.week)+'</b></span>'
-        + '<span class="slim-name">'+(bye?"Bye week":(w.site==="A"?"at ":"")+esc(w.opp))+'</span>'
-        + '<span class="slim-when">'+esc(w.date)+(bye?"":' <span class="site'+(w.site==="A"?" away":"")+'">'+(w.site==="A"?"Away":"Home")+'</span>')+'</span>'
+      return '<section class="slim"><b>Week '+esc(w.week)+'</b>'
+        + '<span class="slim-name">'+(bye?"Bye week":(w.site==="A"?"at ":"vs ")+esc(w.opp))+' \u00b7 '+esc(w.date)+'</span>'
         + tulResult(w)
-        + '<span class="slim-note">'+esc(clean(w.note||"No opponent film."))+'</span></div></section>';
+        + '<em>'+esc(clean(w.note||"No opponent film."))+'</em></section>';
     }
     /* Finished weeks fold up on their own unless someone opens them. */
     var isShut=Object.prototype.hasOwnProperty.call(shut,String(w.week))?shut[w.week]:complete;
@@ -511,9 +593,8 @@
       : w.site==="BYE" ? '<span class="site bye">Bye</span>'
       : '<span class="site'+(w.site==="A"?" away":"")+'">'+(w.site==="A"?"Away":"Home")+'</span>';
 
-    var pill = tot===0 ? '<span class="pill p-none">'+(w.post?"Waiting on games":"No film")+'</span>'
-      : complete ? '<span class="pill p-done">Complete</span>'
-      : dn===0 ? '<span class="pill p-none">Not started</span>'
+    var pill = tot===0 ? '<span class="pill p-wait">'+(w.post?"Waiting on games":"No film")+'</span>'
+      : complete ? '<span class="pill p-done">All pulled</span>'
       : '<span class="pill p-part">'+(tot-dn)+' left</span>';
 
     var body="";
@@ -527,12 +608,12 @@
     if(tot===0){
       body+='<div class="note">'+esc(clean(w.note||(w.post?"No games on file yet.":"No opponent film this week.")))+'</div>';
     } else {
-      body+=headRow();
+      body+=headRow(w);
       w.games.forEach(function(g,gi){
         if(!g.ha){
           if(onlyLeft) return;
           body+='<div class="row open"><span class="rdate">'+esc(g.date)+'</span>'
-             +  '<span class="ropp">Open date</span><span></span><span></span>'
+             +  '<span class="ropp">Open date</span><span></span>'
              +  '<span></span><span></span><span></span><span class="allc"></span></div>';
           return;
         }
@@ -540,23 +621,28 @@
       });
     }
 
-    return '<section class="card'+(complete?" done":"")+(isShut?" shut":"")+(w.post?" postcard":"")+'"'+(due?' data-due="'+due+'"':"")+'>'
-       + '<button class="chead" data-wk="'+esc(w.week)+'" aria-expanded="'+(isShut?"false":"true")+'"'
-       + ' style="--team:'+esc(w.c1||"#888")+';--team2:'+esc(w.c2||"#bbb")+';--pct:'+(tot?Math.round(dn/tot*100):0)+'%'
+    var sub=[];
+    if(w.rec) sub.push('<b>'+esc(w.rec.replace("-","\u2013"))+'</b>');
+    if(w.post) sub.push(esc(w.event)+(w.official?"":" (possible)"));
+    else if(confLabel(w.opp)) sub.push(esc(confLabel(w.opp)));
+    var wk=tulaneKick(w);
+    if(w.date) sub.push((wk&&!w.post?dayName(wk)+", ":"")+esc(String(w.date).replace(/\s*\(.*?\)/,"")));
+    if(w.t) sub.push(esc(w.t)); if(w.tv) sub.push(esc(w.tv));
+    var bw=!w.post&&!complete&&tot?behind(w):null;
+    if(bw&&bw.due&&bw.k&&bw.k.at.getTime()+GAME_LEN>Date.now()) sub.push('<span class="duetag">Film due '+dueText(bw)+'</span>');
+    return '<section class="card week'+(complete?" done":"")+(isShut?" shut":"")+(w.post?" postcard":"")+'"'+(due?' data-due="'+due+'"':"")
+       + ' style="--team:'+esc(w.c1||"#555")+';--team2:'+esc(w.c2||"#999")+'">'
+       + '<button class="chead wbar" data-wk="'+esc(w.week)+'" aria-expanded="'+(isShut?"false":"true")+'"'
+       + ' style="--team:'+esc(w.c1||"#555")+';--team2:'+esc(w.c2||"#999")+';--pct:'+(tot?Math.round(dn/tot*100):0)+'%'
        + (badge?";--logo:url("+badge+")":"")+'">'
-       + '<span class="wk"><small>'+(w.post?"Post":"Week")+'</small><b>'+(w.post?"&#9733;":esc(w.week))+'</b></span>'
+       + '<span class="wnum"><small>'+(w.post?"Post":"Week")+'</small>'+(w.post?"&#9733;":esc(w.week))+'</span>'
        + mark
-       + '<span class="who"><p class="opp">'+(!w.post&&w.site==="A"?"at ":"")+esc(w.opp)
-       + (w.rec?' <span class="rec">'+esc(w.rec.replace("-","–"))+'</span>':"")+'</p>'
-       + '<span class="when">'+(w.post?esc(w.event)+(w.date?" · "+esc(w.date):""):esc(w.date))+' '+siteTag
-       + (w.t?'<span class="kick">'+esc(w.t)+'</span>':"")
-       + (w.tv?'<span class="net">'+esc(w.tv)+'</span>':"")
-       + (w.post?"":countdownSpan(w))
-       + tulResult(w)
-       + '</span></span>'
+       + '<span class="who"><span class="opp">'+(!w.post&&w.site==="A"?"at ":"")+esc(w.opp)+'</span>'
+       + '<span class="when">'+sub.join(" \u00b7 ")+(w.post?"":countdownSpan(w))+tulResult(w)+'</span></span>'
        + '<span class="cstat">'
-       + (tot?'<span class="ring" aria-hidden="true"></span><span class="count"><b>'+dn+"</b>/"+tot+"</span>":"")
+       + (tot?'<span class="count"><b>'+dn+'</b>/'+tot+'</span>':"")
        + pill
+       + (tot?'<span class="wprint" role="button" tabindex="0" data-print="'+esc(w.week)+'" title="Print just this week" aria-label="Print just this week">'+PRINT_SVG+'</span>':"")
        + CARET_D
        + "</span></button>"
        + '<div class="cbody">'+body+"</div></section>";
@@ -892,6 +978,7 @@
   root.addEventListener("click",function(e){
     if(!e.target.closest) return;
     if(e.target.classList&&e.target.classList.contains("box")) return;
+    var pr=e.target.closest(".wprint"); if(pr){ e.stopPropagation(); printWeek(pr.getAttribute("data-print")); return; }
     var ra=e.target.closest(".rowall"); if(ra){ e.stopPropagation(); toggleAll(ra); return; }
     var rm=e.target.closest(".cand-rm"); if(rm){ removeCandidate(rm.getAttribute("data-cand")); return; }
     if(e.target.closest("#candAdd")){ openCandidates(); return; }
@@ -963,6 +1050,24 @@
     byGame=!byGame; render(); window.scrollTo(0,0);
   });
   document.getElementById("fPrint").addEventListener("click",function(){ window.print(); });
+  /* Print a single opponent's call sheet */
+  function printWeek(wk){
+    var h=root.querySelector('.chead[data-wk="'+wk+'"]'); if(!h) return;
+    var card=h.closest(".card"), wasShut=card.classList.contains("shut");
+    card.classList.remove("shut"); card.classList.add("print-this"); document.body.classList.add("print-one");
+    var done=function(){
+      document.body.classList.remove("print-one"); card.classList.remove("print-this");
+      if(wasShut) card.classList.add("shut");
+      window.removeEventListener("afterprint",done);
+    };
+    window.addEventListener("afterprint",done);
+    window.print();
+    setTimeout(function(){ if(document.body.classList.contains("print-one")&&!window.matchMedia("print").matches) done(); },1500);
+  }
+  root.addEventListener("keydown",function(e){
+    var pr=e.target.closest&&e.target.closest(".wprint");
+    if(pr&&(e.key==="Enter"||e.key===" ")){ e.preventDefault(); e.stopPropagation(); printWeek(pr.getAttribute("data-print")); }
+  },true);
   document.getElementById("fExport").addEventListener("click",function(){
     var rows=[["card","game_date","game_opponent","cutup","pulled_by","pulled_at"]];
     Object.keys(STATE.checks).sort().forEach(function(id){
@@ -1111,6 +1216,7 @@
     var resp=await fetch("data.json",{cache:"no-cache"});
     DATA=await resp.json(); LOGOS=DATA.logos||{};
     indexOpponents();
+    try{ await sampleAllLogos(); }catch(e){}
   }catch(e){
     setSync("off","Offline");
     showNotice("Could not load the schedule. Refresh the page.");
