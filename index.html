@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tulane Film Pull Board</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#f3f5f1;
+  --home:#33517f; --homebg:#e7edf7; --away:#8f5636; --awaybg:#f7ece5;
+ --surface:#ffffff; --surface2:#e9ece6; --chip:#f0f2ee;
+  --line:#d8ded5; --line2:#c4ccc0;
+  --ink:#131e18; --ink2:#4b574f; --ink3:#7a867d;
+  --accent:#006747; --accent2:#2f6fb0;
+  --done:#1c7a54; --partial:#a8730f; --none:#9aa69e;
+  --shadow:0 1px 2px rgba(19,30,24,.06), 0 8px 24px -16px rgba(19,30,24,.28);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0d1411; --surface:#151f1a; --surface2:#1c2822; --chip:#eef1ec;
+    --line:#27342d; --line2:#334439;
+    --ink:#e7efe9; --ink2:#a6b4ab; --ink3:#74847a;
+    --accent:#3aa87e; --accent2:#6aa9e8;
+    --done:#3aa87e; --partial:#cf9a30; --none:#5c6b62;
+    --home:#8fb4e8; --homebg:#1a2739; --away:#dda884; --awaybg:#33241b;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0d1411; --surface:#151f1a; --surface2:#1c2822; --chip:#eef1ec;
+  --line:#27342d; --line2:#334439;
+  --ink:#e7efe9; --ink2:#a6b4ab; --ink3:#74847a;
+  --accent:#3aa87e; --accent2:#6aa9e8;
+  --done:#3aa87e; --partial:#cf9a30; --none:#5c6b62;
+  --home:#8fb4e8; --homebg:#1a2739; --away:#dda884; --awaybg:#33241b;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Barlow","Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.45;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px 64px}
+
+/* ---------- masthead ---------- */
+.mast{
+  position:sticky; top:0; z-index:20; background:var(--ground);
+  border-bottom:1px solid var(--line);
+}
+.mast-in{max-width:1120px;margin:0 auto;padding:14px 20px 12px;
+  display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.tul{
+  width:38px;height:38px;flex:none;border-radius:9px;
+  background:var(--accent); color:#fff;
+  display:grid;place-items:center;
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;letter-spacing:.02em;
+}
+.eyebrow{
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;
+  font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);
+  margin:0 0 1px
+}
+h1{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;
+  font-size:27px;line-height:1;letter-spacing:-.005em;margin:0;text-wrap:balance
+}
+.tally{display:flex;align-items:center;gap:14px}
+.tally-num{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:13px;color:var(--ink2);white-space:nowrap
+}
+.tally-num b{color:var(--ink);font-weight:600;font-size:15px}
+.meter{width:190px;height:7px;border-radius:99px;background:var(--surface2);overflow:hidden;border:1px solid var(--line)}
+.meter i{display:block;height:100%;background:var(--accent);width:0;transition:width .35s cubic-bezier(.2,.8,.3,1)}
+
+.tools{
+  max-width:1120px;margin:0 auto;padding:0 20px 12px;
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center
+}
+.btn{
+  appearance:none;border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:13px;
+  letter-spacing:.07em;text-transform:uppercase;
+  padding:6px 12px;border-radius:7px;cursor:pointer;transition:.15s
+}
+.btn:hover{border-color:var(--accent);color:var(--ink)}
+.btn:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.sync{
+  margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  color:var(--ink3);display:flex;align-items:center;gap:6px
+}
+.dot{width:7px;height:7px;border-radius:99px;background:var(--done);flex:none}
+.dot.busy{background:var(--partial)}
+.dot.off{background:var(--none)}
+
+.notice{
+  max-width:1120px;margin:0 auto 4px;padding:9px 14px;
+  border:1px solid var(--line2);border-left:3px solid var(--partial);
+  background:var(--surface);border-radius:7px;font-size:13.5px;color:var(--ink2)
+}
+.notice.hide{display:none}
+
+/* ---------- summary strip ---------- */
+.strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:16px;
+  background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden
+}
+.stat{background:var(--surface);padding:11px 15px;display:flex;flex-direction:column;gap:1px}
+.stat b{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--ink)
+}
+.stat span{
+  font-family:"Barlow Condensed",sans-serif;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink3);font-weight:600
+}
+
+/* ---------- week card ---------- */
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  margin-top:14px;overflow:hidden;box-shadow:var(--shadow)
+}
+.card.done{border-color:color-mix(in srgb, var(--done) 40%, var(--line))}
+.chead{
+  display:grid;grid-template-columns:auto auto 1fr auto;gap:14px;align-items:center;
+  padding:13px 16px;cursor:pointer;border:0;width:100%;text-align:left;
+  color:inherit;font:inherit;border-left:4px solid var(--team,var(--line2));
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--team) 9%, var(--surface)) 0%,
+    var(--surface) 62%);
+  position:relative
+}
+.chead::after{
+  content:"";position:absolute;left:0;bottom:0;height:2px;width:var(--pct,0%);
+  background:var(--team);opacity:.85;transition:width .3s ease
+}
+.chead:focus-visible{outline:2px solid var(--accent2);outline-offset:-3px}
+.wk{
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:12px;letter-spacing:.11em;
+  color:var(--ink3);text-transform:uppercase;width:44px;flex:none;
+  font-variant-numeric:tabular-nums
+}
+.mark{
+  width:46px;height:46px;flex:none;border-radius:10px;background:var(--chip);
+  border:1px solid var(--line);display:grid;place-items:center;overflow:hidden
+}
+.mark img{width:36px;height:36px;display:block;object-fit:contain}
+.rmark{
+  width:24px;height:24px;flex:none;border-radius:5px;background:var(--chip);
+  border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;
+  transition:width .18s ease,height .18s ease,border-radius .18s ease
+}
+.rmark img{width:19px;height:19px;display:block;object-fit:contain;
+  transition:width .18s ease,height .18s ease}
+.rmono{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:9.5px;
+  letter-spacing:.01em;color:#5d6b62
+}
+.opw{display:flex;align-items:center;gap:9px;min-width:0}
+.mark.plain{box-shadow:inset 0 0 0 1.5px var(--edge,transparent)}
+.mono{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;letter-spacing:.01em;
+  color:#fff;width:100%;height:100%;display:grid;place-items:center;padding:0 3px;text-align:center
+}
+.who{min-width:0}
+.opp{
+  font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:23px;line-height:1.05;
+  letter-spacing:-.004em;margin:0 0 1px
+}
+.when{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink3);
+  letter-spacing:.02em;display:flex;gap:8px;align-items:center;flex-wrap:wrap
+}
+.site{
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:1.5px 7px;border-radius:4px;
+  background:var(--homebg);color:var(--home);border:1px solid transparent
+}
+.site.away{background:var(--awaybg);color:var(--away)}
+.site.bye{background:var(--surface2);color:var(--ink3)}
+.kick{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink2);
+  font-variant-numeric:tabular-nums;white-space:nowrap
+}
+.net{
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink3);white-space:nowrap
+}
+.cstat{display:flex;align-items:center;gap:11px;flex:none}
+.count{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-variant-numeric:tabular-nums;
+  color:var(--ink2);white-space:nowrap
+}
+.pill{
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 9px;border-radius:99px;white-space:nowrap;
+  border:1px solid currentColor
+}
+.pill.p-done{color:var(--done)}
+.pill.p-part{color:var(--partial)}
+.pill.p-none{color:var(--none)}
+.caret{width:13px;height:13px;color:var(--ink3);transition:transform .2s;flex:none}
+.card.shut .caret{transform:rotate(-90deg)}
+.card.shut .cbody{display:none}
+
+/* ---------- rows ---------- */
+.cbody{border-top:1px solid var(--line)}
+.rhead,.row{
+  display:grid;
+  grid-template-columns:74px minmax(0,1fr) 52px 128px repeat(3,72px);
+  gap:10px;align-items:center;padding:7px 16px
+}
+.rhead{
+  padding-top:9px;padding-bottom:9px;background:var(--surface2);
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:10.5px;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--ink3)
+}
+.rhead span:nth-child(n+5){text-align:center}
+.game{border-top:1px solid var(--line)}
+.game:first-of-type{border-top:0}
+.row{transition:background .12s;cursor:pointer}
+.row:hover{background:var(--surface2)}
+.game.open .row{background:var(--surface2)}
+.game.open{background:var(--surface2)}
+.rexp{
+  width:11px;height:11px;flex:none;color:var(--ink3);opacity:.5;
+  transition:transform .18s,opacity .15s;margin-left:2px
+}
+.row:hover .rexp{opacity:1}
+.game.open .rexp{transform:rotate(90deg);opacity:1}
+
+/* ---------- game detail ---------- */
+.detail{display:none;margin:0}
+.game.open .detail{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 30px;
+  padding:0 16px 10px 90px;background:var(--surface2)
+}
+.fact{display:flex;align-items:baseline;gap:9px;min-width:0}
+.fact dt{
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink3);margin:0;flex:none
+}
+.fact dd{margin:0;font-size:13px;color:var(--ink2);line-height:1.4;min-width:0}
+.fact dd.none{color:var(--ink3)}
+.fact dd .num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;color:var(--ink)}
+.fact dd .sep{color:var(--line2);padding:0 5px}
+.stamp{color:var(--ink3);font-style:italic}
+.row.rdone .rdate,.row.rdone .rname{color:var(--ink3)}
+.row.open{color:var(--ink3);font-style:italic}
+.rdate{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-variant-numeric:tabular-nums;
+  color:var(--ink2);white-space:nowrap
+}
+.ropp{font-weight:500;font-size:14.5px;min-width:0;overflow:hidden}
+.rname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+  transition:font-size .18s ease}
+
+/* the row swells a little as it opens, so the game you are looking at leads */
+.game.open .row{padding-top:11px;padding-bottom:11px}
+.game.open .rmark{width:38px;height:38px;border-radius:8px}
+.game.open .rmark img{width:30px;height:30px}
+.game.open .rname{
+  font-size:18.5px;font-weight:600;letter-spacing:-.004em;
+  font-family:"Barlow Condensed",sans-serif
+}
+.game.open .opw{gap:12px}
+.rha{
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:9.5px;letter-spacing:.08em;
+  text-align:center;padding:1.5px 0;border-radius:4px
+}
+.rha.h{background:var(--homebg);color:var(--home)}
+.rha.a{background:var(--awaybg);color:var(--away)}
+.kcell{display:flex;flex-direction:column;gap:0;min-width:0;line-height:1.25}
+.kcell .kick{font-size:11.5px}
+.kcell .net{font-size:10px}
+.kcell.tbd{color:var(--ink3)}
+.kcell.final .kick{color:var(--ink);font-weight:500}
+.kcell.final .net::before{content:"Final \00b7\00a0"}
+.rec{
+  font-family:"IBM Plex Mono",monospace;font-size:14px;font-variant-numeric:tabular-nums;
+  color:var(--ink3);font-weight:400;letter-spacing:-.01em
+}
+.kcell.tbd .kick{color:var(--ink3);letter-spacing:.06em}
+.cell{display:grid;place-items:center}
+.box{
+  appearance:none;-webkit-appearance:none;margin:0;
+  width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line2);
+  background:var(--surface);cursor:pointer;display:grid;place-items:center;
+  transition:.13s;position:relative
+}
+.box:hover{border-color:var(--accent)}
+.box:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.box:checked{background:var(--done);border-color:var(--done)}
+.box:checked::after{
+  content:"";width:11px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;
+  transform:rotate(-45deg) translate(1px,-1px)
+}
+.box:disabled{cursor:not-allowed;opacity:.55}
+.note{padding:13px 16px;color:var(--ink3);font-size:14px;border-top:1px solid var(--line)}
+
+.key{
+  margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+  color:var(--ink3);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 22px
+}
+.key b{color:var(--ink2);font-weight:600}
+.foot{margin-top:12px;color:var(--ink3);font-size:12.5px;line-height:1.6}
+
+@media (max-width:720px){
+  .rhead,.row{grid-template-columns:58px minmax(0,1fr) repeat(3,52px);gap:6px;padding:6px 10px}
+  .kcell,.rhead span:nth-child(4){display:none}
+  .game.open .detail{padding-left:12px;grid-template-columns:1fr}
+  .rha{display:none}
+  .rhead span:nth-child(3){display:none}
+  .chead{grid-template-columns:auto 1fr;gap:11px;padding:12px}
+  .cstat{grid-column:1/-1;justify-content:flex-start;padding-left:57px}
+  .wk{display:none}
+  h1{font-size:23px}
+}
+
+@media print{
+  @page{margin:12mm}
+  :root{
+    --ground:#fff;--surface:#fff;--surface2:#fff;--chip:#fff;
+    --line:#b9c1b8;--line2:#98a29a;--ink:#000;--ink2:#333;--ink3:#555;
+    --done:#000;--partial:#000;--none:#666;--shadow:none
+  }
+  body{background:#fff;font-size:11px}
+  .mast{position:static;border-bottom:2px solid #000}
+  .tools,.notice,.caret,.sync{display:none !important}
+  .meter{width:120px;border:1px solid #000}
+  .meter i{background:#000}
+  .card{break-inside:avoid;page-break-inside:avoid;border:1px solid #98a29a;margin-top:9px;box-shadow:none}
+  .card.shut .cbody{display:block}
+  .chead{padding:8px 10px;cursor:default}
+  .rhead{background:#f0f0f0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rhead,.row{padding:4px 10px}
+  .opp{font-size:18px}
+  .mark{width:34px;height:34px}
+  .mark img{width:27px;height:27px}
+  .rmark{width:17px;height:17px;border-radius:3px}
+  .rmark img{width:14px;height:14px}
+  .strip{display:none}
+  .game.open .detail{display:none}
+  .rexp{display:none}
+  .chead{background:#fff !important}
+  .chead::after{display:none}
+  .site,.rha{background:none !important;border:.8px solid #98a29a;color:#333 !important}
+  .kcell .net{color:#555}
+  .box{width:14px;height:14px;border:1.2px solid #000;border-radius:3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .box:checked{background:#000;border-color:#000}
+  .pill{border-width:1px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+
+/* ---------- sign-in dialog ---------- */
+dialog.login{border:1px solid var(--line2);border-radius:12px;padding:0;background:var(--surface);color:var(--ink);
+  width:min(360px,calc(100vw - 32px));box-shadow:var(--shadow)}
+dialog.login::backdrop{background:rgba(10,16,13,.45)}
+dialog.login form{padding:20px 20px 18px;display:flex;flex-direction:column;gap:12px}
+dialog.login h2{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;margin:0}
+dialog.login p{margin:0;color:var(--ink2);font-size:13.5px}
+dialog.login label{display:flex;flex-direction:column;gap:4px;font-family:"Barlow Condensed",sans-serif;font-weight:600;
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+dialog.login input{font:15px "Barlow",sans-serif;padding:8px 10px;border:1px solid var(--line2);border-radius:7px;
+  background:var(--ground);color:var(--ink);text-transform:none;letter-spacing:0}
+dialog.login input:focus{outline:2px solid var(--accent2);outline-offset:1px}
+dialog.login .row2{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+dialog.login .go{background:var(--accent);border-color:var(--accent);color:#fff}
+dialog.login .err{min-height:18px;color:var(--partial);font-size:13px}
+</style>
+</head>
+<body>
+<div id="mount"></div>
+<template id="shell">
+<div class="mast">
+  <div class="mast-in">
+    <div class="brand">
+      <div class="tul">TU</div>
+      <div>
+        <p class="eyebrow">Tulane Football Video</p>
+        <h1>2026 Opponent Film Pull Board</h1>
+      </div>
+    </div>
+    <div class="tally">
+      <div class="tally-num"><b id="pdone">0</b> / <span id="ptot">0</span> cutups</div>
+      <div class="meter" role="progressbar" aria-label="Overall film pulled" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pbar"><i id="pfill"></i></div>
+    </div>
+  </div>
+  <div class="tools">
+    <button class="btn" id="fLeft" aria-pressed="false">Only what's left</button>
+    <button class="btn" id="fShut">Collapse all</button>
+    <button class="btn" id="fPrint">Print</button>
+    <button class="btn" id="fExport">Export</button>
+    <div class="sync"><span class="dot" id="sdot"></span><span id="stext">Loading…</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="notice hide" id="notice"></div>
+  <div class="strip">
+    <div class="stat"><b id="sCut">0</b><span>cutups pulled</span></div>
+    <div class="stat"><b id="sOpp">0</b><span>opponents complete</span></div>
+    <div class="stat"><b id="sGame">0</b><span>games still open</span></div>
+  </div>
+  <div id="root"></div>
+  <div class="key">
+    <span><b>TV cut</b> — broadcast cutup, offense &amp; special teams</span>
+    <span><b>TV def</b> — broadcast cutup, defense</span>
+    <span><b>2 EZ</b> — both end zone angles, all-22</span>
+  </div>
+  <p class="foot">
+    Each card is a Tulane opponent in schedule order. Beneath it are that opponent's own games from their
+    opener through the week they play us — nothing after, since it is no use to us by then.
+    Checkmarks are shared: everyone with this link sees the same board.
+  </p>
+</div>
+</template>
+
+<dialog class="login" id="login">
+  <form id="lForm" method="dialog">
+    <h2>Staff sign-in</h2>
+    <p>Only needed once on this device. Your name shows on the boxes you tick.</p>
+    <label>Your name or initials<input id="lName" autocomplete="name" maxlength="40"></label>
+    <label>Staff passcode<input id="lCode" type="password" autocomplete="current-password"></label>
+    <div class="err" id="lErr" role="alert"></div>
+    <div class="row2">
+      <button type="button" class="btn" id="lCancel">Cancel</button>
+      <button type="submit" class="btn go">Sign in</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
