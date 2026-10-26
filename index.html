@@ -1336,6 +1336,23 @@ dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--acc
 .tdue.soon{color:#b4472f}
 @media print{.tqty{background:none;border:1px solid #000;color:#000}.tdue{color:#000}}
 
+/* nested pack items: the PDF shows what lives inside what */
+#packroot .trow.d1{padding-left:38px}
+#packroot .trow.d2{padding-left:61px}
+#packroot .trow.thead{background:var(--chip)}
+#packroot .trow.thead .tname{font-weight:700}
+#packroot .trow.thead:hover{background:var(--surface2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #packroot .trow.thead{background:var(--surface2)}}
+:root[data-theme="dark"] #packroot .trow.thead{background:var(--surface2)}
+@media (max-width:720px){
+  #packroot .trow.d1{padding-left:30px}
+  #packroot .trow.d2{padding-left:46px}
+}
+@media print{
+  #packroot .trow.thead{background:none;border-top:1px solid #000}
+  #packroot .trow.thead .tname{font-weight:700}
+}
+
 </style>
 </head>
 <body>
@@ -1502,8 +1519,8 @@ dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--acc
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=3.8"></script>
-<script src="app.js?v=3.8"></script>
+<script src="config.js?v=3.9"></script>
+<script src="app.js?v=3.9"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
