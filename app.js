@@ -367,6 +367,7 @@
 
   /* Update just the touched row, its card and the totals, so focus and scroll survive. */
   function patch(box){
+    if(box.closest("#weekroot")) return wkPatch(box);
     if(onlyLeft) return render();
     var card=box.closest(".card");
     if(!card){
@@ -876,12 +877,14 @@
   function whoTip(id,label){
     var w=STATE.checks[id]?STATE.who[id]:null;
     if(!w||!w.by) return "";
+    if(isWeekId(id)) return "Done by "+w.by+(w.at?" · "+shortDate(w.at):"");
     return (label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):"");
   }
   function whoTag(id,label){
     var w=STATE.checks[id]?STATE.who[id]:null;
     if(!w||!w.by) return '<span class="who-tag" aria-hidden="true"></span>';
-    var tip=(label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):"");
+    var tip=isWeekId(id)?("Done by "+w.by+(w.at?" · "+shortDate(w.at):""))
+      :((label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):""));
     return '<span class="who-tag on" title="'+esc(tip)+'">'+esc(initials(w.by))+'</span>';
   }
   function refreshTag(box){
@@ -894,14 +897,14 @@
   }
   /* The same game can show twice (for example a postseason card), so update every copy. */
   function boxesFor(id){
-    return [].filter.call(root.querySelectorAll("input.box"),function(b){ return b.getAttribute("data-id")===id; });
+    return [].filter.call(document.querySelectorAll("input.box"),function(b){ return b.getAttribute("data-id")===id; });
   }
 
   function setLocal(id,on,by){
     if(on){ STATE.checks[id]=1; STATE.who[id]={by:by||lsGet("fpb_who")||"",at:new Date().toISOString()}; }
     else { delete STATE.checks[id]; delete STATE.who[id]; }
     var bs=boxesFor(id);
-    if(onlyLeft){ render(); return; }
+    if(onlyLeft&&!isWeekId(id)){ render(); return; }
     if(bs.length) bs.forEach(function(bx){ bx.checked=!!on; refreshTag(bx); patch(bx); });
     else { updateTotals(); renderWorkload(); }
   }
@@ -958,6 +961,10 @@
   }
   function item(id){ return describe(id,true).replace(/^checked /,""); }
   function describe(id,on){
+    if(isWeekId(id)){
+      var q=String(id).split("|"), hit=WK_LOOK[q[2]+"|"+q[3]];
+      return (on?"checked ":"unchecked ")+(hit?hit.t+" ("+WK_DAYS[hit.d].n+")":"a checklist item");
+    }
     var p=String(id).split("|"), who, date, opp, col;
     if(p[0]==="p"){ who=p[1]+" (postseason)"; date=p[2]; opp=p[3]; col=p[4]; }
     else { var w=weekByNum(Number(p[0].slice(1))); who=w?w.opp:""; date=p[1]; opp=p[2]; col=p[3]; }
@@ -1222,6 +1229,239 @@
     CANDS=r.error?[]:(r.data||[]);
   }
 
+
+  /* ================================================================
+     Weekly checklist: the "DO NOT FORGET THIS SHIZ" day lists.
+     Boxes are keyed to the calendar week, so each week starts empty
+     on its own and every past week stays on the record.
+     ================================================================ */
+  var WK_DAYS=[{"n":"Sunday","a":"SUN","k":"sun","t":[{"t":"Shares for Upcoming Opponents","n":"","s":true},{"t":"Shares for Special Requests","n":"","s":true},{"t":"Cut our next TV Opponents last game with urgency","n":"","s":true},{"t":"Cut our TV copy to share to exchange","n":"Do this First, ODK it as well, Export Edit Files on export, Only for Home Games","s":false},{"t":"All future opponents uploaded to Gamebrain","n":"","s":false},{"t":"Sunday night start first O,D,K video surges to travel laptops","n":"","s":false},{"t":"Review everything that went wrong during the last game","n":"","s":false},{"t":"Turn in Ref Review Clips on DVSport 360","n":"","s":false},{"t":"PFF our team's copy","n":"run update on all other teams mid to late morning","s":false},{"t":"Upload our film to NFL","n":"Home Games only","s":false},{"t":"Set Manage Travel Folders","n":"","s":false},{"t":"Remove last team from Vault Notifications","n":"","s":false},{"t":"Move Huddleboxes back to storage location","n":"","s":false}]},{"n":"Monday","a":"MON","k":"mon","t":[{"t":"Practice","n":"","s":false},{"t":"Push Practice to cloud","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"Download and Import Sunday NFL Games","n":"","s":false},{"t":"Start PFF'ing the NFL Games","n":"","s":true},{"t":"Pub Reset during Practice?","n":"","s":false},{"t":"Copy College games to share","n":"","s":true}]},{"n":"Tuesday","a":"TUE","k":"tue","t":[{"t":"Practice","n":"","s":false},{"t":"Push Practice to cloud","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"Copy College games to share","n":"","s":true},{"t":"PFF Monday night Football game","n":"","s":false},{"t":"Huddleboxes charging","n":"are they needed Wednesday practice?","s":false}]},{"n":"Wednesday","a":"WED","k":"wed","t":[{"t":"Practice","n":"","s":false},{"t":"Push Practice to cloud","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"Initial Pack of boxes","n":"For typical Semi leaving","s":false},{"t":"Any Penalty Videos for refs","n":"","s":false},{"t":"Travel List in Staff Meeting","n":"","s":false}]},{"n":"Thursday","a":"THU","k":"thu","t":[{"t":"Practice","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"During Practice complete the On The Semi List Below","n":"","s":false}]},{"n":"Friday","a":"FRI","k":"fri","t":[{"t":"Practice","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"PFF Thursday night Football game","n":"","s":false}]},{"n":"Saturday","a":"SAT","k":"sat","t":[{"t":"GameDay","n":"","s":false},{"t":"Cards formatted","n":"","s":false},{"t":"Sync each quarter","n":"","s":false},{"t":"PFF Our Game","n":"","s":false},{"t":"Send PFF data to Atavus Tackling dudes","n":"","s":false},{"t":"PUSH OUR GAME TO THE CLOUD","n":"","s":false}]}];
+
+  var WK_LOOK={};
+  WK_DAYS.forEach(function(d,i){ d.t.forEach(function(x){ WK_LOOK[d.k+"|"+wkSlug(x.t)]={d:i,t:x.t}; }); });
+
+  var wkState={off:0,open:{},todayOnly:true};
+  /* set below by wkDefaultOpen() at boot */
+  var weekroot=document.getElementById("weekroot");
+
+  function wkSlug(t){ return String(t).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,44); }
+  function wkPad(n){ return (n<10?"0":"")+n; }
+  function wkISO(d){ return d.getFullYear()+"-"+wkPad(d.getMonth()+1)+"-"+wkPad(d.getDate()); }
+  function wkSunday(off){
+    var d=new Date(); d.setHours(0,0,0,0);
+    d.setDate(d.getDate()-d.getDay()+(off||0)*7);
+    return d;
+  }
+  function wkDayDate(sun,i){ var d=new Date(sun.getTime()); d.setDate(d.getDate()+i); return d; }
+  function wkId(sun,sheet,t){ return "wk|"+wkISO(sun)+"|"+WK_DAYS[sheet].k+"|"+wkSlug(t); }
+  function isWeekId(id){ return String(id).slice(0,3)==="wk|"; }
+
+  /* The Tulane game that falls inside this calendar week, if any. */
+  function wkGame(sun){
+    var end=wkDayDate(sun,6), out=null;
+    (DATA.weeks||[]).forEach(function(w){
+      var p=parseDay(w.date); if(!p) return;
+      var d=new Date(p.y,p.mo,p.d);
+      if(d>=sun&&d<=end) out={w:w,d:d,i:d.getDay(),bye:w.site==="BYE"};
+    });
+    return out;
+  }
+
+  /* Which sheet day belongs on this calendar day.
+     The game-day list always sits on the actual game day, so a Friday
+     kickoff moves it up and leaves Saturday clear. Everything else
+     stays where the sheet puts it. Returns null for a clear day. */
+  function wkSheetFor(i,g){
+    if(!g||g.bye) return i===6?null:i;
+    if(i===g.i) return 6;
+    if(i>g.i) return null;
+    return i;
+  }
+  function wkTasks(i,g){
+    var s=wkSheetFor(i,g);
+    return s===null?{s:null,list:[]}:{s:s,list:WK_DAYS[s].t};
+  }
+  function wkStat(sun,i,g){
+    var tk=wkTasks(i,g), done=0;
+    tk.list.forEach(function(x){ if(STATE.checks[wkId(sun,tk.s,x.t)]) done++; });
+    return {done:done,total:tk.list.length};
+  }
+
+  function wkOpponent(g){
+    if(!g||g.bye) return "";
+    return (g.w.site==="A"?"at ":"vs ")+g.w.opp;
+  }
+  function wkNiceDate(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+
+  function wkCard(sun,i,g,today){
+    var D=WK_DAYS[i], dd=wkDayDate(sun,i), tk=wkTasks(i,g);
+    var isToday=dd.getTime()===today.getTime();
+    var isGame=!!(g&&!g.bye&&g.i===i);
+    var st=wkStat(sun,i,g);
+    var left=st.total-st.done, complete=st.total>0&&left===0;
+    var open=!!wkState.open[i];
+    var cls="card dcard"+(isToday?" iscur":"")+(isGame?" isgame":"")+(complete?" ddone":"")+(open?"":" shut");
+
+    var tag="";
+    if(isGame) tag='<span class="dtag game">Game day'+(wkOpponent(g)?" &middot; "+esc(wkOpponent(g)):"")+'</span>';
+    else if(isToday) tag='<span class="dtag">Today</span>';
+
+    var chip="";
+    if(g&&!g.bye){
+      var diff=g.i-i;
+      if(diff>0) chip='<span class="dout">'+diff+' day'+(diff===1?"":"s")+' out</span>';
+    }
+
+    var body="";
+    if(!tk.list.length){
+      body='<p class="dempty">'+(g&&g.bye?"Bye week, nothing on the sheet for this day.":"Clear. The game-day list sat on "+(g?WK_DAYS[g.i].n:"the game day")+" this week.")+'</p>';
+    } else {
+      tk.list.forEach(function(x){
+        var id=wkId(sun,tk.s,x.t), on=!!STATE.checks[id];
+        body+='<label class="trow'+(on?" tdone":"")+'">'
+          + '<input class="box" type="checkbox" data-id="'+esc(id)+'"'+(on?" checked":"")+'>'
+          + '<span class="tmain"><span class="tname">'+esc(x.t)+'</span>'
+          + (x.n?'<span class="tnote">'+esc(x.n)+'</span>':"")+'</span>'
+          + '<span class="tflags">'+(x.s?'<span class="stu" title="Your sheet flags this as a weekly student task">Student</span>':"")+'</span>'
+          + whoTag(id,"")
+          + '</label>';
+      });
+    }
+
+    return '<section class="'+cls+'" data-day="'+i+'">'
+      + '<div class="dhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
+      + '<span class="dabbr">'+D.a+'</span>'
+      + '<span class="dmeta"><b>'+D.n+'</b><span class="ddate">'+wkNiceDate(dd)+'</span></span>'
+      + tag + chip
+      + '<span class="count"><b>'+st.done+'</b>/'+st.total+'</span>'
+      + '<span class="pill '+(complete?"p-done":st.total?"p-part":"p-none")+'">'+(st.total?(complete?"Done":left+" left"):"Clear")+'</span>'
+      + '<span class="caret" aria-hidden="true">&#9662;</span>'
+      + '</div>'
+      + '<div class="dbody">'+body+'</div></section>';
+  }
+
+  function renderWeek(){
+    if(!weekroot) return;
+    var sun=wkSunday(wkState.off), g=wkGame(sun);
+    var today=new Date(); today.setHours(0,0,0,0);
+    var thisWeek=wkState.off===0;
+
+    var done=0,total=0,clear=0;
+    for(var i=0;i<7;i++){
+      var s=wkStat(sun,i,g);
+      done+=s.done; total+=s.total;
+      if(s.total&&s.done===s.total) clear++;
+    }
+
+    var ctx;
+    if(!g) ctx='<span class="wkctx">No Tulane game this week</span>';
+    else if(g.bye) ctx='<span class="wkctx">Bye week</span>';
+    else ctx='<span class="wkctx">Game week: <b>'+esc(wkOpponent(g))+'</b>, '+WK_DAYS[g.i].n+' '+wkNiceDate(g.d)+'</span>';
+
+    var banner="";
+    if(g&&!g.bye&&g.i<6){
+      banner='<div class="wkshort"><b>Short week.</b> Kickoff is '+WK_DAYS[g.i].n
+        +', so the game-day list moved onto '+WK_DAYS[g.i].n+' and the days after it are clear. '
+        +'The countdown on each card is days to kickoff, not days to Saturday.</div>';
+    }
+
+    var cards="";
+    for(var j=0;j<7;j++) cards+=wkCard(sun,j,g,today);
+
+    weekroot.innerHTML=
+      '<div class="wkbar">'
+      + '<button class="btn wkarrow" id="wkPrev" aria-label="Previous week">&#9664;</button>'
+      + '<button class="btn wkarrow" id="wkNext" aria-label="Next week">&#9654;</button>'
+      + '<span class="wknow">Week of '+wkNiceDate(sun)+'</span>'
+      + ctx
+      + (thisWeek?"":'<button class="btn wkgo" id="wkNow">This week</button>')
+      + '<span class="wksp"></span>'
+      + '<span class="wkstat"><b>'+done+'</b> of '+total+' done<i>&middot;</i><b>'+clear+'</b> of 7 days clear</span>'
+      + '<button class="btn" id="wkToday" aria-pressed="'+(wkState.todayOnly?"true":"false")+'">Today only</button>'
+      + '<button class="btn" id="wkAll">Expand all</button>'
+      + '<button class="btn" id="wkPrint">Print</button>'
+      + '</div>'
+      + banner
+      + '<div class="wkdays">'+cards+'</div>'
+      + '<p class="foot wkfoot">Straight off your <b>DO NOT FORGET THIS SHIZ</b> sheet. <b>STUDENT</b> marks the items the sheet flags as a weekly student task. '
+      + 'Boxes are keyed to the week, so every week starts empty on its own and the weeks behind you stay on the record. '
+      + 'Checkmarks are shared: everyone with this link sees the same list.</p>';
+  }
+
+  function wkDefaultOpen(){
+    wkState.open={};
+    if(wkState.off===0&&wkState.todayOnly){ wkState.open[new Date().getDay()]=true; return; }
+    if(!wkState.todayOnly){ for(var i=0;i<7;i++) wkState.open[i]=true; }
+  }
+
+  /* One box ticked: update just its day card and the week line. */
+  function wkPatch(box){
+    var card=box.closest(".dcard"); if(!card) return renderWeek();
+    var i=Number(card.getAttribute("data-day"));
+    var sun=wkSunday(wkState.off), g=wkGame(sun), st=wkStat(sun,i,g);
+    var left=st.total-st.done, complete=st.total>0&&left===0;
+    var row=box.closest(".trow"); if(row) row.classList.toggle("tdone",box.checked);
+    var c=card.querySelector(".count"); if(c) c.innerHTML="<b>"+st.done+"</b>/"+st.total;
+    var p=card.querySelector(".pill");
+    if(p){ p.className="pill "+(complete?"p-done":st.total?"p-part":"p-none"); p.textContent=st.total?(complete?"Done":left+" left"):"Clear"; }
+    card.classList.toggle("ddone",complete);
+    var done=0,total=0,clear=0;
+    for(var k=0;k<7;k++){ var s=wkStat(sun,k,g); done+=s.done; total+=s.total; if(s.total&&s.done===s.total) clear++; }
+    var line=weekroot.querySelector(".wkstat");
+    if(line) line.innerHTML="<b>"+done+"</b> of "+total+" done<i>&middot;</i><b>"+clear+"</b> of 7 days clear";
+  }
+
+  if(weekroot){
+    weekroot.addEventListener("change",async function(e){
+      var b=e.target;
+      if(!b.classList||!b.classList.contains("box")) return;
+      var id=b.getAttribute("data-id"), on=b.checked;
+      if(await change(id,on)) remember([{id:id,to:on}]);
+    });
+    weekroot.addEventListener("click",function(e){
+      if(e.target.classList&&e.target.classList.contains("box")) return;
+      if(!e.target.closest) return;
+      if(e.target.closest("#wkPrev")){ wkState.off--; wkDefaultOpen(); renderWeek(); return; }
+      if(e.target.closest("#wkNext")){ wkState.off++; wkDefaultOpen(); renderWeek(); return; }
+      if(e.target.closest("#wkNow")){ wkState.off=0; wkState.todayOnly=true; wkDefaultOpen(); renderWeek(); return; }
+      if(e.target.closest("#wkToday")){ wkState.todayOnly=!wkState.todayOnly; wkDefaultOpen(); renderWeek(); return; }
+      if(e.target.closest("#wkAll")){ wkState.todayOnly=false; wkDefaultOpen(); renderWeek(); return; }
+      if(e.target.closest("#wkPrint")){ window.print(); return; }
+      var h=e.target.closest(".dhead");
+      if(h){
+        var card=h.parentNode, i=Number(card.getAttribute("data-day"));
+        wkState.open[i]=!wkState.open[i];
+        card.classList.toggle("shut",!wkState.open[i]);
+        h.setAttribute("aria-expanded",wkState.open[i]?"true":"false");
+      }
+    });
+    weekroot.addEventListener("keydown",function(e){
+      if(e.key!=="Enter"&&e.key!==" ") return;
+      var h=e.target.closest&&e.target.closest(".dhead"); if(!h) return;
+      e.preventDefault(); h.click();
+    });
+  }
+
+  /* ---------- tabs ---------- */
+  function showTab(which){
+    var wk=which==="week";
+    document.body.classList.toggle("wk-mode",wk);
+    var h=document.querySelector(".brand-txt h1");
+    if(h){
+      if(!h.getAttribute("data-board")) h.setAttribute("data-board",h.textContent);
+      h.textContent=wk?"Weekly Checklist":h.getAttribute("data-board");
+    }
+    var tb=document.getElementById("tabBoard"), tw=document.getElementById("tabWeek");
+    if(tb) tb.setAttribute("aria-pressed",wk?"false":"true");
+    if(tw) tw.setAttribute("aria-pressed",wk?"true":"false");
+    lsSet("fpb_tab",wk?"week":"board");
+    if(wk) renderWeek();
+    window.scrollTo({top:0,behavior:"auto"});
+  }
+  var tbB=document.getElementById("tabBoard"), tbW=document.getElementById("tabWeek");
+  if(tbB) tbB.addEventListener("click",function(){ showTab("board"); });
+  if(tbW) tbW.addEventListener("click",function(){ showTab("week"); });
+
   /* ---------- start ---------- */
   setSync("busy","Loading…");
   try{
@@ -1239,6 +1479,7 @@
   function stampPrint(){ var pd=document.getElementById("printDate"); if(pd) pd.textContent=new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}); }
   stampPrint(); window.addEventListener("beforeprint",stampPrint);
   var qt=document.getElementById("quickTop"); if(qt) qt.addEventListener("click",function(){ window.scrollTo({top:0,behavior:RM?"auto":"smooth"}); });
+  if(lsGet("fpb_tab")==="week"){ showTab("week"); } else { wkDefaultOpen(); }
   render();
   syncUndoButtons();
   setInterval(tick,30000);
@@ -1251,7 +1492,7 @@
     return;
   }
   sb=window.supabase.createClient(CFG.url,CFG.anonKey);
-  try{ await loadChecks(); await loadCandidates(); render(); }
+  try{ await loadChecks(); await loadCandidates(); render(); renderWeek(); }
   catch(e){
     setSync("off","Not connected");
     showNotice("Could not load checkmarks. Refresh the page.");
@@ -1266,7 +1507,7 @@
       if(qGet().some(function(x){ return x.id===row.id; })) return;   /* our unsent change wins */
       applyRow(row);
       var bs=boxesFor(row.id);
-      if(onlyLeft){ render(); return; }
+      if(onlyLeft&&!isWeekId(row.id)){ render(); return; }
       if(bs.length) bs.forEach(function(bx){ bx.checked=!!row.checked; refreshTag(bx); patch(bx); });
       else { updateTotals(); renderWorkload(); }
     })
@@ -1282,6 +1523,6 @@
   document.addEventListener("visibilitychange",async function(){
     if(document.visibilityState!=="visible") return;
     flushQueue();
-    try{ await loadChecks(); await loadCandidates(); render(); }catch(e){}
+    try{ await loadChecks(); await loadCandidates(); render(); renderWeek(); }catch(e){}
   });
 })();
