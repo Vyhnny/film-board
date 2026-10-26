@@ -1185,7 +1185,10 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
 .cell.hasnote .box{outline:2px solid #e4a62b;outline-offset:1px}
 
 /* one-item note dialog */
-.notedlg form{max-width:520px}
+dialog#noteDlg{width:min(540px,calc(100vw - 32px))}
+dialog#noteDlg form{max-width:none;min-width:0;width:100%;box-sizing:border-box}
+dialog#noteDlg textarea,dialog#noteDlg .n-list{max-width:100%;box-sizing:border-box}
+dialog#noteDlg .n-list{overflow-x:hidden}
 .n-on{margin:0 0 12px;padding:8px 11px;background:var(--chip);border-left:3px solid var(--accent);border-radius:0 2px 2px 0;
   font-family:var(--narrow),sans-serif;font-weight:700;font-size:13.5px;color:var(--ink);line-height:1.4}
 .n-list{max-height:40vh;overflow:auto;margin-bottom:12px}
@@ -1218,7 +1221,92 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
 #allNotes{max-width:min(760px,94vw);width:100%}
 #allNotes .h-wrap{min-width:0}
 #allNotes .h-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
-.notedlg form{min-width:min(520px,92vw)}
+
+
+.gver{border-top:1px solid var(--line);margin:5px 8px 2px;padding:8px 2px 4px;
+  font-family:var(--narrow),sans-serif;font-size:11.5px;line-height:1.5;color:var(--ink3)}
+.gver b{display:block;font-weight:700;color:var(--ink2);letter-spacing:.03em}
+.gver .dbok{color:var(--done)}
+.gver .dbbad{color:#b4472f;font-weight:700}
+.printhead i{float:right;font-style:normal;font-weight:600;color:#555;font-size:12px}
+
+/* the board's view controls, now on the right and no longer tab-shaped */
+.tools .tright .viewg{gap:5px}
+.tools .tright .viewg .btn{border:1px solid rgba(255,255,255,.22);border-radius:99px;
+  padding:4px 11px 4px;font-size:11.5px;letter-spacing:.06em;border-bottom-width:1px}
+.tools .tright .viewg .btn:hover{border-color:rgba(255,255,255,.55);color:#fff}
+.tools .tright .viewg .btn[aria-pressed="true"]{background:#fff;color:#17221c;border-color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tools .tright .viewg .btn[aria-pressed="true"]{background:var(--tsky);border-color:var(--tsky);color:#07140e}}
+:root[data-theme="dark"] .tools .tright .viewg .btn[aria-pressed="true"]{background:var(--tsky);border-color:var(--tsky);color:#07140e}
+
+/* a row with an unsent draft on it */
+.nbub.draft{opacity:1;color:var(--partial);border:1px dashed currentColor}
+
+/* semi load day picker */
+.semibar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:10px 13px;
+  background:var(--chip);border-left:3px solid var(--accent);border-radius:0 2px 2px 0}
+.semilab{font-family:var(--narrow),sans-serif;font-weight:700;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink3)}
+.semisel{font:14px "Archivo",sans-serif;padding:5px 9px;border:1px solid var(--line2);border-radius:3px;
+  background:var(--surface);color:var(--ink);max-width:100%}
+.semisel:focus{outline:2px solid var(--accent2);outline-offset:1px}
+.semidef{font-size:12.5px;color:var(--ink3)}
+.semireset{border:1px solid var(--line2) !important;background:var(--surface) !important;color:var(--ink2) !important;
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 10px !important;border-radius:2px;cursor:pointer}
+.semireset:hover{color:var(--accent) !important;border-color:var(--accent) !important}
+.semierr{font-size:12.5px;color:var(--partial)}
+.seminote{flex:1 1 100%;font-size:12px;color:var(--ink3)}
+@media print{.semibar{background:none;border-left:3px solid #000}.semisel{border:0;padding:0;font-weight:700}.semireset,.seminote{display:none}}
+
+/* quiet week */
+.wkquiet{margin:14px 0 2px;padding:11px 14px;border-left:3px solid var(--line2);background:var(--chip);
+  color:var(--ink2);font-size:13.5px;line-height:1.55;border-radius:0 2px 2px 0}
+.wkquiet b{font-family:var(--narrow),sans-serif;letter-spacing:.03em;color:var(--ink)}
+.qlink{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+
+/* focus mode: one day, nothing else */
+.focusbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0 12px;
+  border-bottom:1px solid var(--line2);margin-bottom:12px}
+.focusnow{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:23px}
+.focusbar .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 11px;border-radius:2px;cursor:pointer}
+.focusbar .btn:hover{color:var(--ink);border-color:var(--ink3)}
+
+/* notes page filter */
+.n-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px}
+#nFind{flex:1 1 200px;font:14px "Archivo",sans-serif;padding:7px 10px;border:1px solid var(--line2);
+  border-radius:3px;background:var(--surface);color:var(--ink)}
+#nFind:focus{outline:2px solid var(--accent2);outline-offset:1px}
+.n-showdone{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2);
+  text-transform:none;letter-spacing:0;font-family:"Archivo",sans-serif;font-weight:400}
+.n-showdone input{width:16px;height:16px;margin:0}
+.n-count{font-size:12px;color:var(--ink3);white-space:nowrap}
+
+/* notes printed under their line */
+.pnotes{display:none}
+@media print{
+  .pnotes{display:block;margin-top:3px}
+  .pnote{display:block;font-size:11px;line-height:1.4;color:#000;padding-left:9px;border-left:2px solid #999}
+  .pnote i{font-style:normal;color:#555}
+}
+
+/* fill the page instead of pushing a long day onto the next sheet */
+@media print{
+  body.wk-mode .dcard{break-inside:auto}
+  body.wk-mode .trow,body.wk-mode .pastdue{break-inside:avoid}
+  body.wk-mode .dhead{break-after:avoid}
+  body.wk-mode .printhead{break-after:avoid}
+}
+
+/* a heading that splits the bowl tab into things to do and things to pack */
+.pkhead{margin:22px 0 10px;padding-bottom:7px;border-bottom:2px solid var(--line2)}
+.pkhead:first-child{margin-top:4px}
+.pkhead b{display:block;font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:19px;letter-spacing:.01em}
+.pkhead span{display:block;font-size:12.5px;color:var(--ink3);margin-top:2px}
+.dcard.pkprep .dhead{border-left-color:var(--accent2)}
+.dcard.pkprep.ddone .dhead{border-left-color:var(--done)}
 
 </style>
 </head>
@@ -1279,7 +1367,7 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
       <button class="btn ibtn" id="fUndo" disabled aria-label="Undo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3 2.5 6.5 6 10M3 6.5h6.5a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button class="btn ibtn" id="fRedo" disabled aria-label="Redo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3l3.5 3.5L10 10M13 6.5H6.5a4 4 0 0 0 0 8H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="sync"><span class="dot" id="sdot"></span><span id="stext">Loading…</span></div>
-      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="hist">History</button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button></div></span>
+      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="hist">History</button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button><div class="gver" id="gVer"></div></div></span>
     </div>
   </div>
 
@@ -1374,6 +1462,11 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
         <button type="button" class="btn" id="nClose">Close</button>
       </span>
     </div>
+    <div class="n-filter">
+      <input id="nFind" type="search" placeholder="Filter notes" aria-label="Filter notes" autocomplete="off">
+      <label class="n-showdone"><input type="checkbox" id="nDone"> Show handled</label>
+      <span class="n-count" id="nCount"></span>
+    </div>
     <p>Every note anyone has left, newest first. Each one says what it was attached to. Copy all puts the whole list on your clipboard, Save drops it in a text file.</p>
     <textarea id="nFallback" hidden readonly aria-label="Notes text"></textarea>
     <div class="h-list" id="nAll"></div>
@@ -1381,8 +1474,8 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=15"></script>
-<script src="app.js?v=15"></script>
+<script src="config.js?v=3.4"></script>
+<script src="app.js?v=3.4"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),

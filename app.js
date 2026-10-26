@@ -1245,15 +1245,15 @@
      empty on its own. Packing lists are keyed to a game, so each
      trip starts empty on its own. Nothing is ever cleared by hand.
      ================================================================ */
-  var WK_DAYS=[{"n":"Sunday","a":"SUN","k":"sun","t":[{"t":"Shares for Upcoming Opponents","s":1},{"t":"Shares for Special Requests","s":1},{"t":"Cut our next TV Opponents last game with urgency","s":1},{"t":"Cut our TV copy to share to exchange","n":"Do this First, ODK it as well, Export Edit Files on export, Only for Home Games"},{"t":"All future opponents uploaded to Gamebrain"},{"t":"Sunday night start first O,D,K video surges to travel laptops"},{"t":"Review everything that went wrong during the last game"},{"t":"Turn in Ref Review Clips on DVSport 360"},{"t":"PFF our team's copy","n":"run update on all other teams mid to late morning"},{"t":"Upload our film to NFL","n":"Home Games only"},{"t":"Set Manage Travel Folders"},{"t":"Remove last team from Vault Notifications"},{"t":"Move Huddleboxes back to storage location"}]},{"n":"Monday","a":"MON","k":"mon","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Download and Import Sunday NFL Games"},{"t":"Start PFF'ing the NFL Games","s":1},{"t":"Pub Reset during Practice?"},{"t":"Copy College games to share","s":1}]},{"n":"Tuesday","a":"TUE","k":"tue","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Copy College games to share","s":1},{"t":"PFF Monday night Football game"},{"t":"Huddleboxes charging","n":"are they needed at {next} practice?","g":4}]},{"n":"Wednesday","a":"WED","k":"wed","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Initial Pack of boxes","n":"For typical Semi leaving","g":3},{"t":"Any Penalty Videos for refs"},{"t":"Travel List in Staff Meeting","g":3}]},{"n":"Thursday","a":"THU","k":"thu","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"During Practice complete the On The Semi list","g":2,"link":"semi"}]},{"n":"Friday","a":"FRI","k":"fri","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"PFF Thursday night Football game"}]},{"n":"Saturday","a":"SAT","k":"sat","t":[{"t":"GameDay","g":0},{"t":"Cards formatted","g":0},{"t":"Sync each quarter","g":0},{"t":"PFF Our Game","g":0},{"t":"Send PFF data to Atavus Tackling dudes","g":0},{"t":"PUSH OUR GAME TO THE CLOUD","g":0}]}];
-  var PACKS={"semi":{"name":"On The Semi","tab":"On The Semi","scope":"away","sub":"Packed Thursday during practice, two days before kickoff.","groups":[{"g":"Equipment to the semi","items":[{"t":"8 iPad stands"},{"t":"2 already on semi"},{"t":"iPad Case packed with iPads"},{"t":"iPad Cart"},{"t":"A/C tube"},{"t":"Booth Bag"},{"t":"A/C Power"},{"t":"Extra Remotes"},{"t":"2 Huddleboxes - padded and straped"},{"t":"Table in 1"},{"t":"Emlo in 1"},{"t":"Printer in 1"},{"t":"Plenty of Extension Cords"},{"t":"Plenty of HDMI"},{"t":"Plenty of USBc to HDMI"},{"t":"A/C Unit"}]}]},"stay":{"name":"Staycation","tab":"Staycation","scope":"home","sub":"Home game setup.","groups":[{"g":"Equipment","items":[{"t":"3 XOS LAPTOPS"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 CATAPULT REMOTES"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"1/4\" SPEAKER CABLES"},{"t":"BIG AUX CORD"},{"t":"1 SMALL SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"WHITEBOARD ERASER"},{"t":"4 LONG EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"2 GAFFERS TAPE 3\" BLACK"},{"t":"APPLE LIGHTNING CHARGERS"},{"t":"USB - C CHARGERS"},{"t":"3 PROJECTOR SCREENS"},{"t":"CHARGER BUTTS"}]}]},"road":{"name":"Road Travel","tab":"Road Travel","scope":"away","sub":"Grouped the way the sheet groups it, by the LOCATION column.","groups":[{"g":"SL","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"},{"t":"ALLEN WRENCH"}]},{"g":"SB","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"},{"t":"EAR PIECES FOR WALKIES"}]},{"g":"EZ","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ2","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"MR","items":[{"t":"3 XOS LAPTOPS"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 COWBOY REMOTES"},{"t":"USB EXTENDER"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"USB-C to HDMI"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"LONG AUX & LONG 1/4\""},{"t":"1 SMALL SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"3 HDMI CABLES"},{"t":"2 AT&T WIFI HOTSPOTS"},{"t":"2 MICE"},{"t":"3 EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"2 GAFFERS TAPE"}]},{"g":"OR","items":[{"t":"Coaches IPAD"}]},{"g":"Game time","items":[{"t":"POTATO BOWL BAGs"},{"t":"FAST 5 BAG - format cards","n":"IN 1080"},{"t":"4 SSD'S"},{"t":"POWER STRIP - EXTENSION"},{"t":"LANYARDS"},{"t":"UMR 20 BOX"},{"t":"UMR 20"},{"t":"POWER"},{"t":"CARDS"},{"t":"SDI"},{"t":"THUNDER IPAD CHARGERS"},{"t":"COACHES IPAD CHECKLIST"},{"t":"PEN & POST IT NOTES"},{"t":"EAR PIECES FOR WALKIES"},{"t":"AIRLINE HEADPHONES"},{"t":"HMR SETUP FOR SL"},{"t":"COACH'S BOOTH BAG"},{"t":"ETHERNET"},{"t":"USB-C POWER"},{"t":"ADAPTERS"}]},{"g":"Not labeled on the sheet","items":[{"t":"BLUETOOTH REMOTE"},{"t":"PROJECTOR BOX"},{"t":"3 PROJECTORS"},{"t":"3 POWERS"},{"t":"3 HDMI"},{"t":"LONG HDMI'S"},{"t":"USB-C CONVERTER"},{"t":"HUDDLBOX"},{"t":"EXTENSION CORDS LONGER"},{"t":"USBC TO HDMI ADAPTERS"},{"t":"USBC TO HDMI CORDS"},{"t":"USBC POWER"},{"t":"Printer"},{"t":"INK, BATTERY, CABLE"},{"t":"ELMO"},{"t":"CABLES"},{"t":"4 RAINROOMS"},{"t":"MOTIVATIONAL"},{"t":"CHARGER BUTTS"}]}]},"bowl":{"name":"Bowl Travel","tab":"Bowl","scope":"season","sub":"Second camera set is the sheet's right-hand column. Notes at the bottom are last year's lessons, kept verbatim.","groups":[{"g":"SL","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"SL (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"MR","items":[{"t":"15 XOS LAPTOPS ?"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 COWBOY REMOTES"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"USB-C to HDMI"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"LONG AUX"},{"t":"1 SMALL OF SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"3 HDMI CABLES"},{"t":"4 AT&T WIFI HOTSPOTS"},{"t":"2 MICE"},{"t":"3 EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"GAFFERS TAPE"}]},{"g":"OR","items":[{"t":"Coaches IPAD"}]},{"g":"TV copy","items":[{"t":"HMR 10"},{"t":"HMR 10 CARDS - SWAP HALF"},{"t":"SDI CORD"},{"t":"HMR 10 POWER"}]},{"g":"Game time","items":[{"t":"THUNDER IPAD CHARGERS"},{"t":"COACHES IPAD CHECKLIST"},{"t":"PEN & POST IT NOTES"},{"t":"EAR PIECES FOR WALKIES"},{"t":"HMR SETUP FOR SL"},{"t":"LANYARDS"},{"t":"COACH'S BOOTH BAG"},{"t":"ETHERNET"},{"t":"USB-C POWER"},{"t":"ADAPTERS"},{"t":"POTATO BOWL BAG"},{"t":"FAST 5 BAG - format cards"},{"t":"4 SSD'S"},{"t":"POWER STRIP - EXTENSION"}]},{"g":"Charging stations","items":[{"t":"WALKIE"},{"t":"CAMERA"},{"t":"MONITOR"},{"t":"GH5"},{"t":"BATTERIES & CARDS"},{"t":"USB-B PRINTER CABLES"},{"t":"LOTS OF POWER"},{"t":"LOTS OF POWER STRIPS"},{"t":"LOTS OF TAPE"},{"t":"CARDS"},{"t":"SMALL CARDS AND ADAPTERS"}]},{"g":"Not labeled on the sheet","items":[{"t":"MOTIVATIONAL"},{"t":"LAMINATOR?!"},{"t":"OLD LAPTOP"},{"t":"additional box? For Cold Gear?"}]}],"notes":["AS SOON AS BOWL TEAM IS ANNOUNCED. IN AND SETTLED. START DOWNLOADING BITS OF FILM TO ALL COACHES COMPUTERS.","WE OVERLOADED A DOWNLOAD OVERNIGHT AND THE SERVER WAS BOGGED DOWN THE NEXT MORNING","A FEW COMPUTERS DID NOT TRAVEL MODE CORRECTLY. A TEST OF EACH INDIVIDUAL COACHES LAPTOP BEFORE TRAVEL MAY HAVE CLEANED THIS UP","TAKE A WORKING PS5 AND CONTROLLERS NO MATTER WHAT THEY SAY IS INCLUDED IN THE HOSPITALITY ROOM","GIVE CLEARER INSTRUCTIONS TO ADVANCE CREW, VIDEO GA DID NOT HAVE EVERY ROOM SET BY ARRIVAL…. ITS HARD TO DO BUT MAYBE SEND 2,","AND DEVELOP A PLAN IN ADVANCE OF HOW TO HELP EQ AND HOW TO GET OUR SHIT DONE AS WELL","IN EVERY MEETING ROOM, I WANT A FULL SIZE TABLE TO ALLOW COACHES A WORK SPACE, NOT JUST ENOUGH ROOM FOR A PROJECTOR AND LAPTOP","TEST AND MAKE SURE WE HAVE EXTRA PROJECTORS ON HAND, EVEN IF WE HAVE TO RENT 1 OR 2 EXTRAS. THE RENTED PROJECTORS ALWAYS HAVE ISSUES","AND WE NEED TO REPLACE WITH URGENCY."]}};
+  var WK_DAYS=[{"n":"Sunday","a":"SUN","k":"sun","t":[{"t":"Shares for Upcoming Opponents","s":1},{"t":"Shares for Special Requests","s":1},{"t":"Cut our next TV Opponents last game with urgency","s":1},{"t":"Cut our TV copy to share to exchange","n":"Do this First, ODK it as well, Export Edit Files on export, Only for Home Games"},{"t":"All future opponents uploaded to Gamebrain"},{"t":"Sunday night start first O,D,K video surges to travel laptops"},{"t":"Review everything that went wrong during the last game"},{"t":"Turn in Ref Review Clips on DVSport 360"},{"t":"PFF our team's copy","n":"run update on all other teams mid to late morning"},{"t":"Upload our film to NFL","n":"Home Games only"},{"t":"Set Manage Travel Folders"},{"t":"Remove last team from Vault Notifications"},{"t":"Move Huddleboxes back to storage location"}]},{"n":"Monday","a":"MON","k":"mon","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Download and Import Sunday NFL Games"},{"t":"Start PFF'ing the NFL Games","s":1},{"t":"Pub Reset during Practice?"},{"t":"Copy College games to share","s":1}]},{"n":"Tuesday","a":"TUE","k":"tue","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Copy College games to share","s":1},{"t":"PFF Monday night Football game"},{"t":"Huddleboxes charging","n":"are they needed at {next} practice?","g":4}]},{"n":"Wednesday","a":"WED","k":"wed","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Initial Pack of boxes","n":"For typical Semi leaving","sem":-1},{"t":"Any Penalty Videos for refs"},{"t":"Travel List in Staff Meeting","g":3}]},{"n":"Thursday","a":"THU","k":"thu","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"During Practice complete the On The Semi list","sem":0,"link":"semi"}]},{"n":"Friday","a":"FRI","k":"fri","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"PFF Thursday night Football game"}]},{"n":"Saturday","a":"SAT","k":"sat","t":[{"t":"GameDay","g":0},{"t":"Cards formatted","g":0},{"t":"Sync each quarter","g":0},{"t":"PFF Our Game","g":0},{"t":"Send PFF data to Atavus Tackling dudes","g":0},{"t":"PUSH OUR GAME TO THE CLOUD","g":0}]}];
+  var PACKS={"semi":{"name":"On The Semi","tab":"On The Semi","scope":"away","sub":"","groups":[{"g":"Equipment to the semi","items":[{"t":"8 iPad stands"},{"t":"2 already on semi"},{"t":"iPad Case packed with iPads"},{"t":"iPad Cart"},{"t":"A/C tube"},{"t":"Booth Bag"},{"t":"A/C Power"},{"t":"Extra Remotes"},{"t":"2 Huddleboxes - padded and straped"},{"t":"Table in 1"},{"t":"Emlo in 1"},{"t":"Printer in 1"},{"t":"Plenty of Extension Cords"},{"t":"Plenty of HDMI"},{"t":"Plenty of USBc to HDMI"},{"t":"A/C Unit"}]}]},"stay":{"name":"Staycation","tab":"Staycation","scope":"home","sub":"Home game setup.","groups":[{"g":"Equipment","items":[{"t":"3 XOS LAPTOPS"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 CATAPULT REMOTES"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"1/4\" SPEAKER CABLES"},{"t":"BIG AUX CORD"},{"t":"1 SMALL SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"WHITEBOARD ERASER"},{"t":"4 LONG EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"2 GAFFERS TAPE 3\" BLACK"},{"t":"APPLE LIGHTNING CHARGERS"},{"t":"USB - C CHARGERS"},{"t":"3 PROJECTOR SCREENS"},{"t":"CHARGER BUTTS"}]}]},"road":{"name":"Road Travel","tab":"Road Travel","scope":"away","sub":"Grouped the way the sheet groups it, by the LOCATION column.","groups":[{"g":"SL","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"},{"t":"ALLEN WRENCH"}]},{"g":"SB","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"},{"t":"EAR PIECES FOR WALKIES"}]},{"g":"EZ","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ2","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"MR","items":[{"t":"3 XOS LAPTOPS"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 COWBOY REMOTES"},{"t":"USB EXTENDER"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"USB-C to HDMI"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"LONG AUX & LONG 1/4\""},{"t":"1 SMALL SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"3 HDMI CABLES"},{"t":"2 AT&T WIFI HOTSPOTS"},{"t":"2 MICE"},{"t":"3 EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"2 GAFFERS TAPE"}]},{"g":"OR","items":[{"t":"Coaches IPAD"}]},{"g":"Game time","items":[{"t":"POTATO BOWL BAGs"},{"t":"FAST 5 BAG - format cards","n":"IN 1080"},{"t":"4 SSD'S"},{"t":"POWER STRIP - EXTENSION"},{"t":"LANYARDS"},{"t":"UMR 20 BOX"},{"t":"UMR 20"},{"t":"POWER"},{"t":"CARDS"},{"t":"SDI"},{"t":"THUNDER IPAD CHARGERS"},{"t":"COACHES IPAD CHECKLIST"},{"t":"PEN & POST IT NOTES"},{"t":"EAR PIECES FOR WALKIES"},{"t":"AIRLINE HEADPHONES"},{"t":"HMR SETUP FOR SL"},{"t":"COACH'S BOOTH BAG"},{"t":"ETHERNET"},{"t":"USB-C POWER"},{"t":"ADAPTERS"}]},{"g":"Not labeled on the sheet","items":[{"t":"BLUETOOTH REMOTE"},{"t":"PROJECTOR BOX"},{"t":"3 PROJECTORS"},{"t":"3 POWERS"},{"t":"3 HDMI"},{"t":"LONG HDMI'S"},{"t":"USB-C CONVERTER"},{"t":"HUDDLBOX"},{"t":"EXTENSION CORDS LONGER"},{"t":"USBC TO HDMI ADAPTERS"},{"t":"USBC TO HDMI CORDS"},{"t":"USBC POWER"},{"t":"Printer"},{"t":"INK, BATTERY, CABLE"},{"t":"ELMO"},{"t":"CABLES"},{"t":"4 RAINROOMS"},{"t":"MOTIVATIONAL"},{"t":"CHARGER BUTTS"}]}]},"bowl":{"name":"Bowl Travel","tab":"Bowl","scope":"season","sub":"Second camera set is the sheet's right-hand column. Notes at the bottom are last year's lessons, kept verbatim.","groups":[{"g":"SL","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"SL (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"MR","items":[{"t":"15 XOS LAPTOPS ?"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 COWBOY REMOTES"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"USB-C to HDMI"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"LONG AUX"},{"t":"1 SMALL OF SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"3 HDMI CABLES"},{"t":"4 AT&T WIFI HOTSPOTS"},{"t":"2 MICE"},{"t":"3 EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"GAFFERS TAPE"}]},{"g":"OR","items":[{"t":"Coaches IPAD"}]},{"g":"TV copy","items":[{"t":"HMR 10"},{"t":"HMR 10 CARDS - SWAP HALF"},{"t":"SDI CORD"},{"t":"HMR 10 POWER"}]},{"g":"Game time","items":[{"t":"THUNDER IPAD CHARGERS"},{"t":"COACHES IPAD CHECKLIST"},{"t":"PEN & POST IT NOTES"},{"t":"EAR PIECES FOR WALKIES"},{"t":"HMR SETUP FOR SL"},{"t":"LANYARDS"},{"t":"COACH'S BOOTH BAG"},{"t":"ETHERNET"},{"t":"USB-C POWER"},{"t":"ADAPTERS"},{"t":"POTATO BOWL BAG"},{"t":"FAST 5 BAG - format cards"},{"t":"4 SSD'S"},{"t":"POWER STRIP - EXTENSION"}]},{"g":"Charging stations","items":[{"t":"WALKIE"},{"t":"CAMERA"},{"t":"MONITOR"},{"t":"GH5"},{"t":"BATTERIES & CARDS"},{"t":"USB-B PRINTER CABLES"},{"t":"LOTS OF POWER"},{"t":"LOTS OF POWER STRIPS"},{"t":"LOTS OF TAPE"},{"t":"CARDS"},{"t":"SMALL CARDS AND ADAPTERS"}]},{"g":"Not labeled on the sheet","items":[{"t":"MOTIVATIONAL"},{"t":"LAMINATOR?!"},{"t":"OLD LAPTOP"},{"t":"additional box? For Cold Gear?"}]}],"prep":[{"g":"As soon as the matchup is announced","items":[{"t":"Add the opponent to the board as a postseason team"},{"t":"Start film downloads to coaches' laptops, staggered","n":"last time one overnight bulk download bogged the server down the next morning"},{"t":"Pull the opponent's full season off the exchange"},{"t":"Cut the opponent's last game with urgency"},{"t":"Ask the bowl for the meeting room list and room sizes"},{"t":"Ask for a full size table in every meeting room","n":"not just enough room for a projector and a laptop"},{"t":"Get the stadium's video setup in writing","n":"press box spot, end zone access, what cabling they provide"}]},{"g":"Week of departure","items":[{"t":"Test every coach's laptop individually in travel mode","n":"a few did not travel mode correctly last time"},{"t":"Test every projector"},{"t":"Line up one or two rental projectors as spares","n":"the rented ones always have issues, replace with urgency"},{"t":"Charge everything","n":"huddleboxes, iPads, batteries, walkies"},{"t":"Format all cards"},{"t":"Confirm the advance crew","n":"who goes, when they land, what each person sets. Consider sending two"},{"t":"Write the advance crew a room by room setup sheet"},{"t":"Plan how we help Equipment and still get our own setup done"},{"t":"Confirm hotel meeting room access times"},{"t":"Pack a working PS5 and controllers","n":"no matter what they say is in the hospitality room"}]},{"g":"Day before the truck leaves","items":[{"t":"Pack to the Bowl Travel list"},{"t":"Label every case"},{"t":"Photograph each packed case"},{"t":"Confirm the truck's departure time and arrival window with Equipment"},{"t":"Set aside the carry on","n":"laptops, drives, chargers, anything we cannot replace down there"},{"t":"Load the travel laptops with the latest O,D,K surges"},{"t":"Print the coaches iPad checklist and the room setup sheets"}]},{"g":"On arrival","items":[{"t":"Walk the stadium","n":"sideline spot, end zone spot, cable runs, power"},{"t":"Walk the meeting rooms and confirm the tables"},{"t":"Set and test every meeting room before the team arrives"},{"t":"Test the hotspots and find out what the venue provides"},{"t":"Test upload speed from the hotel and from the stadium"},{"t":"Run a full record and upload dry run"},{"t":"Find the nearest hardware store"}]}],"notes":["AS SOON AS BOWL TEAM IS ANNOUNCED. IN AND SETTLED. START DOWNLOADING BITS OF FILM TO ALL COACHES COMPUTERS.","WE OVERLOADED A DOWNLOAD OVERNIGHT AND THE SERVER WAS BOGGED DOWN THE NEXT MORNING","A FEW COMPUTERS DID NOT TRAVEL MODE CORRECTLY. A TEST OF EACH INDIVIDUAL COACHES LAPTOP BEFORE TRAVEL MAY HAVE CLEANED THIS UP","TAKE A WORKING PS5 AND CONTROLLERS NO MATTER WHAT THEY SAY IS INCLUDED IN THE HOSPITALITY ROOM","GIVE CLEARER INSTRUCTIONS TO ADVANCE CREW, VIDEO GA DID NOT HAVE EVERY ROOM SET BY ARRIVAL…. ITS HARD TO DO BUT MAYBE SEND 2,","AND DEVELOP A PLAN IN ADVANCE OF HOW TO HELP EQ AND HOW TO GET OUR SHIT DONE AS WELL","IN EVERY MEETING ROOM, I WANT A FULL SIZE TABLE TO ALLOW COACHES A WORK SPACE, NOT JUST ENOUGH ROOM FOR A PROJECTOR AND LAPTOP","TEST AND MAKE SURE WE HAVE EXTRA PROJECTORS ON HAND, EVEN IF WE HAVE TO RENT 1 OR 2 EXTRAS. THE RENTED PROJECTORS ALWAYS HAVE ISSUES","AND WE NEED TO REPLACE WITH URGENCY."]}};
   var PACK_ORDER=["semi","road","stay","bowl"];
 
   var WK_LOOK={};
   WK_DAYS.forEach(function(d,i){ d.t.forEach(function(x){ WK_LOOK[d.k+"|"+ckSlug(x.t)]={d:i,t:x.t}; }); });
 
   var TAB="board";
-  var wkState={off:0,open:{}, todayOnly:true};
+  var wkState={off:0,open:{}, todayOnly:true, focus:false};
   var pkState={};        /* list key -> week number being packed for */
   var weekroot=document.getElementById("weekroot");
   var packroot=document.getElementById("packroot");
@@ -1264,6 +1264,32 @@
   function isWeekId(id){ return String(id).slice(0,3)==="wk|"; }
   function isPackId(id){ return String(id).slice(0,3)==="pk|"; }
   function isListId(id){ return isWeekId(id)||isPackId(id); }
+
+  /* ---------------- shared settings ----------------
+     Small bits the whole staff shares, like the day the semi loads when
+     Equipment moves it off its usual slot. */
+  var SETTINGS={};
+  async function loadSettings(){
+    if(!sb) return;
+    var r=await sb.from("settings").select("k,v");
+    SETTINGS={};
+    if(!r.error) (r.data||[]).forEach(function(x){ SETTINGS[x.k]=x.v; });
+  }
+  function applySetting(row){ if(row&&row.k) SETTINGS[row.k]=row.v; }
+  async function saveSetting(k,v){
+    if(!sb) return "Not connected.";
+    if(!lsGet("fpb_code")){ var ok=await askLogin(); if(!ok) return "Sign in to change this."; }
+    var r=await sb.rpc("set_setting",{p_code:lsGet("fpb_code"),p_k:k,p_v:v||"",p_who:lsGet("fpb_who")||""});
+    if(r.error){
+      var m=String(r.error.message||"");
+      if(/does not exist|schema|function/i.test(m)) return "Run notes-setup.sql in Supabase first.";
+      if(/passcode/i.test(m)){ lsDel("fpb_code"); return "Passcode changed. Try again."; }
+      return "That did not save.";
+    }
+    if(v) SETTINGS[k]=v; else delete SETTINGS[k];
+    return "";
+  }
+  function semiKey(w){ return w?("semi:w"+w.week):""; }
 
   /* ---------------- week helpers ---------------- */
   function wkSunday(off){
@@ -1285,29 +1311,79 @@
     return p;
   }
 
+  /* Every Tulane game on the calendar, regular season plus any postseason
+     game that has actually been announced. A team somebody added as a
+     maybe is not a game yet, so it does not drive a checklist. */
+  function allGames(){
+    var out=(DATA.weeks||[]).slice();
+    try{
+      postWeeks().forEach(function(w){ if(w.official&&w.date) out.push(w); });
+    }catch(e){}
+    return out;
+  }
   /* The Tulane game inside this calendar week, if any. */
   function wkGame(sun){
     var end=wkDayDate(sun,6), out=null;
-    (DATA.weeks||[]).forEach(function(w){
+    allGames().forEach(function(w){
       var p=wkDate(w); if(!p) return;
       var d=new Date(p.y,p.mo,p.d);
-      if(d>=sun&&d<=end) out={w:w,d:d,i:d.getDay(),bye:w.site==="BYE"};
+      if(d>=sun&&d<=end) out={w:w,d:d,i:d.getDay(),bye:w.site==="BYE",post:!!w.post};
     });
     return out;
   }
+  /* Is there a game in the week before or the week after this one? If not,
+     the season is not running and the day lists do not apply. */
+  function weekIsLive(sun,g){
+    if(g) return true;
+    var from=new Date(sun.getTime()); from.setDate(from.getDate()-7);
+    var to=new Date(sun.getTime()); to.setDate(to.getDate()+13);
+    var live=false;
+    allGames().forEach(function(w){
+      if(w.site==="BYE") return;
+      var p=wkDate(w); if(!p) return;
+      var d=new Date(p.y,p.mo,p.d);
+      if(d>=from&&d<=to) live=true;
+    });
+    return live;
+  }
+  function sideWord(site){ return site==="A"?"at ":site==="N"?"vs ":"vs "; }
   function gameLabel(g){
     if(!g||g.bye) return "";
-    return (g.w.site==="A"?"at ":"vs ")+g.w.opp;
+    return sideWord(g.w.site)+g.w.opp+(g.w.event?" ("+g.w.event+")":"");
   }
+
+  /* The calendar day index the semi loads on, 0 (Sunday) to 6.
+     Default is two days before kickoff, which is the Thursday of a normal
+     Saturday week. Equipment can move it, and that override wins. */
+  function semiDay(sun,g){
+    if(!g||g.bye) return -1;
+    var ov=SETTINGS[semiKey(g.w)];
+    if(ov){
+      var p=String(ov).split("-");
+      if(p.length===3){
+        var d=new Date(+p[0],+p[1]-1,+p[2]);
+        var i=Math.round((d.getTime()-sun.getTime())/86400000);
+        if(i>=0&&i<=6) return i;
+      }
+    }
+    return Math.max(0,g.i-2);
+  }
+  function semiIsCustom(g){ return !!(g&&g.w&&SETTINGS[semiKey(g.w)]); }
 
   /* What lands on calendar day i.
      A task with a .g rides the kickoff: it sits that many days before
      the game, wherever the game falls. Everything else keeps its
      weekday. Returns a list of {sheet, item}. */
-  function wkTasks(i,g){
-    var out=[];
+  function wkTasks(i,g,sun){
+    var out=[], sd=sun?semiDay(sun,g):-1;
+    if(sun&&!weekIsLive(sun,g)) return out;
     WK_DAYS.forEach(function(D,sheet){
       D.t.forEach(function(x){
+        if(x.sem!==undefined){
+          /* rides the semi load day, wherever that has been set */
+          if(sd>=0&&sd+x.sem===i) out.push({sheet:sheet,item:x});
+          return;
+        }
         if(x.g===undefined){
           /* a plain weekday task drops off on game day and after, because by
              then the week's routine is over and the game-day list has landed */
@@ -1322,7 +1398,7 @@
     return out;
   }
   function wkStat(sun,i,g){
-    var list=wkTasks(i,g), done=0;
+    var list=wkTasks(i,g,sun), done=0;
     list.forEach(function(e){ if(STATE.checks[wkId(sun,e.sheet,e.item.t)]) done++; });
     return {done:done,total:list.length};
   }
@@ -1330,7 +1406,7 @@
   function wkOverdue(sun,g,upto){
     var out=[];
     for(var i=0;i<upto;i++){
-      wkTasks(i,g).forEach(function(e){
+      wkTasks(i,g,sun).forEach(function(e){
         if(!STATE.checks[wkId(sun,e.sheet,e.item.t)]) out.push({day:i,sheet:e.sheet,item:e.item});
       });
     }
@@ -1357,7 +1433,7 @@
   }
 
   function wkCard(sun,i,g,today,overdue){
-    var D=WK_DAYS[i], dd=wkDayDate(sun,i), list=wkTasks(i,g);
+    var D=WK_DAYS[i], dd=wkDayDate(sun,i), list=wkTasks(i,g,sun);
     var isToday=dd.getTime()===today.getTime();
     var isGame=!!(g&&!g.bye&&g.i===i);
     var st={done:0,total:list.length};
@@ -1385,7 +1461,8 @@
     }
     if(!list.length){
       body+='<p class="dempty">'+(g&&g.bye?"Bye week, nothing on the sheet for this day."
-        :(g?"Clear. The week ended at kickoff on "+WK_DAYS[g.i].n+".":"Nothing on the sheet for this day."))+'</p>';
+        :(g?"Clear. The week ended at kickoff on "+WK_DAYS[g.i].n+"."
+           :"Nothing on the sheet for this day."))+'</p>';
     } else {
       list.forEach(function(e){ body+=taskRow(wkId(sun,e.sheet,e.item.t),e.item,i); });
     }
@@ -1417,25 +1494,50 @@
       if(s.total&&s.done===s.total) clear++;
     }
 
+    var live=weekIsLive(sun,g);
     var ctx;
-    if(!g) ctx='<span class="wkctx">No Tulane game this week</span>';
+    if(!g) ctx='<span class="wkctx">'+(live?"No Tulane game this week":"Nothing scheduled around this week")+'</span>';
     else if(g.bye) ctx='<span class="wkctx">Bye week</span>';
     else ctx='<span class="wkctx">Game week: <b>'+esc(gameLabel(g))+'</b>, '+WK_DAYS[g.i].n+' '+ckNice(g.d)+'</span>';
 
     var banner="";
-    if(g&&!g.bye&&g.i<6){
+    if(!live){
+      banner='<div class="wkquiet"><b>Quiet week.</b> No Tulane game this week, the week before or the week after, '
+        +'so the day lists are off. They come back on their own once a game is within a week either side. '
+        +'Bowl prep lives on the <button type="button" class="qlink" data-golist="bowl">Bowl</button> tab.</div>';
+    } else if(g&&!g.bye&&g.i<6){
       banner='<div class="wkshort"><b>Short week.</b> Kickoff is '+WK_DAYS[g.i].n+'. '
         +'The game-day list, the box pack, the staff-meeting travel list, the semi load and the huddlebox charge '
         +'all slid up to stay the same number of days from kickoff. The rest kept its weekday. '
         +'The count on each card is days to kickoff.</div>';
     }
 
+    /* Focus mode: today only, no week bar, no other days. The phone lands
+       here by default on the current week. */
+    var todayIdx=new Date().getDay();
+    var focus=wkState.focus&&thisWeek&&total>0;
     var cards="";
-    for(var j=0;j<7;j++) cards+=wkCard(sun,j,g,today,overdue);
+    if(focus){
+      wkState.open[todayIdx]=true;
+      cards=wkCard(sun,todayIdx,g,today,overdue);
+    } else {
+      for(var j=0;j<7;j++) cards+=wkCard(sun,j,g,today,overdue);
+    }
 
+    if(focus){
+      weekroot.innerHTML=
+        '<div class="printhead">Weekly checklist &middot; '+WK_DAYS[todayIdx].n+' '+ckNice(wkDayDate(sun,todayIdx))+'<i>v'+VER+'</i></div>'
+        + '<div class="focusbar"><span class="focusnow">Today</span>'
+        + (g&&!g.bye?'<span class="wkctx">'+esc(gameLabel(g))+', '+WK_DAYS[g.i].n+'</span>':'')
+        + '<span class="wksp"></span>'
+        + '<button class="btn" id="wkWhole">Whole week</button></div>'
+        + '<div class="wkdays">'+cards+'</div>';
+      return;
+    }
     weekroot.innerHTML=
       '<div class="printhead">Weekly checklist &middot; week of '+ckNice(sun)
-        +(g&&!g.bye?' &middot; '+esc(gameLabel(g))+', '+WK_DAYS[g.i].n:'')+'</div>'
+        +(g&&!g.bye?' &middot; '+esc(gameLabel(g))+', '+WK_DAYS[g.i].n:'')
+        +'<i>v'+VER+'</i></div>'
       + '<div class="wkbar">'
       + '<button class="btn wkarrow" id="wkPrev" aria-label="Previous week">&#9664;</button>'
       + '<button class="btn wkarrow" id="wkNext" aria-label="Next week">&#9654;</button>'
@@ -1443,10 +1545,11 @@
       + ctx
       + (thisWeek?"":'<button class="btn wkgo" id="wkNow">This week</button>')
       + '<span class="wksp"></span>'
-      + '<span class="wkstat"><b>'+done+'</b>/'+total+' done<i>&middot;</i><b>'+clear+'</b>/7 days'
+      + '<span class="wkstat">'+(total?('<b>'+done+'</b>/'+total+' done<i>&middot;</i><b>'+clear+'</b>/7 days'):'Nothing due')
       + (overdue&&overdue.length?'<i>&middot;</i><b class="lateN">'+overdue.length+'</b> past due':'')+'</span>'
       + '<button class="btn" id="wkToday" aria-pressed="'+(wkState.todayOnly?"true":"false")+'">Today</button>'
       + '<button class="btn" id="wkAll">Expand</button>'
+      + '<button class="btn" id="wkFocus">Today only</button>'
       + '</div>'
       + banner
       + '<div class="wkdays">'+cards+'</div>'
@@ -1455,6 +1558,11 @@
       + 'Boxes are keyed to the week, so every week starts empty on its own and the weeks behind you stay on the record.</p>';
   }
 
+  (function(){
+    var saved=lsGet("fpb_focus");
+    if(saved!==null) wkState.focus=saved==="1";
+    else wkState.focus=(window.matchMedia&&window.matchMedia("(max-width:720px)").matches);
+  })();
   function wkDefaultOpen(){
     wkState.open={};
     if(wkState.off===0&&wkState.todayOnly){ wkState.open[new Date().getDay()]=true; return; }
@@ -1485,7 +1593,15 @@
   function pkGames(scope){
     if(scope==="season") return [];
     var want=scope==="home"?"H":"A";
-    return (DATA.weeks||[]).filter(function(w){ return w.site===want; });
+    var out=(DATA.weeks||[]).filter(function(w){ return w.site===want; });
+    /* an announced bowl or championship travels too; a neutral site is a trip */
+    try{
+      postWeeks().forEach(function(w){
+        if(!w.official||!w.date) return;
+        if((w.site==="N"?"A":w.site)===want) out.push(w);
+      });
+    }catch(e){}
+    return out;
   }
   function pkDefault(scope){
     var gs=pkGames(scope); if(!gs.length) return null;
@@ -1496,17 +1612,27 @@
   function pkWeek(key){
     var p=PACKS[key];
     if(p.scope==="season") return null;
-    if(pkState[key]===undefined){ var d=pkDefault(p.scope); pkState[key]=d?d.week:null; }
+    var gs=pkGames(p.scope);
+    /* until you move the arrows yourself, this always lands on the next
+       trip, so a tab left open all week does not stay on a played game */
+    if(!pkState[key+"|touched"]){
+      var d=pkDefault(p.scope);
+      pkState[key]=d?d.week:null;
+    }
     var out=null;
-    pkGames(p.scope).forEach(function(w){ if(w.week===pkState[key]) out=w; });
+    gs.forEach(function(w){ if(w.week===pkState[key]) out=w; });
+    if(!out&&gs.length){ var d2=pkDefault(p.scope); out=d2||gs[gs.length-1]; pkState[key]=out.week; }
     return out;
   }
+  /* A season-wide list still starts fresh each year. */
   function pkId(key,w,gname,t){
-    return "pk|"+key+"|"+(w?"w"+w.week:"season")+"|"+ckSlug(gname)+"|"+ckSlug(t);
+    var scope=w?("w"+w.week):("s"+seasonYear());
+    return "pk|"+key+"|"+scope+"|"+ckSlug(gname)+"|"+ckSlug(t);
   }
+  function pkAllGroups(p){ return (p.prep||[]).concat(p.groups||[]); }
   function pkStat(key,w){
     var p=PACKS[key], done=0, total=0;
-    p.groups.forEach(function(gr){ gr.items.forEach(function(it){
+    pkAllGroups(p).forEach(function(gr){ gr.items.forEach(function(it){
       total++; if(STATE.checks[pkId(key,w,gr.g,it.t)]) done++; }); });
     return {done:done,total:total};
   }
@@ -1521,7 +1647,8 @@
     var who;
     if(p.scope==="season") who='<span class="wkctx">Whole season, one list</span>';
     else if(!w) who='<span class="wkctx">No '+(p.scope==="home"?"home":"road")+' games on the schedule</span>';
-    else who='<span class="wknow">'+esc((p.scope==="home"?"vs ":"at ")+w.opp)+'</span><span class="wkctx">'+esc(w.date)+'</span>';
+    else who='<span class="wknow">'+esc(sideWord(w.site||(p.scope==="home"?"H":"A"))+w.opp)+'</span>'
+           + '<span class="wkctx">'+esc(w.date+(w.event?" \u00b7 "+w.event:""))+'</span>';
 
     var nav=p.scope==="season"?"":
         '<button class="btn wkarrow" id="pkPrev"'+(idx<=0?" disabled":"")+' aria-label="Previous game">&#9664;</button>'
@@ -1530,13 +1657,13 @@
     var body="";
     /* a long list starts folded so you can see the whole shape of it */
     var foldByDefault=st.total>30;
-    p.groups.forEach(function(gr){
+    function groupHtml(gr,isPrep){
       var gd=0;
       gr.items.forEach(function(it){ if(STATE.checks[pkId(key,w,gr.g,it.t)]) gd++; });
       var gleft=gr.items.length-gd, gdone=gleft===0;
       var shut=pkState[key+"|shut|"+gr.g];
       var open=shut===undefined?!foldByDefault:!shut;
-      body+='<section class="dcard pkgroup'+(gdone?" ddone":"")+(open?"":" shut")+'" data-grp="'+esc(gr.g)+'">'
+      body+='<section class="dcard pkgroup'+(isPrep?" pkprep":"")+(gdone?" ddone":"")+(open?"":" shut")+'" data-grp="'+esc(gr.g)+'">'
         + '<div class="dhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
         + '<span class="dmeta"><b>'+esc(gr.g)+'</b></span>'
         + '<span class="count"><b>'+gd+'</b>/'+gr.items.length+'</span>'
@@ -1551,7 +1678,14 @@
           + '<span class="tflags"></span>'+whoTag(id,"")+'</label>';
       });
       body+='</div></section>';
-    });
+    }
+    if(p.prep&&p.prep.length){
+      body+='<div class="pkhead"><b>Before the bowl</b><span>Things to do, in the order they happen. '
+          + 'Drafted from last year&#39;s bowl notes, so change whatever is wrong.</span></div>';
+      p.prep.forEach(function(gr){ groupHtml(gr,true); });
+      body+='<div class="pkhead"><b>Equipment</b><span>What goes in the truck.</span></div>';
+    }
+    p.groups.forEach(function(gr){ groupHtml(gr,false); });
 
     var notes="";
     if(p.notes&&p.notes.length){
@@ -1561,17 +1695,50 @@
     }
 
     packroot.innerHTML=
-      '<div class="printhead">'+esc(p.name)+(w?' &middot; '+esc((p.scope==="home"?"vs ":"at ")+w.opp+", "+w.date):'')+'</div>'
+      '<div class="printhead">'+esc(p.name)+(w?' &middot; '+esc(sideWord(w.site||"A")+w.opp+", "+w.date):'')
+        +'<i>v'+VER+'</i></div>'
       + '<div class="wkbar">'+nav+who
       + '<span class="wksp"></span>'
-      + '<span class="wkstat"><b>'+st.done+'</b>/'+st.total+' packed</span>'
+      + '<span class="wkstat"><b>'+st.done+'</b>/'+st.total+(p.prep?' done':' packed')+'</span>'
       + '<button class="btn" id="pkAll">Expand</button>'
       + '<button class="btn" id="pkShut">Collapse</button></div>'
+      + (key==="semi"?semiBar(w):"")
       + (p.sub?'<p class="pksub">'+esc(p.sub)+'</p>':"")
       + '<div class="wkdays">'+body+notes+'</div>'
       + '<p class="foot ckfoot">'+esc(p.name)+' off your travel sheet. '
       + (p.scope==="season"?'One list for the season.':'Boxes are keyed to the game above, so every trip starts empty on its own and past trips stay on the record.')
       + ' Checkmarks are shared: everyone with this link sees the same list.</p>';
+  }
+
+  /* "Loads Wednesday, two days before kickoff" plus a day picker, because
+     Equipment moves the semi and nobody should have to wait on a rebuild. */
+  function semiBar(w){
+    if(!w) return "";
+    var gw=null;
+    (DATA.weeks||[]).forEach(function(x){ if(x.week===w.week) gw=x; });
+    var p=wkDate(gw||w); if(!p) return "";
+    var kick=new Date(p.y,p.mo,p.d);
+    var sun=new Date(kick.getTime()); sun.setDate(sun.getDate()-sun.getDay());
+    var g={w:gw||w,d:kick,i:kick.getDay(),bye:false};
+    var sd=semiDay(sun,g), custom=semiIsCustom(g);
+    var out=0-(sd-g.i);
+    var opts="";
+    for(var i=0;i<7;i++){
+      var dd=wkDayDate(sun,i);
+      var away=g.i-i;
+      opts+='<option value="'+ckISO(dd)+'"'+(i===sd?" selected":"")+'>'
+        + WK_DAYS[i].n+" "+ckNice(dd)
+        + (away>0?" ("+away+" day"+(away===1?"":"s")+" out)":(away===0?" (game day)":""))
+        + '</option>';
+    }
+    return '<div class="semibar">'
+      + '<span class="semilab">Semi loads</span>'
+      + '<select class="semisel" id="semiDay">'+opts+'</select>'
+      + (custom?'<button type="button" class="btn semireset" id="semiReset">Back to default</button>'
+               :'<span class="semidef">Default: two days before kickoff</span>')
+      + '<span class="semierr" id="semiErr"></span>'
+      + '<span class="seminote">The box pack lands the day before, and the Week tab moves both.</span>'
+      + '</div>';
   }
 
   function pkPatch(box){
@@ -1586,7 +1753,7 @@
     card.classList.toggle("ddone",complete);
     var st=pkStat(TAB,pkWeek(TAB));
     var line=packroot.querySelector(".wkstat");
-    if(line) line.innerHTML="<b>"+st.done+"</b>/"+st.total+" packed";
+    if(line) line.innerHTML="<b>"+st.done+"</b>/"+st.total+((PACKS[TAB]&&PACKS[TAB].prep)?" done":" packed");
   }
 
   function listPatch(box){
@@ -1631,6 +1798,8 @@
       if(e.target.closest("#wkNow")){ wkState.off=0; wkState.todayOnly=true; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkToday")){ wkState.todayOnly=!wkState.todayOnly; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkAll")){ wkState.todayOnly=false; wkDefaultOpen(); renderWeek(); return; }
+      if(e.target.closest("#wkFocus")){ wkState.focus=true; wkState.off=0; lsSet("fpb_focus","1"); renderWeek(); return; }
+      if(e.target.closest("#wkWhole")){ wkState.focus=false; lsSet("fpb_focus","0"); wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#ckPrint")){ window.print(); return; }
       onHeadClick(e);
     });
@@ -1641,6 +1810,16 @@
     });
   }
   if(packroot){
+    packroot.addEventListener("change",function(e){
+      var sel=e.target.closest&&e.target.closest("#semiDay"); if(!sel) return;
+      var gw=pkWeek("semi"); if(!gw) return;
+      var err=document.getElementById("semiErr");
+      if(err) err.textContent="Saving…";
+      saveSetting(semiKey(gw),sel.value).then(function(bad){
+        if(err) err.textContent=bad||"";
+        if(!bad){ renderPack(TAB); renderWeek(); flash("Semi day set."); }
+      });
+    });
     packroot.addEventListener("change",onListChange);
     packroot.addEventListener("click",function(e){
       if(e.target.classList&&e.target.classList.contains("box")) return;
@@ -1650,11 +1829,19 @@
         var gs=pkGames(p.scope), w=pkWeek(TAB), idx=-1;
         gs.forEach(function(x,i){ if(w&&x.week===w.week) idx=i; });
         idx+=e.target.closest("#pkNext")?1:-1;
-        if(idx>=0&&idx<gs.length){ pkState[TAB]=gs[idx].week; renderPack(TAB); }
+        if(idx>=0&&idx<gs.length){ pkState[TAB]=gs[idx].week; pkState[TAB+"|touched"]=true; renderPack(TAB); }
         return;
       }
-      if(e.target.closest("#pkAll")){ p.groups.forEach(function(gr){ pkState[TAB+"|shut|"+gr.g]=false; }); renderPack(TAB); return; }
-      if(e.target.closest("#pkShut")){ p.groups.forEach(function(gr){ pkState[TAB+"|shut|"+gr.g]=true; }); renderPack(TAB); return; }
+      if(e.target.closest("#semiReset")){
+        var gw0=pkWeek("semi");
+        saveSetting(semiKey(gw0),"").then(function(bad){
+          document.getElementById("semiErr") && (document.getElementById("semiErr").textContent=bad||"");
+          if(!bad){ renderPack(TAB); renderWeek(); flash("Semi day back to the default."); }
+        });
+        return;
+      }
+      if(e.target.closest("#pkAll")){ pkAllGroups(p).forEach(function(gr){ pkState[TAB+"|shut|"+gr.g]=false; }); renderPack(TAB); return; }
+      if(e.target.closest("#pkShut")){ pkAllGroups(p).forEach(function(gr){ pkState[TAB+"|shut|"+gr.g]=true; }); renderPack(TAB); return; }
       if(e.target.closest("#ckPrint")){ window.print(); return; }
       onHeadClick(e);
     });
@@ -1713,6 +1900,18 @@
   var noteDlg=document.getElementById("noteDlg");
   var allDlg=document.getElementById("allNotes");
   var noteRef="", noteLabel="";
+  var noteQ="", noteShowDone=false;
+
+  /* A half-typed note is kept as a draft on this device until you either
+     click Add note or clear the box. Closing the window does not lose it. */
+  var DKEY="fpb_ndraft";
+  function drafts(){ try{ return JSON.parse(lsGet(DKEY)||"{}"); }catch(e){ return {}; } }
+  function draftFor(ref){ return drafts()[ref]||""; }
+  function setDraft(ref,txt){
+    var d=drafts();
+    if(txt&&txt.trim()) d[ref]=txt; else delete d[ref];
+    try{ lsSet(DKEY,JSON.stringify(d)); }catch(e){}
+  }
 
   function notesFor(ref){ return NOTES.filter(function(n){ return n.ref===ref; }); }
   function openNoteCount(ref){ return notesFor(ref).filter(function(n){ return !n.done; }).length; }
@@ -1721,7 +1920,7 @@
   async function loadNotes(){
     if(!sb) return;
     var r=await sb.from("notes").select("id,ref,label,body,who,done,created_at")
-                  .order("created_at",{ascending:false}).limit(500);
+                  .order("created_at",{ascending:false}).limit(2000);
     NOTES=r.error?[]:(r.data||[]);
     NOTES_OK=!r.error;
   }
@@ -1758,10 +1957,13 @@
           var fl=row.querySelector(".tflags"); (fl||row).insertBefore(dot,fl?fl.firstChild:null);
         }
         dot.setAttribute("data-note",id);
-        dot.classList.toggle("has",tot>0);
+        var dr=!!draftFor(id);
+        dot.classList.toggle("has",tot>0||dr);
         dot.classList.toggle("open",n>0);
+        dot.classList.toggle("draft",dr&&!tot);
         dot.textContent=tot?String(tot):"";
-        dot.title=tot?(tot+" note"+(tot===1?"":"s")+" on this"):"Add a note";
+        dot.title=tot?(tot+" note"+(tot===1?"":"s")+" on this"+(dr?", plus an unsent draft":""))
+                     :(dr?"You have an unsent draft here":"Add a note");
         dot.setAttribute("aria-label",dot.title);
       }
       var cell=b.closest(".cell");
@@ -1788,12 +1990,18 @@
     noteRef=id; noteLabel=labelForId(id);
     document.getElementById("nOn").textContent=noteLabel;
     document.getElementById("nErr").textContent=NOTES_OK?"":"Notes need the one-time database setup (notes-setup.sql).";
-    document.getElementById("nBody").value="";
+    document.getElementById("nBody").value=draftFor(id);
     drawNoteList();
     if(noteDlg.showModal) noteDlg.showModal(); else noteDlg.setAttribute("open","");
     setTimeout(function(){ document.getElementById("nBody").focus(); },30);
   }
   function closeNote(){ noteDlg.close?noteDlg.close():noteDlg.removeAttribute("open"); }
+  function stashDraft(){
+    if(!noteRef) return;
+    var t=document.getElementById("nBody");
+    setDraft(noteRef,t?t.value:"");
+    paintNoteMarks();
+  }
 
   async function noteRpc(fn,args){
     if(!sb) return "Not connected.";
@@ -1819,10 +2027,16 @@
       var bad=await noteRpc("add_note",{p_ref:noteRef,p_label:noteLabel,p_body:body,p_who:lsGet("fpb_who")||""});
       if(bad){ err.textContent=bad; return; }
       err.textContent=""; document.getElementById("nBody").value="";
+      setDraft(noteRef,"");
       await loadNotes(); drawNoteList(); paintNoteMarks(); syncGearBadge();
       flash("Note saved.");
     });
     document.getElementById("nCancel").addEventListener("click",closeNote);
+    /* a click on the dark area outside the box targets the dialog itself */
+    noteDlg.addEventListener("click",function(e){ if(e.target===noteDlg) closeNote(); });
+    /* covers the Close button, the backdrop and the Escape key */
+    noteDlg.addEventListener("close",stashDraft);
+    window.addEventListener("beforeunload",stashDraft);
     document.getElementById("nList").addEventListener("click",async function(e){
       var d=e.target.closest&&e.target.closest("[data-note-del]");
       if(d){
@@ -1840,12 +2054,23 @@
   }
 
   /* ---------- every note, with copy and save ---------- */
+  function shownNotes(){
+    var q=noteQ.trim().toLowerCase();
+    return NOTES.filter(function(n){
+      if(!noteShowDone&&n.done) return false;
+      if(!q) return true;
+      return (n.label+" "+n.body+" "+(n.who||"")).toLowerCase().indexOf(q)>=0;
+    });
+  }
   function noteLines(){
-    var out=["Tulane Football Video  -  Notes",
+    var out=["Tulane Football Video  -  Notes  (Football Video Ops v"+VER+")",
              "Copied "+new Date().toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}),
              ""];
-    if(!NOTES.length) out.push("(none)");
-    NOTES.forEach(function(n){
+    var list=shownNotes();
+    if(noteQ.trim()) out.splice(2,0,'Filtered on "'+noteQ.trim()+'"'+(noteShowDone?"":", handled ones hidden"));
+    else if(!noteShowDone) out.splice(2,0,"Handled notes hidden");
+    if(!list.length) out.push("(none)");
+    list.forEach(function(n){
       out.push((n.done?"[x] ":"[ ] ")+(n.label||"(not attached)"));
       out.push("    "+n.body.replace(/\n/g,"\n    "));
       out.push("    "+(n.who||"Someone")+", "+shortDate(n.created_at));
@@ -1856,8 +2081,14 @@
   function drawAllNotes(){
     var box=document.getElementById("nAll");
     if(!NOTES_OK){ box.innerHTML='<p class="h-empty">Notes need the one-time database setup. Run notes-setup.sql in Supabase.</p>'; return; }
+    var list=shownNotes(), hid=NOTES.length-list.length;
+    var head=document.getElementById("nCount");
+    if(head) head.textContent=list.length+" shown"+(hid?", "+hid+" hidden":"");
+    var cp=document.getElementById("nCopy");
+    if(cp&&cp.textContent.indexOf("Copied")<0) cp.textContent="Copy "+list.length;
     if(!NOTES.length){ box.innerHTML='<p class="h-empty">No notes yet. Right-click any checkbox to leave one.</p>'; return; }
-    box.innerHTML=NOTES.map(function(n){
+    if(!list.length){ box.innerHTML='<p class="h-empty">Nothing matches. Clear the filter, or tick Show handled.</p>'; return; }
+    box.innerHTML=list.map(function(n){
       return '<div class="h-row n-all'+(n.done?" ndone":"")+'">'
         + '<input type="checkbox" class="box nchk" data-note-id="'+n.id+'"'+(n.done?" checked":"")+' aria-label="Mark handled">'
         + '<span class="h-what"><b>'+esc(n.label||"(not attached)")+'</b>'
@@ -1874,6 +2105,8 @@
   }
   if(allDlg){
     document.getElementById("nClose").addEventListener("click",function(){ allDlg.close?allDlg.close():allDlg.removeAttribute("open"); });
+    document.getElementById("nFind").addEventListener("input",function(e){ noteQ=e.target.value; drawAllNotes(); });
+    document.getElementById("nDone").addEventListener("change",function(e){ noteShowDone=e.target.checked; drawAllNotes(); });
     document.getElementById("nCopy").addEventListener("click",function(){
       var txt=noteLines(), btn=document.getElementById("nCopy");
       function ok(){ btn.textContent="Copied"; setTimeout(function(){ btn.textContent="Copy all"; },1600); }
@@ -1907,6 +2140,32 @@
       await loadNotes(); drawAllNotes(); paintNoteMarks(); syncGearBadge();
     });
   }
+
+  /* ---------- notes on the printed page ----------
+     Built only while printing, then torn down, so the screen stays light. */
+  function printNotesOn(){
+    printNotesOff();                 /* beforeprint can fire twice */
+    [].forEach.call(document.querySelectorAll("#weekroot .trow, #packroot .trow"),function(row){
+      /* a past-due row is the same task shown twice, so only the day it
+         belongs to carries the note on paper */
+      if(row.classList.contains("tlate")) return;
+      var b=row.querySelector("input.box"); if(!b) return;
+      var list=notesFor(b.getAttribute("data-id")).filter(function(n){ return !n.done; });
+      if(!list.length) return;
+      var d=document.createElement("span");
+      d.className="pnotes";
+      d.innerHTML=list.map(function(n){
+        return '<span class="pnote">'+esc(n.body)+' <i>'+esc(n.who||"")+'</i></span>';
+      }).join("");
+      var main=row.querySelector(".tmain")||row;
+      main.appendChild(d);
+    });
+  }
+  function printNotesOff(){
+    [].forEach.call(document.querySelectorAll(".pnotes"),function(e){ e.remove(); });
+  }
+  window.addEventListener("beforeprint",printNotesOn);
+  window.addEventListener("afterprint",printNotesOff);
 
   /* ---------- right-click anywhere, long-press on a touchscreen ---------- */
   function boxUnder(el){
@@ -1942,6 +2201,53 @@
     document.addEventListener(ev,cancelPress,{passive:true});
   });
 
+  /* The board's own view controls sat next to the tabs and read like more
+     tabs. They are actions, so they belong on the right with the gear. */
+  (function(){
+    var vg=document.querySelector('.tools .tgroup.bdonly[aria-label="View"]');
+    var tr=document.querySelector('.tools .tright');
+    if(!vg||!tr) return;
+    vg.classList.add("viewg");
+    tr.insertBefore(vg,tr.firstChild);
+    var sep=document.createElement("span");
+    sep.className="tsep bdonly"; sep.setAttribute("aria-hidden","true");
+    tr.insertBefore(sep,vg.nextSibling);
+    var old=document.querySelector('.tleft .tsep.bdonly');
+    if(old) old.remove();
+  })();
+
+  /* ---------- version and database check ----------
+     The number is MAJOR.MINOR: MAJOR goes up when a .sql file has to be
+     run in Supabase, MINOR when only index.html and app.js change. The
+     check below is what actually matters: it asks the database what it
+     has rather than trusting the number. */
+  var VER="3.4";
+  var DBNEED=[{t:"checks",sql:"setup.sql"},
+              {t:"check_log",sql:"database-update.sql"},
+              {t:"candidates",sql:"database-update.sql"},
+              {t:"notes",sql:"notes-setup.sql"},
+              {t:"settings",sql:"notes-setup.sql"}];
+  var DBMISS=[];
+  async function checkDb(){
+    DBMISS=[];
+    if(!sb) return;
+    for(var i=0;i<DBNEED.length;i++){
+      var need=DBNEED[i], bad=false;
+      try{
+        var r=await sb.from(need.t).select("*",{head:true,count:"exact"}).limit(1);
+        bad=!!r.error;
+      }catch(e){ bad=true; }
+      if(bad&&DBMISS.indexOf(need.sql)<0) DBMISS.push(need.sql);
+    }
+  }
+  function drawVersion(){
+    var el=document.getElementById("gVer"); if(!el) return;
+    el.innerHTML='<b>Football Video Ops v'+VER+'</b>'
+      + (DBMISS.length
+          ? '<span class="dbbad">Database needs '+esc(DBMISS.join(", "))+'</span>'
+          : '<span class="dbok">Database up to date</span>');
+  }
+
   /* ---------- the gear ---------- */
   var gMenu=document.getElementById("gMenu"), gBtn=document.getElementById("fGear");
   function syncGearBadge(){
@@ -1965,6 +2271,7 @@
         gMenu.querySelector('[data-g="theme"]').textContent=
           (document.documentElement.getAttribute("data-theme")==="dark")?"Light mode":"Dark mode";
         syncGearBadge();
+        drawVersion();
       }
     });
     document.addEventListener("click",function(e){
@@ -2031,6 +2338,8 @@
     return;
   }
   try{ await loadNotes(); }catch(e){}
+  try{ await loadSettings(); renderCurrentList(); }catch(e){}
+  try{ await checkDb(); }catch(e){}
   paintNoteMarks(); syncGearBadge();
   flushQueue();
 
@@ -2049,6 +2358,7 @@
       await loadCandidates(); render();
     })
     .on("postgres_changes",{event:"*",schema:"public",table:"notes"},function(msg){ applyNoteRow(msg); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"settings"},function(msg){ applySetting(msg.new); renderCurrentList(); })
     .subscribe(function(status){
       if(status==="SUBSCRIBED"){ if(!qGet().length) setSync("ok","Live"); else showQueue(); }
       else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED") setSync("busy","Reconnecting…");
@@ -2058,6 +2368,6 @@
   document.addEventListener("visibilitychange",async function(){
     if(document.visibilityState!=="visible") return;
     flushQueue();
-    try{ await loadChecks(); await loadCandidates(); await loadNotes(); render(); renderCurrentList(); paintNoteMarks(); syncGearBadge(); }catch(e){}
+    try{ await loadChecks(); await loadCandidates(); await loadNotes(); await loadSettings(); render(); renderCurrentList(); paintNoteMarks(); syncGearBadge(); }catch(e){}
   });
 })();
