@@ -367,7 +367,7 @@
 
   /* Update just the touched row, its card and the totals, so focus and scroll survive. */
   function patch(box){
-    if(box.closest("#weekroot")) return wkPatch(box);
+    if(box.closest("#weekroot")||box.closest("#packroot")) return listPatch(box);
     if(onlyLeft) return render();
     var card=box.closest(".card");
     if(!card){
@@ -877,13 +877,13 @@
   function whoTip(id,label){
     var w=STATE.checks[id]?STATE.who[id]:null;
     if(!w||!w.by) return "";
-    if(isWeekId(id)) return "Done by "+w.by+(w.at?" · "+shortDate(w.at):"");
+    if(isListId(id)) return "Done by "+w.by+(w.at?" · "+shortDate(w.at):"");
     return (label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):"");
   }
   function whoTag(id,label){
     var w=STATE.checks[id]?STATE.who[id]:null;
     if(!w||!w.by) return '<span class="who-tag" aria-hidden="true"></span>';
-    var tip=isWeekId(id)?("Done by "+w.by+(w.at?" · "+shortDate(w.at):""))
+    var tip=isListId(id)?("Done by "+w.by+(w.at?" · "+shortDate(w.at):""))
       :((label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):""));
     return '<span class="who-tag on" title="'+esc(tip)+'">'+esc(initials(w.by))+'</span>';
   }
@@ -904,7 +904,7 @@
     if(on){ STATE.checks[id]=1; STATE.who[id]={by:by||lsGet("fpb_who")||"",at:new Date().toISOString()}; }
     else { delete STATE.checks[id]; delete STATE.who[id]; }
     var bs=boxesFor(id);
-    if(onlyLeft&&!isWeekId(id)){ render(); return; }
+    if(onlyLeft&&!isListId(id)){ render(); return; }
     if(bs.length) bs.forEach(function(bx){ bx.checked=!!on; refreshTag(bx); patch(bx); });
     else { updateTotals(); renderWorkload(); }
   }
@@ -963,7 +963,16 @@
   function describe(id,on){
     if(isWeekId(id)){
       var q=String(id).split("|"), hit=WK_LOOK[q[2]+"|"+q[3]];
-      return (on?"checked ":"unchecked ")+(hit?hit.t+" ("+WK_DAYS[hit.d].n+")":"a checklist item");
+      var dp=q[1].split("-"), wd=new Date(+dp[0],+dp[1]-1,+dp[2]);
+      return (on?"checked ":"unchecked ")+(hit?hit.t+" \u00b7 "+WK_DAYS[hit.d].n+", week of "+ckNice(wd):"a checklist item");
+    }
+    if(isPackId(id)){
+      var z=String(id).split("|"), lp=PACKS[z[1]], nm="";
+      var gw=(z[2]==="season")?null:weekByNum(Number(z[2].slice(1)));
+      var tail=(lp?" \u00b7 "+lp.name:"")+(gw?" \u00b7 "+(gw.site==="A"?"at ":"vs ")+gw.opp:"");
+      if(lp) lp.groups.forEach(function(gr){ gr.items.forEach(function(it){
+        if(ckSlug(gr.g)===z[3]&&ckSlug(it.t)===z[4]) nm=it.t+tail; }); });
+      return (on?"packed ":"unpacked ")+(nm||"a packing item");
     }
     var p=String(id).split("|"), who, date, opp, col;
     if(p[0]==="p"){ who=p[1]+" (postseason)"; date=p[2]; opp=p[3]; col=p[4]; }
@@ -1231,79 +1240,135 @@
 
 
   /* ================================================================
-     Weekly checklist: the "DO NOT FORGET THIS SHIZ" day lists.
-     Boxes are keyed to the calendar week, so each week starts empty
-     on its own and every past week stays on the record.
+     Checklists: the DO NOT FORGET THIS SHIZ sheets.
+     Day lists are keyed to the calendar week, so each week starts
+     empty on its own. Packing lists are keyed to a game, so each
+     trip starts empty on its own. Nothing is ever cleared by hand.
      ================================================================ */
-  var WK_DAYS=[{"n":"Sunday","a":"SUN","k":"sun","t":[{"t":"Shares for Upcoming Opponents","n":"","s":true},{"t":"Shares for Special Requests","n":"","s":true},{"t":"Cut our next TV Opponents last game with urgency","n":"","s":true},{"t":"Cut our TV copy to share to exchange","n":"Do this First, ODK it as well, Export Edit Files on export, Only for Home Games","s":false},{"t":"All future opponents uploaded to Gamebrain","n":"","s":false},{"t":"Sunday night start first O,D,K video surges to travel laptops","n":"","s":false},{"t":"Review everything that went wrong during the last game","n":"","s":false},{"t":"Turn in Ref Review Clips on DVSport 360","n":"","s":false},{"t":"PFF our team's copy","n":"run update on all other teams mid to late morning","s":false},{"t":"Upload our film to NFL","n":"Home Games only","s":false},{"t":"Set Manage Travel Folders","n":"","s":false},{"t":"Remove last team from Vault Notifications","n":"","s":false},{"t":"Move Huddleboxes back to storage location","n":"","s":false}]},{"n":"Monday","a":"MON","k":"mon","t":[{"t":"Practice","n":"","s":false},{"t":"Push Practice to cloud","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"Download and Import Sunday NFL Games","n":"","s":false},{"t":"Start PFF'ing the NFL Games","n":"","s":true},{"t":"Pub Reset during Practice?","n":"","s":false},{"t":"Copy College games to share","n":"","s":true}]},{"n":"Tuesday","a":"TUE","k":"tue","t":[{"t":"Practice","n":"","s":false},{"t":"Push Practice to cloud","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"Copy College games to share","n":"","s":true},{"t":"PFF Monday night Football game","n":"","s":false},{"t":"Huddleboxes charging","n":"are they needed Wednesday practice?","s":false}]},{"n":"Wednesday","a":"WED","k":"wed","t":[{"t":"Practice","n":"","s":false},{"t":"Push Practice to cloud","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"Initial Pack of boxes","n":"For typical Semi leaving","s":false},{"t":"Any Penalty Videos for refs","n":"","s":false},{"t":"Travel List in Staff Meeting","n":"","s":false}]},{"n":"Thursday","a":"THU","k":"thu","t":[{"t":"Practice","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"During Practice complete the On The Semi List Below","n":"","s":false}]},{"n":"Friday","a":"FRI","k":"fri","t":[{"t":"Practice","n":"","s":false},{"t":"O,D,K video surges to travel laptops","n":"","s":false},{"t":"PFF Thursday night Football game","n":"","s":false}]},{"n":"Saturday","a":"SAT","k":"sat","t":[{"t":"GameDay","n":"","s":false},{"t":"Cards formatted","n":"","s":false},{"t":"Sync each quarter","n":"","s":false},{"t":"PFF Our Game","n":"","s":false},{"t":"Send PFF data to Atavus Tackling dudes","n":"","s":false},{"t":"PUSH OUR GAME TO THE CLOUD","n":"","s":false}]}];
+  var WK_DAYS=[{"n":"Sunday","a":"SUN","k":"sun","t":[{"t":"Shares for Upcoming Opponents","s":1},{"t":"Shares for Special Requests","s":1},{"t":"Cut our next TV Opponents last game with urgency","s":1},{"t":"Cut our TV copy to share to exchange","n":"Do this First, ODK it as well, Export Edit Files on export, Only for Home Games"},{"t":"All future opponents uploaded to Gamebrain"},{"t":"Sunday night start first O,D,K video surges to travel laptops"},{"t":"Review everything that went wrong during the last game"},{"t":"Turn in Ref Review Clips on DVSport 360"},{"t":"PFF our team's copy","n":"run update on all other teams mid to late morning"},{"t":"Upload our film to NFL","n":"Home Games only"},{"t":"Set Manage Travel Folders"},{"t":"Remove last team from Vault Notifications"},{"t":"Move Huddleboxes back to storage location"}]},{"n":"Monday","a":"MON","k":"mon","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Download and Import Sunday NFL Games"},{"t":"Start PFF'ing the NFL Games","s":1},{"t":"Pub Reset during Practice?"},{"t":"Copy College games to share","s":1}]},{"n":"Tuesday","a":"TUE","k":"tue","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Copy College games to share","s":1},{"t":"PFF Monday night Football game"},{"t":"Huddleboxes charging","n":"are they needed at {next} practice?","g":4}]},{"n":"Wednesday","a":"WED","k":"wed","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Initial Pack of boxes","n":"For typical Semi leaving","g":3},{"t":"Any Penalty Videos for refs"},{"t":"Travel List in Staff Meeting","g":3}]},{"n":"Thursday","a":"THU","k":"thu","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"During Practice complete the On The Semi list","g":2,"link":"semi"}]},{"n":"Friday","a":"FRI","k":"fri","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"PFF Thursday night Football game"}]},{"n":"Saturday","a":"SAT","k":"sat","t":[{"t":"GameDay","g":0},{"t":"Cards formatted","g":0},{"t":"Sync each quarter","g":0},{"t":"PFF Our Game","g":0},{"t":"Send PFF data to Atavus Tackling dudes","g":0},{"t":"PUSH OUR GAME TO THE CLOUD","g":0}]}];
+  var PACKS={"semi":{"name":"On The Semi","tab":"On The Semi","scope":"away","sub":"Packed Thursday during practice, two days before kickoff.","groups":[{"g":"Equipment to the semi","items":[{"t":"8 iPad stands"},{"t":"2 already on semi"},{"t":"iPad Case packed with iPads"},{"t":"iPad Cart"},{"t":"A/C tube"},{"t":"Booth Bag"},{"t":"A/C Power"},{"t":"Extra Remotes"},{"t":"2 Huddleboxes - padded and straped"},{"t":"Table in 1"},{"t":"Emlo in 1"},{"t":"Printer in 1"},{"t":"Plenty of Extension Cords"},{"t":"Plenty of HDMI"},{"t":"Plenty of USBc to HDMI"},{"t":"A/C Unit"}]}]},"stay":{"name":"Staycation","tab":"Staycation","scope":"home","sub":"Home game setup.","groups":[{"g":"Equipment","items":[{"t":"3 XOS LAPTOPS"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 CATAPULT REMOTES"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"1/4\" SPEAKER CABLES"},{"t":"BIG AUX CORD"},{"t":"1 SMALL SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"WHITEBOARD ERASER"},{"t":"4 LONG EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"2 GAFFERS TAPE 3\" BLACK"},{"t":"APPLE LIGHTNING CHARGERS"},{"t":"USB - C CHARGERS"},{"t":"3 PROJECTOR SCREENS"},{"t":"CHARGER BUTTS"}]}]},"road":{"name":"Road Travel","tab":"Road Travel","scope":"away","sub":"Grouped the way the sheet groups it, by the LOCATION column.","groups":[{"g":"SL","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"},{"t":"ALLEN WRENCH"}]},{"g":"SB","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"},{"t":"EAR PIECES FOR WALKIES"}]},{"g":"EZ","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ2","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"MR","items":[{"t":"3 XOS LAPTOPS"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 COWBOY REMOTES"},{"t":"USB EXTENDER"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"USB-C to HDMI"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"LONG AUX & LONG 1/4\""},{"t":"1 SMALL SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"3 HDMI CABLES"},{"t":"2 AT&T WIFI HOTSPOTS"},{"t":"2 MICE"},{"t":"3 EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"2 GAFFERS TAPE"}]},{"g":"OR","items":[{"t":"Coaches IPAD"}]},{"g":"Game time","items":[{"t":"POTATO BOWL BAGs"},{"t":"FAST 5 BAG - format cards","n":"IN 1080"},{"t":"4 SSD'S"},{"t":"POWER STRIP - EXTENSION"},{"t":"LANYARDS"},{"t":"UMR 20 BOX"},{"t":"UMR 20"},{"t":"POWER"},{"t":"CARDS"},{"t":"SDI"},{"t":"THUNDER IPAD CHARGERS"},{"t":"COACHES IPAD CHECKLIST"},{"t":"PEN & POST IT NOTES"},{"t":"EAR PIECES FOR WALKIES"},{"t":"AIRLINE HEADPHONES"},{"t":"HMR SETUP FOR SL"},{"t":"COACH'S BOOTH BAG"},{"t":"ETHERNET"},{"t":"USB-C POWER"},{"t":"ADAPTERS"}]},{"g":"Not labeled on the sheet","items":[{"t":"BLUETOOTH REMOTE"},{"t":"PROJECTOR BOX"},{"t":"3 PROJECTORS"},{"t":"3 POWERS"},{"t":"3 HDMI"},{"t":"LONG HDMI'S"},{"t":"USB-C CONVERTER"},{"t":"HUDDLBOX"},{"t":"EXTENSION CORDS LONGER"},{"t":"USBC TO HDMI ADAPTERS"},{"t":"USBC TO HDMI CORDS"},{"t":"USBC POWER"},{"t":"Printer"},{"t":"INK, BATTERY, CABLE"},{"t":"ELMO"},{"t":"CABLES"},{"t":"4 RAINROOMS"},{"t":"MOTIVATIONAL"},{"t":"CHARGER BUTTS"}]}]},"bowl":{"name":"Bowl Travel","tab":"Bowl","scope":"season","sub":"Second camera set is the sheet's right-hand column. Notes at the bottom are last year's lessons, kept verbatim.","groups":[{"g":"SL","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"SL (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"MR","items":[{"t":"15 XOS LAPTOPS ?"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 COWBOY REMOTES"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"USB-C to HDMI"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"LONG AUX"},{"t":"1 SMALL OF SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"3 HDMI CABLES"},{"t":"4 AT&T WIFI HOTSPOTS"},{"t":"2 MICE"},{"t":"3 EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"GAFFERS TAPE"}]},{"g":"OR","items":[{"t":"Coaches IPAD"}]},{"g":"TV copy","items":[{"t":"HMR 10"},{"t":"HMR 10 CARDS - SWAP HALF"},{"t":"SDI CORD"},{"t":"HMR 10 POWER"}]},{"g":"Game time","items":[{"t":"THUNDER IPAD CHARGERS"},{"t":"COACHES IPAD CHECKLIST"},{"t":"PEN & POST IT NOTES"},{"t":"EAR PIECES FOR WALKIES"},{"t":"HMR SETUP FOR SL"},{"t":"LANYARDS"},{"t":"COACH'S BOOTH BAG"},{"t":"ETHERNET"},{"t":"USB-C POWER"},{"t":"ADAPTERS"},{"t":"POTATO BOWL BAG"},{"t":"FAST 5 BAG - format cards"},{"t":"4 SSD'S"},{"t":"POWER STRIP - EXTENSION"}]},{"g":"Charging stations","items":[{"t":"WALKIE"},{"t":"CAMERA"},{"t":"MONITOR"},{"t":"GH5"},{"t":"BATTERIES & CARDS"},{"t":"USB-B PRINTER CABLES"},{"t":"LOTS OF POWER"},{"t":"LOTS OF POWER STRIPS"},{"t":"LOTS OF TAPE"},{"t":"CARDS"},{"t":"SMALL CARDS AND ADAPTERS"}]},{"g":"Not labeled on the sheet","items":[{"t":"MOTIVATIONAL"},{"t":"LAMINATOR?!"},{"t":"OLD LAPTOP"},{"t":"additional box? For Cold Gear?"}]}],"notes":["AS SOON AS BOWL TEAM IS ANNOUNCED. IN AND SETTLED. START DOWNLOADING BITS OF FILM TO ALL COACHES COMPUTERS.","WE OVERLOADED A DOWNLOAD OVERNIGHT AND THE SERVER WAS BOGGED DOWN THE NEXT MORNING","A FEW COMPUTERS DID NOT TRAVEL MODE CORRECTLY. A TEST OF EACH INDIVIDUAL COACHES LAPTOP BEFORE TRAVEL MAY HAVE CLEANED THIS UP","TAKE A WORKING PS5 AND CONTROLLERS NO MATTER WHAT THEY SAY IS INCLUDED IN THE HOSPITALITY ROOM","GIVE CLEARER INSTRUCTIONS TO ADVANCE CREW, VIDEO GA DID NOT HAVE EVERY ROOM SET BY ARRIVAL…. ITS HARD TO DO BUT MAYBE SEND 2,","AND DEVELOP A PLAN IN ADVANCE OF HOW TO HELP EQ AND HOW TO GET OUR SHIT DONE AS WELL","IN EVERY MEETING ROOM, I WANT A FULL SIZE TABLE TO ALLOW COACHES A WORK SPACE, NOT JUST ENOUGH ROOM FOR A PROJECTOR AND LAPTOP","TEST AND MAKE SURE WE HAVE EXTRA PROJECTORS ON HAND, EVEN IF WE HAVE TO RENT 1 OR 2 EXTRAS. THE RENTED PROJECTORS ALWAYS HAVE ISSUES","AND WE NEED TO REPLACE WITH URGENCY."]}};
+  var PACK_ORDER=["semi","road","stay","bowl"];
 
   var WK_LOOK={};
-  WK_DAYS.forEach(function(d,i){ d.t.forEach(function(x){ WK_LOOK[d.k+"|"+wkSlug(x.t)]={d:i,t:x.t}; }); });
+  WK_DAYS.forEach(function(d,i){ d.t.forEach(function(x){ WK_LOOK[d.k+"|"+ckSlug(x.t)]={d:i,t:x.t}; }); });
 
-  var wkState={off:0,open:{},todayOnly:true};
-  /* set below by wkDefaultOpen() at boot */
+  var TAB="board";
+  var wkState={off:0,open:{}, todayOnly:true};
+  var pkState={};        /* list key -> week number being packed for */
   var weekroot=document.getElementById("weekroot");
+  var packroot=document.getElementById("packroot");
 
-  function wkSlug(t){ return String(t).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,44); }
-  function wkPad(n){ return (n<10?"0":"")+n; }
-  function wkISO(d){ return d.getFullYear()+"-"+wkPad(d.getMonth()+1)+"-"+wkPad(d.getDate()); }
+  function ckSlug(t){ return String(t).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,44); }
+  function ckPad(n){ return (n<10?"0":"")+n; }
+  function ckISO(d){ return d.getFullYear()+"-"+ckPad(d.getMonth()+1)+"-"+ckPad(d.getDate()); }
+  function isWeekId(id){ return String(id).slice(0,3)==="wk|"; }
+  function isPackId(id){ return String(id).slice(0,3)==="pk|"; }
+  function isListId(id){ return isWeekId(id)||isPackId(id); }
+
+  /* ---------------- week helpers ---------------- */
   function wkSunday(off){
     var d=new Date(); d.setHours(0,0,0,0);
     d.setDate(d.getDate()-d.getDay()+(off||0)*7);
     return d;
   }
   function wkDayDate(sun,i){ var d=new Date(sun.getTime()); d.setDate(d.getDate()+i); return d; }
-  function wkId(sun,sheet,t){ return "wk|"+wkISO(sun)+"|"+WK_DAYS[sheet].k+"|"+wkSlug(t); }
-  function isWeekId(id){ return String(id).slice(0,3)==="wk|"; }
+  function wkId(sun,sheet,t){ return "wk|"+ckISO(sun)+"|"+WK_DAYS[sheet].k+"|"+ckSlug(t); }
+  function ckNice(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
 
-  /* The Tulane game that falls inside this calendar week, if any. */
+  /* A week date can still be a flex window the conference has not set, like
+     "Nov 27/28". Take the later day: that is the Saturday. Once the schedule
+     pins it to one date this does nothing. */
+  function wkDate(w){
+    var p=parseDay(w.date); if(!p) return null;
+    var m=/[A-Z][a-z]{2}\s+\d{1,2}\s*[\/-]\s*(\d{1,2})/.exec(String(w.date||""));
+    if(m) return {y:p.y,mo:p.mo,d:parseInt(m[1],10),flex:true};
+    return p;
+  }
+
+  /* The Tulane game inside this calendar week, if any. */
   function wkGame(sun){
     var end=wkDayDate(sun,6), out=null;
     (DATA.weeks||[]).forEach(function(w){
-      var p=parseDay(w.date); if(!p) return;
+      var p=wkDate(w); if(!p) return;
       var d=new Date(p.y,p.mo,p.d);
       if(d>=sun&&d<=end) out={w:w,d:d,i:d.getDay(),bye:w.site==="BYE"};
     });
     return out;
   }
-
-  /* Which sheet day belongs on this calendar day.
-     The game-day list always sits on the actual game day, so a Friday
-     kickoff moves it up and leaves Saturday clear. Everything else
-     stays where the sheet puts it. Returns null for a clear day. */
-  function wkSheetFor(i,g){
-    if(!g||g.bye) return i===6?null:i;
-    if(i===g.i) return 6;
-    if(i>g.i) return null;
-    return i;
-  }
-  function wkTasks(i,g){
-    var s=wkSheetFor(i,g);
-    return s===null?{s:null,list:[]}:{s:s,list:WK_DAYS[s].t};
-  }
-  function wkStat(sun,i,g){
-    var tk=wkTasks(i,g), done=0;
-    tk.list.forEach(function(x){ if(STATE.checks[wkId(sun,tk.s,x.t)]) done++; });
-    return {done:done,total:tk.list.length};
-  }
-
-  function wkOpponent(g){
+  function gameLabel(g){
     if(!g||g.bye) return "";
     return (g.w.site==="A"?"at ":"vs ")+g.w.opp;
   }
-  function wkNiceDate(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
 
-  function wkCard(sun,i,g,today){
-    var D=WK_DAYS[i], dd=wkDayDate(sun,i), tk=wkTasks(i,g);
+  /* What lands on calendar day i.
+     A task with a .g rides the kickoff: it sits that many days before
+     the game, wherever the game falls. Everything else keeps its
+     weekday. Returns a list of {sheet, item}. */
+  function wkTasks(i,g){
+    var out=[];
+    WK_DAYS.forEach(function(D,sheet){
+      D.t.forEach(function(x){
+        if(x.g===undefined){
+          /* a plain weekday task drops off on game day and after, because by
+             then the week's routine is over and the game-day list has landed */
+          if(sheet===i&&!(g&&!g.bye&&i>=g.i)) out.push({sheet:sheet,item:x});
+          return;
+        }
+        if(!g||g.bye) return;                 /* no kickoff, no anchor */
+        var land=g.i-x.g;
+        if(land===i) out.push({sheet:sheet,item:x});
+      });
+    });
+    return out;
+  }
+  function wkStat(sun,i,g){
+    var list=wkTasks(i,g), done=0;
+    list.forEach(function(e){ if(STATE.checks[wkId(sun,e.sheet,e.item.t)]) done++; });
+    return {done:done,total:list.length};
+  }
+  /* Unfinished work from earlier in the same week. */
+  function wkOverdue(sun,g,upto){
+    var out=[];
+    for(var i=0;i<upto;i++){
+      wkTasks(i,g).forEach(function(e){
+        if(!STATE.checks[wkId(sun,e.sheet,e.item.t)]) out.push({day:i,sheet:e.sheet,item:e.item});
+      });
+    }
+    return out;
+  }
+
+  function noteText(n,dayIdx){
+    return String(n||"").replace("{next}",WK_DAYS[(dayIdx+1)%7].n);
+  }
+  function taskRow(id,item,dayIdx,from){
+    var on=!!STATE.checks[id];
+    var note=noteText(item.n,dayIdx);
+    return '<label class="trow'+(on?" tdone":"")+(from!==undefined?" tlate":"")+'">'
+      + '<input class="box" type="checkbox" data-id="'+esc(id)+'"'+(on?" checked":"")+'>'
+      + '<span class="tmain"><span class="tname">'+esc(item.t)+'</span>'
+      + (from!==undefined?'<span class="tfrom">from '+WK_DAYS[from].n+'</span>':"")
+      + (note?'<span class="tnote">'+esc(note)+'</span>':"")+'</span>'
+      + '<span class="tflags">'
+      + (item.link?'<button type="button" class="tlink" data-golist="'+esc(item.link)+'">Open list</button>':"")
+      + (item.s?'<span class="stu" title="Your sheet flags this as a weekly student task">Student</span>':"")
+      + '</span>'
+      + whoTag(id,"")
+      + '</label>';
+  }
+
+  function wkCard(sun,i,g,today,overdue){
+    var D=WK_DAYS[i], dd=wkDayDate(sun,i), list=wkTasks(i,g);
     var isToday=dd.getTime()===today.getTime();
     var isGame=!!(g&&!g.bye&&g.i===i);
-    var st=wkStat(sun,i,g);
+    var st={done:0,total:list.length};
+    list.forEach(function(e){ if(STATE.checks[wkId(sun,e.sheet,e.item.t)]) st.done++; });
     var left=st.total-st.done, complete=st.total>0&&left===0;
+    var late=(overdue&&isToday)?overdue:[];
     var open=!!wkState.open[i];
-    var cls="card dcard"+(isToday?" iscur":"")+(isGame?" isgame":"")+(complete?" ddone":"")+(open?"":" shut");
+    var cls="dcard"+(isToday?" iscur":"")+(isGame?" isgame":"")+(complete&&!late.length?" ddone":"")+(open?"":" shut");
 
     var tag="";
-    if(isGame) tag='<span class="dtag game">Game day'+(wkOpponent(g)?" &middot; "+esc(wkOpponent(g)):"")+'</span>';
+    if(isGame) tag='<span class="dtag game">Game day'+(gameLabel(g)?" &middot; "+esc(gameLabel(g)):"")+'</span>';
     else if(isToday) tag='<span class="dtag">Today</span>';
 
     var chip="";
@@ -1313,26 +1378,24 @@
     }
 
     var body="";
-    if(!tk.list.length){
-      body='<p class="dempty">'+(g&&g.bye?"Bye week, nothing on the sheet for this day.":"Clear. The game-day list sat on "+(g?WK_DAYS[g.i].n:"the game day")+" this week.")+'</p>';
+    if(late.length){
+      body+='<div class="pastdue"><div class="pdhead">Past due &middot; carried over from earlier this week</div>';
+      late.forEach(function(e){ body+=taskRow(wkId(sun,e.sheet,e.item.t),e.item,e.day,e.day); });
+      body+='</div>';
+    }
+    if(!list.length){
+      body+='<p class="dempty">'+(g&&g.bye?"Bye week, nothing on the sheet for this day."
+        :(g?"Clear. The week ended at kickoff on "+WK_DAYS[g.i].n+".":"Nothing on the sheet for this day."))+'</p>';
     } else {
-      tk.list.forEach(function(x){
-        var id=wkId(sun,tk.s,x.t), on=!!STATE.checks[id];
-        body+='<label class="trow'+(on?" tdone":"")+'">'
-          + '<input class="box" type="checkbox" data-id="'+esc(id)+'"'+(on?" checked":"")+'>'
-          + '<span class="tmain"><span class="tname">'+esc(x.t)+'</span>'
-          + (x.n?'<span class="tnote">'+esc(x.n)+'</span>':"")+'</span>'
-          + '<span class="tflags">'+(x.s?'<span class="stu" title="Your sheet flags this as a weekly student task">Student</span>':"")+'</span>'
-          + whoTag(id,"")
-          + '</label>';
-      });
+      list.forEach(function(e){ body+=taskRow(wkId(sun,e.sheet,e.item.t),e.item,i); });
     }
 
     return '<section class="'+cls+'" data-day="'+i+'">'
       + '<div class="dhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
       + '<span class="dabbr">'+D.a+'</span>'
-      + '<span class="dmeta"><b>'+D.n+'</b><span class="ddate">'+wkNiceDate(dd)+'</span></span>'
+      + '<span class="dmeta"><b>'+D.n+'</b><span class="ddate">'+ckNice(dd)+'</span></span>'
       + tag + chip
+      + (late.length?'<span class="pill p-late">'+late.length+' past due</span>':"")
       + '<span class="count"><b>'+st.done+'</b>/'+st.total+'</span>'
       + '<span class="pill '+(complete?"p-done":st.total?"p-part":"p-none")+'">'+(st.total?(complete?"Done":left+" left"):"Clear")+'</span>'
       + '<span class="caret" aria-hidden="true">&#9662;</span>'
@@ -1345,6 +1408,7 @@
     var sun=wkSunday(wkState.off), g=wkGame(sun);
     var today=new Date(); today.setHours(0,0,0,0);
     var thisWeek=wkState.off===0;
+    var overdue=thisWeek?wkOverdue(sun,g,new Date().getDay()):null;
 
     var done=0,total=0,clear=0;
     for(var i=0;i<7;i++){
@@ -1356,36 +1420,39 @@
     var ctx;
     if(!g) ctx='<span class="wkctx">No Tulane game this week</span>';
     else if(g.bye) ctx='<span class="wkctx">Bye week</span>';
-    else ctx='<span class="wkctx">Game week: <b>'+esc(wkOpponent(g))+'</b>, '+WK_DAYS[g.i].n+' '+wkNiceDate(g.d)+'</span>';
+    else ctx='<span class="wkctx">Game week: <b>'+esc(gameLabel(g))+'</b>, '+WK_DAYS[g.i].n+' '+ckNice(g.d)+'</span>';
 
     var banner="";
     if(g&&!g.bye&&g.i<6){
-      banner='<div class="wkshort"><b>Short week.</b> Kickoff is '+WK_DAYS[g.i].n
-        +', so the game-day list moved onto '+WK_DAYS[g.i].n+' and the days after it are clear. '
-        +'The countdown on each card is days to kickoff, not days to Saturday.</div>';
+      banner='<div class="wkshort"><b>Short week.</b> Kickoff is '+WK_DAYS[g.i].n+'. '
+        +'The game-day list, the box pack, the staff-meeting travel list, the semi load and the huddlebox charge '
+        +'all slid up to stay the same number of days from kickoff. The rest kept its weekday. '
+        +'The count on each card is days to kickoff.</div>';
     }
 
     var cards="";
-    for(var j=0;j<7;j++) cards+=wkCard(sun,j,g,today);
+    for(var j=0;j<7;j++) cards+=wkCard(sun,j,g,today,overdue);
 
     weekroot.innerHTML=
-      '<div class="wkbar">'
+      '<div class="printhead">Weekly checklist &middot; week of '+ckNice(sun)
+        +(g&&!g.bye?' &middot; '+esc(gameLabel(g))+', '+WK_DAYS[g.i].n:'')+'</div>'
+      + '<div class="wkbar">'
       + '<button class="btn wkarrow" id="wkPrev" aria-label="Previous week">&#9664;</button>'
       + '<button class="btn wkarrow" id="wkNext" aria-label="Next week">&#9654;</button>'
-      + '<span class="wknow">Week of '+wkNiceDate(sun)+'</span>'
+      + '<span class="wknow">Week of '+ckNice(sun)+'</span>'
       + ctx
       + (thisWeek?"":'<button class="btn wkgo" id="wkNow">This week</button>')
       + '<span class="wksp"></span>'
-      + '<span class="wkstat"><b>'+done+'</b> of '+total+' done<i>&middot;</i><b>'+clear+'</b> of 7 days clear</span>'
-      + '<button class="btn" id="wkToday" aria-pressed="'+(wkState.todayOnly?"true":"false")+'">Today only</button>'
-      + '<button class="btn" id="wkAll">Expand all</button>'
-      + '<button class="btn" id="wkPrint">Print</button>'
+      + '<span class="wkstat"><b>'+done+'</b>/'+total+' done<i>&middot;</i><b>'+clear+'</b>/7 days'
+      + (overdue&&overdue.length?'<i>&middot;</i><b class="lateN">'+overdue.length+'</b> past due':'')+'</span>'
+      + '<button class="btn" id="wkToday" aria-pressed="'+(wkState.todayOnly?"true":"false")+'">Today</button>'
+      + '<button class="btn" id="wkAll">Expand</button>'
       + '</div>'
       + banner
       + '<div class="wkdays">'+cards+'</div>'
-      + '<p class="foot wkfoot">Straight off your <b>DO NOT FORGET THIS SHIZ</b> sheet. <b>STUDENT</b> marks the items the sheet flags as a weekly student task. '
-      + 'Boxes are keyed to the week, so every week starts empty on its own and the weeks behind you stay on the record. '
-      + 'Checkmarks are shared: everyone with this link sees the same list.</p>';
+      + '<p class="foot ckfoot">Straight off your <b>DO NOT FORGET THIS SHIZ</b> sheet. <b>STUDENT</b> marks the items the sheet flags as a weekly student task. '
+      + 'Anything left unticked from earlier in the week rides along at the top of today, under Past due, and ticking it there ticks it on its own day too. '
+      + 'Boxes are keyed to the week, so every week starts empty on its own and the weeks behind you stay on the record.</p>';
   }
 
   function wkDefaultOpen(){
@@ -1394,46 +1461,178 @@
     if(!wkState.todayOnly){ for(var i=0;i<7;i++) wkState.open[i]=true; }
   }
 
-  /* One box ticked: update just its day card and the week line. */
   function wkPatch(box){
-    var card=box.closest(".dcard"); if(!card) return renderWeek();
+    var card=box.closest(".dcard"); if(!card) return;
     var i=Number(card.getAttribute("data-day"));
     var sun=wkSunday(wkState.off), g=wkGame(sun), st=wkStat(sun,i,g);
     var left=st.total-st.done, complete=st.total>0&&left===0;
     var row=box.closest(".trow"); if(row) row.classList.toggle("tdone",box.checked);
     var c=card.querySelector(".count"); if(c) c.innerHTML="<b>"+st.done+"</b>/"+st.total;
-    var p=card.querySelector(".pill");
+    var p=card.querySelector(".pill:not(.p-late)");
     if(p){ p.className="pill "+(complete?"p-done":st.total?"p-part":"p-none"); p.textContent=st.total?(complete?"Done":left+" left"):"Clear"; }
-    card.classList.toggle("ddone",complete);
+    card.classList.toggle("ddone",complete&&!card.querySelector(".pastdue .trow:not(.tdone)"));
     var done=0,total=0,clear=0;
     for(var k=0;k<7;k++){ var s=wkStat(sun,k,g); done+=s.done; total+=s.total; if(s.total&&s.done===s.total) clear++; }
+    var late=(wkState.off===0)?wkOverdue(sun,g,new Date().getDay()).length:0;
     var line=weekroot.querySelector(".wkstat");
-    if(line) line.innerHTML="<b>"+done+"</b> of "+total+" done<i>&middot;</i><b>"+clear+"</b> of 7 days clear";
+    if(line) line.innerHTML="<b>"+done+"</b>/"+total+" done<i>&middot;</i><b>"+clear+"</b>/7 days"
+      +(late?'<i>&middot;</i><b class="lateN">'+late+'</b> past due':"");
+    var lp=weekroot.querySelector(".dcard.iscur .pill.p-late");
+    if(lp){ if(late) lp.textContent=late+" past due"; else lp.remove(); }
+  }
+
+  /* ---------------- packing lists ---------------- */
+  function pkGames(scope){
+    if(scope==="season") return [];
+    var want=scope==="home"?"H":"A";
+    return (DATA.weeks||[]).filter(function(w){ return w.site===want; });
+  }
+  function pkDefault(scope){
+    var gs=pkGames(scope); if(!gs.length) return null;
+    var now=Date.now(), pick=null;
+    gs.forEach(function(w){ if(!pick){ var k=tulaneKick(w); if(k&&k.at.getTime()+GAME_LEN>now) pick=w; } });
+    return pick||gs[gs.length-1];
+  }
+  function pkWeek(key){
+    var p=PACKS[key];
+    if(p.scope==="season") return null;
+    if(pkState[key]===undefined){ var d=pkDefault(p.scope); pkState[key]=d?d.week:null; }
+    var out=null;
+    pkGames(p.scope).forEach(function(w){ if(w.week===pkState[key]) out=w; });
+    return out;
+  }
+  function pkId(key,w,gname,t){
+    return "pk|"+key+"|"+(w?"w"+w.week:"season")+"|"+ckSlug(gname)+"|"+ckSlug(t);
+  }
+  function pkStat(key,w){
+    var p=PACKS[key], done=0, total=0;
+    p.groups.forEach(function(gr){ gr.items.forEach(function(it){
+      total++; if(STATE.checks[pkId(key,w,gr.g,it.t)]) done++; }); });
+    return {done:done,total:total};
+  }
+
+  function renderPack(key){
+    if(!packroot) return;
+    var p=PACKS[key], w=pkWeek(key), st=pkStat(key,w);
+    var left=st.total-st.done;
+    var gs=pkGames(p.scope), idx=-1;
+    gs.forEach(function(x,i){ if(w&&x.week===w.week) idx=i; });
+
+    var who;
+    if(p.scope==="season") who='<span class="wkctx">Whole season, one list</span>';
+    else if(!w) who='<span class="wkctx">No '+(p.scope==="home"?"home":"road")+' games on the schedule</span>';
+    else who='<span class="wknow">'+esc((p.scope==="home"?"vs ":"at ")+w.opp)+'</span><span class="wkctx">'+esc(w.date)+'</span>';
+
+    var nav=p.scope==="season"?"":
+        '<button class="btn wkarrow" id="pkPrev"'+(idx<=0?" disabled":"")+' aria-label="Previous game">&#9664;</button>'
+      + '<button class="btn wkarrow" id="pkNext"'+(idx<0||idx>=gs.length-1?" disabled":"")+' aria-label="Next game">&#9654;</button>';
+
+    var body="";
+    /* a long list starts folded so you can see the whole shape of it */
+    var foldByDefault=st.total>30;
+    p.groups.forEach(function(gr){
+      var gd=0;
+      gr.items.forEach(function(it){ if(STATE.checks[pkId(key,w,gr.g,it.t)]) gd++; });
+      var gleft=gr.items.length-gd, gdone=gleft===0;
+      var shut=pkState[key+"|shut|"+gr.g];
+      var open=shut===undefined?!foldByDefault:!shut;
+      body+='<section class="dcard pkgroup'+(gdone?" ddone":"")+(open?"":" shut")+'" data-grp="'+esc(gr.g)+'">'
+        + '<div class="dhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
+        + '<span class="dmeta"><b>'+esc(gr.g)+'</b></span>'
+        + '<span class="count"><b>'+gd+'</b>/'+gr.items.length+'</span>'
+        + '<span class="pill '+(gdone?"p-done":"p-part")+'">'+(gdone?"Done":gleft+" left")+'</span>'
+        + '<span class="caret" aria-hidden="true">&#9662;</span></div><div class="dbody">';
+      gr.items.forEach(function(it){
+        var id=pkId(key,w,gr.g,it.t), on=!!STATE.checks[id];
+        body+='<label class="trow'+(on?" tdone":"")+'">'
+          + '<input class="box" type="checkbox" data-id="'+esc(id)+'"'+(on?" checked":"")+'>'
+          + '<span class="tmain"><span class="tname">'+esc(it.t)+'</span>'
+          + (it.n?'<span class="tnote">'+esc(it.n)+'</span>':"")+'</span>'
+          + '<span class="tflags"></span>'+whoTag(id,"")+'</label>';
+      });
+      body+='</div></section>';
+    });
+
+    var notes="";
+    if(p.notes&&p.notes.length){
+      notes='<section class="dcard pknotes"><div class="dhead nohit"><span class="dmeta"><b>Bowl notes</b></span></div><div class="dbody"><ul>';
+      p.notes.forEach(function(n){ notes+='<li>'+esc(n)+'</li>'; });
+      notes+='</ul></div></section>';
+    }
+
+    packroot.innerHTML=
+      '<div class="printhead">'+esc(p.name)+(w?' &middot; '+esc((p.scope==="home"?"vs ":"at ")+w.opp+", "+w.date):'')+'</div>'
+      + '<div class="wkbar">'+nav+who
+      + '<span class="wksp"></span>'
+      + '<span class="wkstat"><b>'+st.done+'</b>/'+st.total+' packed</span>'
+      + '<button class="btn" id="pkAll">Expand</button>'
+      + '<button class="btn" id="pkShut">Collapse</button></div>'
+      + (p.sub?'<p class="pksub">'+esc(p.sub)+'</p>':"")
+      + '<div class="wkdays">'+body+notes+'</div>'
+      + '<p class="foot ckfoot">'+esc(p.name)+' off your travel sheet. '
+      + (p.scope==="season"?'One list for the season.':'Boxes are keyed to the game above, so every trip starts empty on its own and past trips stay on the record.')
+      + ' Checkmarks are shared: everyone with this link sees the same list.</p>';
+  }
+
+  function pkPatch(box){
+    var card=box.closest(".pkgroup"); if(!card) return;
+    var row=box.closest(".trow"); if(row) row.classList.toggle("tdone",box.checked);
+    var all=card.querySelectorAll(".trow"), done=0;
+    all.forEach(function(r){ if(r.querySelector(".box").checked) done++; });
+    var left=all.length-done, complete=left===0;
+    var c=card.querySelector(".count"); if(c) c.innerHTML="<b>"+done+"</b>/"+all.length;
+    var p=card.querySelector(".pill");
+    if(p){ p.className="pill "+(complete?"p-done":"p-part"); p.textContent=complete?"Done":left+" left"; }
+    card.classList.toggle("ddone",complete);
+    var st=pkStat(TAB,pkWeek(TAB));
+    var line=packroot.querySelector(".wkstat");
+    if(line) line.innerHTML="<b>"+st.done+"</b>/"+st.total+" packed";
+  }
+
+  function listPatch(box){
+    if(box.closest("#packroot")) return pkPatch(box);
+    return wkPatch(box);
+  }
+
+  /* ---------------- shared wiring ---------------- */
+  function onListChange(e){
+    var b=e.target;
+    if(!b.classList||!b.classList.contains("box")) return;
+    var id=b.getAttribute("data-id"), on=b.checked;
+    change(id,on).then(function(ok){ if(ok) remember([{id:id,to:on}]); });
+  }
+  function onHeadClick(e){
+    var h=e.target.closest&&e.target.closest(".dhead");
+    if(!h||h.classList.contains("nohit")) return false;
+    var card=h.parentNode;
+    if(card.classList.contains("pkgroup")){
+      var g=card.getAttribute("data-grp"), k=TAB+"|shut|"+g;
+      pkState[k]=!card.classList.contains("shut");
+      card.classList.toggle("shut",!!pkState[k]);
+      h.setAttribute("aria-expanded",pkState[k]?"false":"true");
+    } else {
+      var i=Number(card.getAttribute("data-day"));
+      wkState.open[i]=!wkState.open[i];
+      card.classList.toggle("shut",!wkState.open[i]);
+      h.setAttribute("aria-expanded",wkState.open[i]?"true":"false");
+    }
+    return true;
   }
 
   if(weekroot){
-    weekroot.addEventListener("change",async function(e){
-      var b=e.target;
-      if(!b.classList||!b.classList.contains("box")) return;
-      var id=b.getAttribute("data-id"), on=b.checked;
-      if(await change(id,on)) remember([{id:id,to:on}]);
-    });
+    weekroot.addEventListener("change",onListChange);
     weekroot.addEventListener("click",function(e){
       if(e.target.classList&&e.target.classList.contains("box")) return;
       if(!e.target.closest) return;
+      var gl=e.target.closest("[data-golist]");
+      if(gl){ e.preventDefault(); e.stopPropagation(); showTab(gl.getAttribute("data-golist")); return; }
       if(e.target.closest("#wkPrev")){ wkState.off--; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkNext")){ wkState.off++; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkNow")){ wkState.off=0; wkState.todayOnly=true; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkToday")){ wkState.todayOnly=!wkState.todayOnly; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkAll")){ wkState.todayOnly=false; wkDefaultOpen(); renderWeek(); return; }
-      if(e.target.closest("#wkPrint")){ window.print(); return; }
-      var h=e.target.closest(".dhead");
-      if(h){
-        var card=h.parentNode, i=Number(card.getAttribute("data-day"));
-        wkState.open[i]=!wkState.open[i];
-        card.classList.toggle("shut",!wkState.open[i]);
-        h.setAttribute("aria-expanded",wkState.open[i]?"true":"false");
-      }
+      if(e.target.closest("#ckPrint")){ window.print(); return; }
+      onHeadClick(e);
     });
     weekroot.addEventListener("keydown",function(e){
       if(e.key!=="Enter"&&e.key!==" ") return;
@@ -1441,26 +1640,357 @@
       e.preventDefault(); h.click();
     });
   }
+  if(packroot){
+    packroot.addEventListener("change",onListChange);
+    packroot.addEventListener("click",function(e){
+      if(e.target.classList&&e.target.classList.contains("box")) return;
+      if(!e.target.closest) return;
+      var p=PACKS[TAB]; if(!p) return;
+      if(e.target.closest("#pkPrev")||e.target.closest("#pkNext")){
+        var gs=pkGames(p.scope), w=pkWeek(TAB), idx=-1;
+        gs.forEach(function(x,i){ if(w&&x.week===w.week) idx=i; });
+        idx+=e.target.closest("#pkNext")?1:-1;
+        if(idx>=0&&idx<gs.length){ pkState[TAB]=gs[idx].week; renderPack(TAB); }
+        return;
+      }
+      if(e.target.closest("#pkAll")){ p.groups.forEach(function(gr){ pkState[TAB+"|shut|"+gr.g]=false; }); renderPack(TAB); return; }
+      if(e.target.closest("#pkShut")){ p.groups.forEach(function(gr){ pkState[TAB+"|shut|"+gr.g]=true; }); renderPack(TAB); return; }
+      if(e.target.closest("#ckPrint")){ window.print(); return; }
+      onHeadClick(e);
+    });
+    packroot.addEventListener("keydown",function(e){
+      if(e.key!=="Enter"&&e.key!==" ") return;
+      var h=e.target.closest&&e.target.closest(".dhead"); if(!h||h.classList.contains("nohit")) return;
+      e.preventDefault(); h.click();
+    });
+  }
 
-  /* ---------- tabs ---------- */
+  /* ---------------- tabs ---------------- */
   function showTab(which){
-    var wk=which==="week";
-    document.body.classList.toggle("wk-mode",wk);
+    TAB=which;
+    var onBoard=which==="board", onWeek=which==="week", onPack=!!PACKS[which];
+    var b=document.body;
+    b.classList.toggle("wk-mode",!onBoard);
+    b.classList.toggle("on-week",onWeek);
+    b.classList.toggle("on-pack",onPack);
+    [].forEach.call(document.querySelectorAll(".tabg .btn"),function(t){
+      t.setAttribute("aria-pressed",t.getAttribute("data-tab")===which?"true":"false");
+    });
     var h=document.querySelector(".brand-txt h1");
     if(h){
       if(!h.getAttribute("data-board")) h.setAttribute("data-board",h.textContent);
-      h.textContent=wk?"Weekly Checklist":h.getAttribute("data-board");
+      h.textContent=onBoard?h.getAttribute("data-board")
+        :(onWeek?"Weekly Checklist":PACKS[which].name);
     }
-    var tb=document.getElementById("tabBoard"), tw=document.getElementById("tabWeek");
-    if(tb) tb.setAttribute("aria-pressed",wk?"false":"true");
-    if(tw) tw.setAttribute("aria-pressed",wk?"true":"false");
-    lsSet("fpb_tab",wk?"week":"board");
-    if(wk) renderWeek();
+    var pm=document.querySelector(".printmeta");
+    if(pm){
+      if(!pm.getAttribute("data-board")) pm.setAttribute("data-board",pm.innerHTML);
+      pm.innerHTML=onBoard?pm.getAttribute("data-board")
+        :'Printed <span id="printDate"></span><span class="pm-sep"></span>Done by ____________';
+      try{ stampPrint(); }catch(e){}
+    }
+    var tb=document.querySelector('.tabg .btn[data-tab="'+which+'"]');
+    document.title=(tb?tb.textContent.trim()+" \u00b7 ":"")+"Football Video Ops";
+    lsSet("fpb_tab",which);
+    if(onWeek) renderWeek();
+    if(onPack) renderPack(which);
     window.scrollTo({top:0,behavior:"auto"});
   }
-  var tbB=document.getElementById("tabBoard"), tbW=document.getElementById("tabWeek");
-  if(tbB) tbB.addEventListener("click",function(){ showTab("board"); });
-  if(tbW) tbW.addEventListener("click",function(){ showTab("week"); });
+  function renderCurrentList(){
+    if(TAB==="week") renderWeek();
+    else if(PACKS[TAB]) renderPack(TAB);
+  }
+  [].forEach.call(document.querySelectorAll(".tabg .btn"),function(t){
+    t.addEventListener("click",function(){ showTab(t.getAttribute("data-tab")); });
+  });
+
+  /* ================================================================
+     Notes. Right-click (or long-press) any checkbox on any tab to
+     leave a note on it. The note stores a label saying what it was
+     attached to, so the Copy all dump reads on its own.
+     ================================================================ */
+  var NOTES=[];
+  var noteDlg=document.getElementById("noteDlg");
+  var allDlg=document.getElementById("allNotes");
+  var noteRef="", noteLabel="";
+
+  function notesFor(ref){ return NOTES.filter(function(n){ return n.ref===ref; }); }
+  function openNoteCount(ref){ return notesFor(ref).filter(function(n){ return !n.done; }).length; }
+  function openNoteTotal(){ return NOTES.filter(function(n){ return !n.done; }).length; }
+
+  async function loadNotes(){
+    if(!sb) return;
+    var r=await sb.from("notes").select("id,ref,label,body,who,done,created_at")
+                  .order("created_at",{ascending:false}).limit(500);
+    NOTES=r.error?[]:(r.data||[]);
+    NOTES_OK=!r.error;
+  }
+  var NOTES_OK=false;
+
+  function applyNoteRow(msg){
+    var row=msg.new&&msg.new.id?msg.new:(msg.old||null); if(!row) return;
+    NOTES=NOTES.filter(function(n){ return n.id!==row.id; });
+    if(msg.eventType!=="DELETE"&&msg.new&&msg.new.id) NOTES.unshift(msg.new);
+    paintNoteMarks(); syncGearBadge();
+    if(allDlg&&allDlg.open) drawAllNotes();
+    if(noteDlg&&noteDlg.open) drawNoteList();
+  }
+
+  /* what the note is hanging on, in words, worked out once when it is written */
+  function labelForId(id){
+    try{
+      var t=describe(id,true).replace(/^(checked|packed)\s+/,"");
+      if(!isWeekId(id)&&!isPackId(id)) t="Film board \u00b7 "+t;
+      return t;
+    }catch(e){ return id; }
+  }
+
+  /* ---------- the little bubble on a row, and the ring on a board cell ---------- */
+  function paintNoteMarks(){
+    [].forEach.call(document.querySelectorAll("input.box"),function(b){
+      var id=b.getAttribute("data-id"), n=openNoteCount(id), tot=notesFor(id).length;
+      var row=b.closest(".trow");
+      if(row){
+        var dot=row.querySelector(".nbub");
+        if(!dot){
+          dot=document.createElement("button");
+          dot.type="button"; dot.className="nbub";
+          var fl=row.querySelector(".tflags"); (fl||row).insertBefore(dot,fl?fl.firstChild:null);
+        }
+        dot.setAttribute("data-note",id);
+        dot.classList.toggle("has",tot>0);
+        dot.classList.toggle("open",n>0);
+        dot.textContent=tot?String(tot):"";
+        dot.title=tot?(tot+" note"+(tot===1?"":"s")+" on this"):"Add a note";
+        dot.setAttribute("aria-label",dot.title);
+      }
+      var cell=b.closest(".cell");
+      if(cell) cell.classList.toggle("hasnote",tot>0);
+    });
+  }
+
+  /* ---------- the one-item note dialog ---------- */
+  function drawNoteList(){
+    var box=document.getElementById("nList");
+    var list=notesFor(noteRef);
+    if(!list.length){ box.innerHTML='<p class="n-empty">No notes on this yet.</p>'; return; }
+    box.innerHTML=list.map(function(n){
+      return '<div class="n-row'+(n.done?" ndone":"")+'">'
+        + '<input type="checkbox" class="box nchk" data-note-id="'+n.id+'"'+(n.done?" checked":"")+' aria-label="Mark handled">'
+        + '<span class="n-main"><span class="n-body">'+esc(n.body)+'</span>'
+        + '<span class="n-meta">'+esc(n.who||"Someone")+' &middot; '+esc(shortDate(n.created_at))+'</span></span>'
+        + '<button type="button" class="btn n-del" data-note-del="'+n.id+'" aria-label="Delete note">Delete</button>'
+        + '</div>';
+    }).join("");
+  }
+  function openNote(id){
+    if(!noteDlg) return;
+    noteRef=id; noteLabel=labelForId(id);
+    document.getElementById("nOn").textContent=noteLabel;
+    document.getElementById("nErr").textContent=NOTES_OK?"":"Notes need the one-time database setup (notes-setup.sql).";
+    document.getElementById("nBody").value="";
+    drawNoteList();
+    if(noteDlg.showModal) noteDlg.showModal(); else noteDlg.setAttribute("open","");
+    setTimeout(function(){ document.getElementById("nBody").focus(); },30);
+  }
+  function closeNote(){ noteDlg.close?noteDlg.close():noteDlg.removeAttribute("open"); }
+
+  async function noteRpc(fn,args){
+    if(!sb) return "Not connected.";
+    if(!lsGet("fpb_code")){ var ok=await askLogin(); if(!ok) return "Sign in to leave notes."; }
+    args.p_code=lsGet("fpb_code");
+    var r=await sb.rpc(fn,args);
+    if(r.error){
+      var m=String(r.error.message||"");
+      if(/does not exist|schema|function/i.test(m)) return "Run notes-setup.sql in Supabase first.";
+      if(/passcode/i.test(m)){ lsDel("fpb_code"); return "Passcode changed. Try again."; }
+      return "That did not save. Try again.";
+    }
+    return "";
+  }
+
+  if(noteDlg){
+    document.getElementById("nForm").addEventListener("submit",async function(e){
+      e.preventDefault();
+      var body=document.getElementById("nBody").value.trim();
+      var err=document.getElementById("nErr");
+      if(!body){ err.textContent="Type the note first."; return; }
+      err.textContent="Saving…";
+      var bad=await noteRpc("add_note",{p_ref:noteRef,p_label:noteLabel,p_body:body,p_who:lsGet("fpb_who")||""});
+      if(bad){ err.textContent=bad; return; }
+      err.textContent=""; document.getElementById("nBody").value="";
+      await loadNotes(); drawNoteList(); paintNoteMarks(); syncGearBadge();
+      flash("Note saved.");
+    });
+    document.getElementById("nCancel").addEventListener("click",closeNote);
+    document.getElementById("nList").addEventListener("click",async function(e){
+      var d=e.target.closest&&e.target.closest("[data-note-del]");
+      if(d){
+        var bad=await noteRpc("del_note",{p_id:Number(d.getAttribute("data-note-del"))});
+        if(bad){ document.getElementById("nErr").textContent=bad; return; }
+        await loadNotes(); drawNoteList(); paintNoteMarks(); syncGearBadge();
+      }
+    });
+    document.getElementById("nList").addEventListener("change",async function(e){
+      var c=e.target.closest&&e.target.closest("[data-note-id]"); if(!c) return;
+      var bad=await noteRpc("set_note_done",{p_id:Number(c.getAttribute("data-note-id")),p_on:c.checked});
+      if(bad){ document.getElementById("nErr").textContent=bad; c.checked=!c.checked; return; }
+      await loadNotes(); drawNoteList(); paintNoteMarks(); syncGearBadge();
+    });
+  }
+
+  /* ---------- every note, with copy and save ---------- */
+  function noteLines(){
+    var out=["Tulane Football Video  -  Notes",
+             "Copied "+new Date().toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}),
+             ""];
+    if(!NOTES.length) out.push("(none)");
+    NOTES.forEach(function(n){
+      out.push((n.done?"[x] ":"[ ] ")+(n.label||"(not attached)"));
+      out.push("    "+n.body.replace(/\n/g,"\n    "));
+      out.push("    "+(n.who||"Someone")+", "+shortDate(n.created_at));
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  function drawAllNotes(){
+    var box=document.getElementById("nAll");
+    if(!NOTES_OK){ box.innerHTML='<p class="h-empty">Notes need the one-time database setup. Run notes-setup.sql in Supabase.</p>'; return; }
+    if(!NOTES.length){ box.innerHTML='<p class="h-empty">No notes yet. Right-click any checkbox to leave one.</p>'; return; }
+    box.innerHTML=NOTES.map(function(n){
+      return '<div class="h-row n-all'+(n.done?" ndone":"")+'">'
+        + '<input type="checkbox" class="box nchk" data-note-id="'+n.id+'"'+(n.done?" checked":"")+' aria-label="Mark handled">'
+        + '<span class="h-what"><b>'+esc(n.label||"(not attached)")+'</b>'
+        + '<span class="n-body">'+esc(n.body)+'</span>'
+        + '<span class="h-when">'+esc((n.who||"Someone")+" · "+shortDate(n.created_at))+'</span></span>'
+        + '<button type="button" class="btn n-del" data-note-del="'+n.id+'">Delete</button></div>';
+    }).join("");
+  }
+  async function openAllNotes(){
+    if(!allDlg) return;
+    if(allDlg.showModal) allDlg.showModal(); else allDlg.setAttribute("open","");
+    document.getElementById("nAll").innerHTML='<p class="h-empty">Loading…</p>';
+    await loadNotes(); drawAllNotes(); paintNoteMarks(); syncGearBadge();
+  }
+  if(allDlg){
+    document.getElementById("nClose").addEventListener("click",function(){ allDlg.close?allDlg.close():allDlg.removeAttribute("open"); });
+    document.getElementById("nCopy").addEventListener("click",function(){
+      var txt=noteLines(), btn=document.getElementById("nCopy");
+      function ok(){ btn.textContent="Copied"; setTimeout(function(){ btn.textContent="Copy all"; },1600); }
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(ok,function(){ fallbackCopy(txt,ok); });
+      } else fallbackCopy(txt,ok);
+    });
+    function fallbackCopy(txt,ok){
+      var ta=document.getElementById("nFallback");
+      ta.value=txt; ta.hidden=false; ta.focus(); ta.select();
+      try{ document.execCommand("copy"); ok(); }catch(e){}
+    }
+    document.getElementById("nSave").addEventListener("click",function(){
+      var blob=new Blob([noteLines()],{type:"text/plain"});
+      var a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="film-board-notes-"+ckISO(new Date())+".txt";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+    });
+    document.getElementById("nAll").addEventListener("click",async function(e){
+      var d=e.target.closest&&e.target.closest("[data-note-del]"); if(!d) return;
+      var bad=await noteRpc("del_note",{p_id:Number(d.getAttribute("data-note-del"))});
+      if(bad){ flash(bad); return; }
+      await loadNotes(); drawAllNotes(); paintNoteMarks(); syncGearBadge();
+    });
+    document.getElementById("nAll").addEventListener("change",async function(e){
+      var c=e.target.closest&&e.target.closest("[data-note-id]"); if(!c) return;
+      var bad=await noteRpc("set_note_done",{p_id:Number(c.getAttribute("data-note-id")),p_on:c.checked});
+      if(bad){ flash(bad); c.checked=!c.checked; return; }
+      await loadNotes(); drawAllNotes(); paintNoteMarks(); syncGearBadge();
+    });
+  }
+
+  /* ---------- right-click anywhere, long-press on a touchscreen ---------- */
+  function boxUnder(el){
+    if(!el||!el.closest) return null;
+    var b=el.closest("input.box"); if(b) return b;
+    var host=el.closest(".trow, .cell"); if(!host) return null;
+    return host.querySelector("input.box");
+  }
+  document.addEventListener("contextmenu",function(e){
+    if(e.target.closest&&e.target.closest(".nbub")) return;
+    var b=boxUnder(e.target); if(!b) return;
+    var id=b.getAttribute("data-id"); if(!id) return;
+    e.preventDefault();
+    openNote(id);
+  });
+  document.addEventListener("click",function(e){
+    var d=e.target.closest&&e.target.closest(".nbub"); if(!d) return;
+    e.preventDefault(); e.stopPropagation();
+    openNote(d.getAttribute("data-note"));
+  },true);
+  var pressTimer=null, pressBox=null;
+  function cancelPress(){ if(pressTimer) clearTimeout(pressTimer); pressTimer=null; pressBox=null; }
+  document.addEventListener("touchstart",function(e){
+    var b=boxUnder(e.target); if(!b) return;
+    pressBox=b;
+    pressTimer=setTimeout(function(){
+      pressTimer=null;
+      var id=pressBox&&pressBox.getAttribute("data-id");
+      if(id){ if(navigator.vibrate) try{ navigator.vibrate(12); }catch(x){} openNote(id); }
+    },520);
+  },{passive:true});
+  ["touchend","touchmove","touchcancel","scroll"].forEach(function(ev){
+    document.addEventListener(ev,cancelPress,{passive:true});
+  });
+
+  /* ---------- the gear ---------- */
+  var gMenu=document.getElementById("gMenu"), gBtn=document.getElementById("fGear");
+  function syncGearBadge(){
+    var n=openNoteTotal();
+    if(gBtn) gBtn.classList.toggle("hasnote",n>0);
+    var lab=document.getElementById("gNoteN");
+    if(lab) lab.textContent=n?String(n):"";
+  }
+  function closeGear(){ if(gMenu){ gMenu.hidden=true; gBtn.setAttribute("aria-expanded","false"); } }
+  if(gBtn){
+    gBtn.addEventListener("click",function(e){
+      e.stopPropagation();
+      var open=gMenu.hidden;
+      gMenu.hidden=!open; gBtn.setAttribute("aria-expanded",open?"true":"false");
+      if(open){
+        var u=document.getElementById("fUndo"), r=document.getElementById("fRedo");
+        gMenu.querySelector('[data-g="undo"]').disabled=!u||u.disabled;
+        gMenu.querySelector('[data-g="redo"]').disabled=!r||r.disabled;
+        var who=lsGet("fpb_who");
+        gMenu.querySelector('[data-g="who"]').textContent=who?("Signed in as "+who):"Sign in";
+        gMenu.querySelector('[data-g="theme"]').textContent=
+          (document.documentElement.getAttribute("data-theme")==="dark")?"Light mode":"Dark mode";
+        syncGearBadge();
+      }
+    });
+    document.addEventListener("click",function(e){
+      if(gMenu.hidden) return;
+      if(e.target.closest&&(e.target.closest("#gMenu")||e.target.closest("#fGear"))) return;
+      closeGear();
+    });
+    gMenu.addEventListener("click",function(e){
+      var b=e.target.closest&&e.target.closest("[data-g]"); if(!b||b.disabled) return;
+      var g=b.getAttribute("data-g");
+      closeGear();
+      if(g==="notes") return openAllNotes();
+      if(g==="print") return window.print();
+      if(g==="who") return askLogin();
+      if(g==="theme"){
+        var dark=document.documentElement.getAttribute("data-theme")==="dark";
+        document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+        lsSet("fpb_theme",dark?"light":"dark");
+        return;
+      }
+      var hit={hist:"fHist",export:"fExport",undo:"fUndo",redo:"fRedo"}[g];
+      var el=hit&&document.getElementById(hit);
+      if(el) el.click();
+    });
+  }
+  (function(){ var t=lsGet("fpb_theme"); if(t) document.documentElement.setAttribute("data-theme",t); })();
 
   /* ---------- start ---------- */
   setSync("busy","Loading…");
@@ -1479,7 +2009,9 @@
   function stampPrint(){ var pd=document.getElementById("printDate"); if(pd) pd.textContent=new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}); }
   stampPrint(); window.addEventListener("beforeprint",stampPrint);
   var qt=document.getElementById("quickTop"); if(qt) qt.addEventListener("click",function(){ window.scrollTo({top:0,behavior:RM?"auto":"smooth"}); });
-  if(lsGet("fpb_tab")==="week"){ showTab("week"); } else { wkDefaultOpen(); }
+  wkDefaultOpen();
+  var savedTab=lsGet("fpb_tab")||"board";
+  showTab((savedTab!=="board"&&(savedTab==="week"||PACKS[savedTab]))?savedTab:"board");
   render();
   syncUndoButtons();
   setInterval(tick,30000);
@@ -1492,12 +2024,14 @@
     return;
   }
   sb=window.supabase.createClient(CFG.url,CFG.anonKey);
-  try{ await loadChecks(); await loadCandidates(); render(); renderWeek(); }
+  try{ await loadChecks(); await loadCandidates(); render(); renderCurrentList(); }
   catch(e){
     setSync("off","Not connected");
     showNotice("Could not load checkmarks. Refresh the page.");
     return;
   }
+  try{ await loadNotes(); }catch(e){}
+  paintNoteMarks(); syncGearBadge();
   flushQueue();
 
   sb.channel("checks-live")
@@ -1507,13 +2041,14 @@
       if(qGet().some(function(x){ return x.id===row.id; })) return;   /* our unsent change wins */
       applyRow(row);
       var bs=boxesFor(row.id);
-      if(onlyLeft&&!isWeekId(row.id)){ render(); return; }
+      if(onlyLeft&&!isListId(row.id)){ render(); return; }
       if(bs.length) bs.forEach(function(bx){ bx.checked=!!row.checked; refreshTag(bx); patch(bx); });
       else { updateTotals(); renderWorkload(); }
     })
     .on("postgres_changes",{event:"*",schema:"public",table:"candidates"},async function(){
       await loadCandidates(); render();
     })
+    .on("postgres_changes",{event:"*",schema:"public",table:"notes"},function(msg){ applyNoteRow(msg); })
     .subscribe(function(status){
       if(status==="SUBSCRIBED"){ if(!qGet().length) setSync("ok","Live"); else showQueue(); }
       else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED") setSync("busy","Reconnecting…");
@@ -1523,6 +2058,6 @@
   document.addEventListener("visibilitychange",async function(){
     if(document.visibilityState!=="visible") return;
     flushQueue();
-    try{ await loadChecks(); await loadCandidates(); render(); renderWeek(); }catch(e){}
+    try{ await loadChecks(); await loadCandidates(); await loadNotes(); render(); renderCurrentList(); paintNoteMarks(); syncGearBadge(); }catch(e){}
   });
 })();
