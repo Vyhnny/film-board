@@ -1194,17 +1194,26 @@ dialog#noteDlg .n-list{overflow-x:hidden}
 .n-list{max-height:40vh;overflow:auto;margin-bottom:12px}
 .n-list:empty{display:none}
 .n-empty,.h-empty{color:var(--ink3);font-size:13px;margin:0 0 10px}
-.n-row,.n-all{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:9px 2px;border-bottom:1px solid var(--line)}
+.n-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:9px 2px;border-bottom:1px solid var(--line)}
+.n-all{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:9px 2px;border-bottom:1px solid var(--line)}
+.n-meta b{color:var(--done);font-weight:700}
 .n-row:last-child{border-bottom:0}
 .n-main{display:block;min-width:0}
 .n-body{display:block;font-size:13.5px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .n-meta{display:block;font-size:11.5px;color:var(--ink3);margin-top:3px}
 .n-row.ndone .n-body,.n-all.ndone .n-body,.n-all.ndone b{color:var(--ink3);text-decoration:line-through;text-decoration-color:var(--line2)}
-.nchk{appearance:none;-webkit-appearance:none;width:20px;height:20px;border-radius:5px;border:1.5px solid var(--line2);
-  background:var(--surface);cursor:pointer;display:grid;place-items:center;margin:1px 0 0;padding:0;position:static}
+/* stands on its own: the board's .box rule later in this sheet is 34x28 and
+   was pushing the tick outside the square */
+.nchk{appearance:none !important;-webkit-appearance:none !important;
+  width:20px !important;height:20px !important;min-width:20px;border-radius:5px;border:1.5px solid var(--line2);
+  background:var(--surface);cursor:pointer;display:grid !important;place-items:center !important;
+  margin:1px 0 0 !important;padding:0 !important;position:static !important;transition:none;animation:none !important}
 .nchk:checked{background:var(--done);border-color:var(--done)}
-.nchk:checked::after{content:"";display:block;width:10px;height:5px;border-left:2.2px solid #fff;border-bottom:2.2px solid #fff;
-  transform:rotate(-45deg) translate(1px,-1px);background:none;position:static}
+.nchk:checked{background:var(--done) !important;border-color:var(--done) !important}
+.nchk:checked::after{content:"" !important;display:block !important;width:10px !important;height:5px !important;
+  border-left:2.2px solid #fff !important;border-bottom:2.2px solid #fff !important;
+  border-top:0 !important;border-right:0 !important;
+  transform:rotate(-45deg) translate(1px,-1px) !important;background:none !important;position:static !important;margin:0 !important}
 .n-del{font-size:11px !important;padding:4px 9px !important;color:var(--ink3) !important;border:1px solid var(--line2) !important;
   background:none !important;border-radius:2px;cursor:pointer}
 .n-del:hover{color:#b4472f !important;border-color:#b4472f !important}
@@ -1279,9 +1288,18 @@ dialog#noteDlg .n-list{overflow-x:hidden}
 #nFind{flex:1 1 200px;font:14px "Archivo",sans-serif;padding:7px 10px;border:1px solid var(--line2);
   border-radius:3px;background:var(--surface);color:var(--ink)}
 #nFind:focus{outline:2px solid var(--accent2);outline-offset:1px}
-.n-showdone{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2);
-  text-transform:none;letter-spacing:0;font-family:"Archivo",sans-serif;font-weight:400}
-.n-showdone input{width:16px;height:16px;margin:0}
+/* dialog.login label stacks and uppercases; this one is a plain inline toggle */
+dialog#allNotes label.n-showdone{display:flex;flex-direction:row;align-items:center;gap:7px;
+  font-size:12.5px;color:var(--ink2);text-transform:none;letter-spacing:0;
+  font-family:"Archivo",sans-serif;font-weight:400;white-space:nowrap;cursor:pointer}
+dialog#allNotes label.n-showdone input{appearance:none;-webkit-appearance:none;
+  width:17px;height:17px;min-width:17px;margin:0;padding:0;border-radius:4px;
+  border:1.5px solid var(--line2);background:var(--surface);cursor:pointer;
+  display:grid;place-items:center}
+dialog#allNotes label.n-showdone input:checked{background:var(--accent);border-color:var(--accent)}
+dialog#allNotes label.n-showdone input:checked::after{content:"";display:block;width:9px;height:4.5px;
+  border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
 .n-count{font-size:12px;color:var(--ink3);white-space:nowrap}
 
 /* notes printed under their line */
@@ -1307,6 +1325,16 @@ dialog#noteDlg .n-list{overflow-x:hidden}
 .pkhead span{display:block;font-size:12.5px;color:var(--ink3);margin-top:2px}
 .dcard.pkprep .dhead{border-left-color:var(--accent2)}
 .dcard.pkprep.ddone .dhead{border-left-color:var(--done)}
+
+/* how many of a thing, and a recurring deadline */
+.tqty{font-family:var(--narrow),sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:var(--ink2);background:var(--chip);border:1px solid var(--line);padding:2px 7px;border-radius:99px;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.trow.tdone .tqty{opacity:.5}
+.tdue{display:block;font-family:var(--narrow),sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.04em;
+  color:var(--accent2);margin-top:3px}
+.tdue.soon{color:#b4472f}
+@media print{.tqty{background:none;border:1px solid #000;color:#000}.tdue{color:#000}}
 
 </style>
 </head>
@@ -1347,8 +1375,8 @@ dialog#noteDlg .n-list{overflow-x:hidden}
     <div class="tgroup tabg" role="group" aria-label="Section">
       <button class="btn" data-tab="board" aria-pressed="true">Film Board</button>
       <button class="btn" data-tab="week" aria-pressed="false">Week</button>
-      <button class="btn" data-tab="semi" aria-pressed="false">On The Semi</button>
-      <button class="btn" data-tab="road" aria-pressed="false">Road Travel</button>
+      <button class="btn" data-tab="semi" aria-pressed="false">Semi Load</button>
+      <button class="btn" data-tab="road" aria-pressed="false">Away Game</button>
       <button class="btn" data-tab="stay" aria-pressed="false">Staycation</button>
       <button class="btn" data-tab="bowl" aria-pressed="false">Bowl</button>
     </div>
@@ -1458,7 +1486,7 @@ dialog#noteDlg .n-list{overflow-x:hidden}
     <div class="h-top"><h2>Notes</h2>
       <span class="n-acts">
         <button type="button" class="btn" id="nCopy">Copy all</button>
-        <button type="button" class="btn" id="nSave">Save</button>
+        <button type="button" class="btn" id="nSave">Download</button>
         <button type="button" class="btn" id="nClose">Close</button>
       </span>
     </div>
@@ -1467,15 +1495,15 @@ dialog#noteDlg .n-list{overflow-x:hidden}
       <label class="n-showdone"><input type="checkbox" id="nDone"> Show handled</label>
       <span class="n-count" id="nCount"></span>
     </div>
-    <p>Every note anyone has left, newest first. Each one says what it was attached to. Copy all puts the whole list on your clipboard, Save drops it in a text file.</p>
+    <p>Every note anyone has left, newest first. Each one says what it was attached to. Checking one off here marks it handled, which saves straight away. Copy puts the list on your clipboard, Download writes it to a text file.</p>
     <textarea id="nFallback" hidden readonly aria-label="Notes text"></textarea>
     <div class="h-list" id="nAll"></div>
   </div>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=3.4"></script>
-<script src="app.js?v=3.4"></script>
+<script src="config.js?v=3.8"></script>
+<script src="app.js?v=3.8"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
