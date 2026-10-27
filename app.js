@@ -1246,7 +1246,7 @@
      empty on its own. Packing lists are keyed to a game, so each
      trip starts empty on its own. Nothing is ever cleared by hand.
      ================================================================ */
-  var WK_DAYS=[{"n":"Sunday","a":"SUN","k":"sun","t":[{"t":"Shares for Upcoming Opponents","s":1},{"t":"Shares for Special Requests","s":1},{"t":"Cut our next TV Opponents last game with urgency","s":1},{"t":"Cut our TV copy to share to exchange","n":"Do this First, ODK it as well, Export Edit Files on export, Only for Home Games"},{"t":"All future opponents uploaded to Gamebrain"},{"t":"Sunday night start first O,D,K video surges to travel laptops"},{"t":"Review everything that went wrong during the last game"},{"t":"Turn in Ref Review Clips on DVSport 360"},{"t":"PFF our team's copy","n":"run update on all other teams mid to late morning"},{"t":"Upload our film to NFL","n":"Home Games only"},{"t":"Set Manage Travel Folders"},{"t":"Remove last team from Vault Notifications"},{"t":"Move Huddleboxes back to storage location"}]},{"n":"Monday","a":"MON","k":"mon","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Download and Import Sunday NFL Games"},{"t":"Start PFF'ing the NFL Games","s":1},{"t":"Pub Reset during Practice?"},{"t":"Copy College games to share","s":1}]},{"n":"Tuesday","a":"TUE","k":"tue","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Copy College games to share","s":1},{"t":"PFF Monday night Football game"},{"t":"Huddleboxes charging","n":"are they needed at {next} practice?","g":4}]},{"n":"Wednesday","a":"WED","k":"wed","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Initial Pack of boxes","n":"For typical Semi leaving","sem":-1,"link":"auto"},{"t":"Any Penalty Videos for refs"},{"t":"Travel List in Staff Meeting","g":3}]},{"n":"Thursday","a":"THU","k":"thu","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"Check the students' hours","due":"2026-10-30"},{"t":"During Practice complete the Semi Load list","sem":0,"link":"semi"}]},{"n":"Friday","a":"FRI","k":"fri","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"PFF Thursday night Football game"}]},{"n":"Saturday","a":"SAT","k":"sat","t":[{"t":"GameDay","g":0},{"t":"Cards formatted","g":0},{"t":"Sync each quarter","g":0},{"t":"PFF Our Game","g":0},{"t":"Send PFF data to Atavus Tackling dudes","g":0},{"t":"PUSH OUR GAME TO THE CLOUD","g":0}]}];
+  var WK_DAYS=[{"n":"Sunday","a":"SUN","k":"sun","t":[{"t":"Shares for Upcoming Opponents","s":1},{"t":"Shares for Special Requests","s":1},{"t":"Cut our next TV Opponents last game with urgency","s":1},{"t":"Cut our TV copy to share to exchange","n":"Do this First, ODK it as well, Export Edit Files on export, Only for Home Games"},{"t":"All future opponents uploaded to Gamebrain"},{"t":"Sunday night start first O,D,K video surges to travel laptops"},{"t":"Review everything that went wrong during the last game"},{"t":"Turn in Ref Review Clips on DVSport 360"},{"t":"PFF our team's copy","n":"run update on all other teams mid to late morning"},{"t":"Upload our film to NFL","n":"Home Games only"},{"t":"Set Manage Travel Folders"},{"t":"Remove last team from Vault Notifications"},{"t":"Move Huddleboxes back to storage location"}]},{"n":"Monday","a":"MON","k":"mon","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Download and Import Sunday NFL Games"},{"t":"Start PFF'ing the NFL Games","s":1},{"t":"Pub Reset during Practice?"},{"t":"Download Skycasts","n":"Carries forward until they are all down"},{"t":"Copy College games to share","s":1}]},{"n":"Tuesday","a":"TUE","k":"tue","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Copy College games to share","s":1},{"t":"PFF Monday night Football game"},{"t":"Huddleboxes charging","n":"are they needed at {next} practice?","g":4}]},{"n":"Wednesday","a":"WED","k":"wed","t":[{"t":"Practice"},{"t":"Push Practice to cloud"},{"t":"O,D,K video surges to travel laptops"},{"t":"Initial Pack of boxes","n":"For typical Semi leaving","sem":-1,"link":"auto"},{"t":"Any Penalty Videos for refs"},{"t":"Travel List in Staff Meeting","g":3}]},{"n":"Thursday","a":"THU","k":"thu","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"Check the students' hours","due":"2026-10-30"},{"t":"During Practice complete the Semi Load list","sem":0,"link":"semi"}]},{"n":"Friday","a":"FRI","k":"fri","t":[{"t":"Practice"},{"t":"O,D,K video surges to travel laptops"},{"t":"PFF Thursday night Football game"}]},{"n":"Saturday","a":"SAT","k":"sat","t":[{"t":"GameDay","g":0},{"t":"Cards formatted","g":0},{"t":"Sync each quarter","g":0},{"t":"PFF Our Game","g":0},{"t":"Send PFF data to Atavus Tackling dudes","g":0},{"t":"PUSH OUR GAME TO THE CLOUD","g":0}]}];
   var PACKS={"road":{"name":"Away Game","tab":"Away Game","scope":"away","sub":"Off the Away Game Pack List. Indented items live inside the one above them.","groups":[{"g":"Travel case · Blue case","items":[{"t":"XOS laptops","q":"3"},{"t":"HDMI cables","d":1,"q":"3"},{"t":"Mice","d":1,"q":"3"},{"t":"Mouse pads","d":1,"q":"3"},{"t":"Laptop power","d":1,"q":"2"},{"t":"USB-C laptop power","d":1},{"t":"Cowboy remotes","d":1,"q":"3"},{"t":"USB extender","d":1},{"t":"PowerPoint clicker","d":1},{"t":"Brandon laptop bag"},{"t":"Mousepad","d":1},{"t":"Mouse","d":1},{"t":"SSDs","d":1,"q":"4"},{"t":"AT&T WiFi hotspots","d":1,"q":"2"},{"t":"Empty SD card cases","d":1,"q":"2"},{"t":"Walkie","d":1},{"t":"USB-C laptop power","d":1},{"t":"SL Potato Bowl bag"},{"t":"Fast 5 bag: format cards","d":1,"n":"In 1080"},{"t":"Power strip / extension","d":1},{"t":"Lanyards","d":1},{"t":"UMR 20","d":1,"n":"moved here from the EZ bag, the HMR-10 is broken"},{"t":"UMR power","d":1},{"t":"UMR cards","d":1},{"t":"UMR SDI","d":1},{"t":"Power wheel","d":1},{"t":"EZ Potato Bowl bag"},{"t":"Power wheel","d":1}]},{"g":"Travel case · Green case","items":[{"t":"Speaker cables"},{"t":"Small aux cord"},{"t":"Long aux & long 1/4\" cable"},{"t":"Small set of speakers"},{"t":"Expo markers"},{"t":"Extension cords","q":"3"},{"t":"Power strips","q":"3"},{"t":"Gaffer's tape","q":"2"},{"t":"Pen & Post-it notes"},{"t":"Airline headphones"},{"t":"Cowboy remote"}]},{"g":"Travel case · Projector box","items":[{"t":"Projectors","q":"3"},{"t":"Projector power cords","q":"3"},{"t":"Projector HDMI cables","q":"3"},{"t":"USB-C to HDMI"}]},{"g":"No case / oversize","items":[{"t":"Big speaker"},{"t":"Speaker power","d":1},{"t":"Projector screens","q":"2"},{"t":"Rainrooms","q":"4"},{"t":"Motivational"}]},{"g":"Camera bag · SL sideline","items":[{"t":"Camera"},{"t":"Walkie"},{"t":"Earpiece"},{"t":"Cards","q":"7"},{"t":"Camera batteries","q":"4"},{"t":"Monitor batteries","q":"4"},{"t":"Tripod"},{"t":"Monitor"},{"t":"Rain gear"},{"t":"Black Magic box"},{"t":"HDMI cable"},{"t":"USB-C brick & cable"}]},{"g":"Camera bag · SB scoreboard","items":[{"t":"Camera"},{"t":"Walkie"},{"t":"Earpiece"},{"t":"Cards","q":"7"},{"t":"Camera batteries","q":"4"},{"t":"Monitor batteries","q":"4"},{"t":"Tripod"},{"t":"Monitor"},{"t":"Rain gear"}]},{"g":"Camera bag · EZ end zone","items":[{"t":"Camera"},{"t":"Walkie"},{"t":"Earpiece"},{"t":"Cards","q":"7"},{"t":"Camera batteries","q":"4"},{"t":"Monitor batteries","q":"4"},{"t":"Tripod"},{"t":"Monitor"},{"t":"Rain gear"},{"t":"Black Magic box"},{"t":"HDMI cable"},{"t":"USB-C brick & cable"}]},{"g":"Camera bag · EZ2 end zone 2","items":[{"t":"Camera"},{"t":"Walkie"},{"t":"Earpiece"},{"t":"Cards","q":"7"},{"t":"Camera batteries","q":"4"},{"t":"Monitor batteries","q":"4"},{"t":"Tripod"},{"t":"Monitor"},{"t":"Rain gear"}]}]},"semi":{"name":"Semi Load","tab":"Semi Load","scope":"away","sub":"Indented items live inside the one above them.","groups":[{"g":"Semi load","items":[{"t":"iPad cart"},{"t":"A/C tube","d":1},{"t":"Booth bag","d":1},{"t":"Ethernet","d":2},{"t":"USB-C power","d":2},{"t":"Adapters","d":2},{"t":"A/C power","d":1},{"t":"Extra remotes","d":1},{"t":"iPad case"},{"t":"iPad stands","q":"7","n":"two broke, one replaced. The sheet still says 8"},{"t":"A/C unit"},{"t":"Huddleboxes","q":"2","n":"Padded and strapped"},{"t":"Extension cords (longer)","d":1,"n":"Plenty"},{"t":"HDMI cables","d":1,"n":"Plenty"},{"t":"USB-C to HDMI adapters","d":1,"n":"Plenty"},{"t":"USB-C to HDMI cords","d":1,"n":"Plenty"},{"t":"USB-C power","d":1},{"t":"Long HDMIs","d":1},{"t":"USB-C converter","d":1},{"t":"Table in 1","d":1},{"t":"Elmo in 1","d":1},{"t":"Elmo cables","d":2},{"t":"Printer & case","d":1},{"t":"Ink","d":2},{"t":"Battery","d":2},{"t":"Cable","d":2}]}]},"stay":{"name":"Staycation","tab":"Staycation","scope":"home","sub":"Off the Home Game Pack List. Indented items live inside the one above them.","groups":[{"g":"Travel case · Green case","items":[{"t":"XOS laptops","q":"2"},{"t":"HDMI cables","d":1,"q":"2"},{"t":"Mice","d":1,"q":"2"},{"t":"Mouse pads","d":1,"q":"2"},{"t":"Laptop power","d":1,"q":"2"},{"t":"Cowboy remotes","d":1,"q":"2"},{"t":"USB extender","d":1},{"t":"Ross' laptop"},{"t":"HDMI cable","d":1},{"t":"Mouse","d":1},{"t":"Mouse pad","d":1},{"t":"USB-C laptop power","d":1},{"t":"Speaker cables"},{"t":"Small aux cord"},{"t":"Long aux & long 1/4\" cable"},{"t":"Small set of speakers"},{"t":"Expo markers"},{"t":"Extension cords","q":"3"},{"t":"Power strips","q":"3"},{"t":"Gaffer's tape","q":"2"},{"t":"Pen & Post-it notes"},{"t":"Cowboy remote"},{"t":"Power wheel","q":"2"}]},{"g":"Travel case · Projector box","items":[{"t":"Projectors","q":"3"},{"t":"Projector power cords","q":"3"},{"t":"Projector HDMI cables","q":"3"},{"t":"USB-C to HDMI"}]},{"g":"No case / oversize","items":[{"t":"Big speaker"},{"t":"Speaker power","d":1},{"t":"Projector screens","q":"2"},{"t":"Motivational"}]}]},"bowl":{"name":"Bowl Travel","tab":"Bowl","scope":"season","sub":"Second camera set is the sheet's right-hand column. Notes at the bottom are last year's lessons, kept verbatim.","prep":[{"g":"As soon as the matchup is announced","items":[{"t":"Add the opponent to the board as a postseason team"},{"t":"Start film downloads to coaches' laptops, staggered","n":"we overloaded a download overnight once and the server was bogged down the next morning"},{"t":"Pull the opponent's full season off the exchange"},{"t":"Cut the opponent's last game with urgency"},{"t":"Ask the bowl for the meeting room list and room sizes"},{"t":"Ask for a full size table in every meeting room","n":"so coaches have a work space, not just room for a projector and laptop"},{"t":"Get the stadium's video setup in writing","n":"press box spot, end zone access, what cabling they provide"}]},{"g":"Week of departure","items":[{"t":"Test every coach's laptop individually in travel mode","n":"a few did not go into travel mode correctly last time"},{"t":"Test every projector"},{"t":"Line up one or two rental projectors as spares","n":"the rented ones always have issues, and ours need replacing with urgency"},{"t":"Charge everything","n":"huddleboxes, iPads, batteries, walkies"},{"t":"Format all cards"},{"t":"Confirm the advance crew","n":"who goes, when they land, what each person sets. Consider sending two"},{"t":"Write the advance crew a room by room setup sheet"},{"t":"Plan how we help EQ and still get our own work done"},{"t":"Confirm hotel meeting room access times"},{"t":"Pack a working PS5 and controllers","n":"no matter what they say is in the hospitality room"}]},{"g":"Day before the truck leaves","items":[{"t":"Pack to the Bowl Travel list below"},{"t":"Label every case"},{"t":"Photograph each packed case"},{"t":"Confirm the truck's departure time and arrival window with EQ"},{"t":"Set aside the carry on","n":"laptops, drives, chargers, anything we cannot replace down there"},{"t":"Load the travel laptops with the latest O,D,K surges"},{"t":"Print the coaches iPad checklist and the room setup sheets"}]},{"g":"On arrival","items":[{"t":"Walk the stadium","n":"sideline spot, end zone spot, cable runs, power"},{"t":"Walk the meeting rooms and confirm the tables"},{"t":"Set and test every meeting room before the team arrives"},{"t":"Test the hotspots and find out what the venue provides"},{"t":"Test upload speed from the hotel and from the stadium"},{"t":"Run a full record and upload dry run"},{"t":"Find the nearest hardware store"}]}],"groups":[{"g":"SL","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"SL (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"BLACK MAGIC BOX"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"EZ (second set)","items":[{"t":"CAMERA"},{"t":"WALKIES"},{"t":"CARDS"},{"t":"BATTERIES"},{"t":"TRIPOD"},{"t":"MONITOR & BATTERIES"},{"t":"CAMERA RAIN GEAR"}]},{"g":"MR","items":[{"t":"15 XOS LAPTOPS ?"},{"t":"3 HDMI CABLES"},{"t":"3 MICE"},{"t":"3 MOUSE PADS"},{"t":"3 LAPTOP POWERS"},{"t":"3 COWBOY REMOTES"},{"t":"3 PROJECTORS"},{"t":"PROJECTOR POWER"},{"t":"PROJECTOR HDMI'S"},{"t":"USB-C to HDMI"},{"t":"1 BIG SPEAKER"},{"t":"SPEAKER CABLES"},{"t":"SPEAKER POWER"},{"t":"SMALL AUX CORD"},{"t":"LONG AUX"},{"t":"1 SMALL OF SPEAKERS"},{"t":"EXPO MARKERS"},{"t":"3 HDMI CABLES"},{"t":"4 AT&T WIFI HOTSPOTS"},{"t":"2 MICE"},{"t":"3 EXTENSION CORDS"},{"t":"3 POWER STRIPS"},{"t":"GAFFERS TAPE"}]},{"g":"OR","items":[{"t":"Coaches IPAD"}]},{"g":"TV copy","items":[{"t":"HMR 10"},{"t":"HMR 10 CARDS - SWAP HALF"},{"t":"SDI CORD"},{"t":"HMR 10 POWER"}]},{"g":"Game time","items":[{"t":"THUNDER IPAD CHARGERS"},{"t":"COACHES IPAD CHECKLIST"},{"t":"PEN & POST IT NOTES"},{"t":"EAR PIECES FOR WALKIES"},{"t":"HMR SETUP FOR SL"},{"t":"LANYARDS"},{"t":"COACH'S BOOTH BAG"},{"t":"ETHERNET"},{"t":"USB-C POWER"},{"t":"ADAPTERS"},{"t":"POTATO BOWL BAG"},{"t":"FAST 5 BAG - format cards"},{"t":"4 SSD'S"},{"t":"POWER STRIP - EXTENSION"}]},{"g":"Charging stations","items":[{"t":"WALKIE"},{"t":"CAMERA"},{"t":"MONITOR"},{"t":"GH5"},{"t":"BATTERIES & CARDS"},{"t":"USB-B PRINTER CABLES"},{"t":"LOTS OF POWER"},{"t":"LOTS OF POWER STRIPS"},{"t":"LOTS OF TAPE"},{"t":"CARDS"},{"t":"SMALL CARDS AND ADAPTERS"}]},{"g":"Gear ideas to consider","items":[{"t":"MOTIVATIONAL"},{"t":"LAMINATOR?!"},{"t":"OLD LAPTOP"},{"t":"additional box? For Cold Gear?"}]}],"notes":["AS SOON AS BOWL TEAM IS ANNOUNCED. IN AND SETTLED. START DOWNLOADING BITS OF FILM TO ALL COACHES COMPUTERS.","WE OVERLOADED A DOWNLOAD OVERNIGHT AND THE SERVER WAS BOGGED DOWN THE NEXT MORNING","A FEW COMPUTERS DID NOT TRAVEL MODE CORRECTLY. A TEST OF EACH INDIVIDUAL COACHES LAPTOP BEFORE TRAVEL MAY HAVE CLEANED THIS UP","TAKE A WORKING PS5 AND CONTROLLERS NO MATTER WHAT THEY SAY IS INCLUDED IN THE HOSPITALITY ROOM","GIVE CLEARER INSTRUCTIONS TO ADVANCE CREW, VIDEO GA DID NOT HAVE EVERY ROOM SET BY ARRIVAL…. ITS HARD TO DO BUT MAYBE SEND 2,","AND DEVELOP A PLAN IN ADVANCE OF HOW TO HELP EQ AND HOW TO GET OUR SHIT DONE AS WELL","IN EVERY MEETING ROOM, I WANT A FULL SIZE TABLE TO ALLOW COACHES A WORK SPACE, NOT JUST ENOUGH ROOM FOR A PROJECTOR AND LAPTOP","TEST AND MAKE SURE WE HAVE EXTRA PROJECTORS ON HAND, EVEN IF WE HAVE TO RENT 1 OR 2 EXTRAS. THE RENTED PROJECTORS ALWAYS HAVE ISSUES","AND WE NEED TO REPLACE WITH URGENCY."]}};
   var PACK_ORDER=["semi","road","stay","bowl"];
 
@@ -2427,7 +2427,7 @@
      run in Supabase, MINOR when only index.html and app.js change. The
      check below is what actually matters: it asks the database what it
      has rather than trusting the number. */
-  var VER="5.1";
+  var VER="5.2";
   var DBNEED=[{t:"checks",sql:"setup.sql"},
               {t:"check_log",sql:"database-update.sql"},
               {t:"candidates",sql:"database-update.sql"},
@@ -2792,12 +2792,49 @@
      conversation later can start from what actually happened and when
      rather than from memory.
      ================================================================ */
-  var O_CATS=[["Late","con"],["No Call/No Show","con"],
-              ["Unwilling to Follow Direction","con"],
-              ["Positive Note","pro"],["Other","neutral"]];
-  function oCatKind(c){ var k="neutral"; O_CATS.forEach(function(x){ if(x[0]===c) k=x[1]; }); return k; }
+  /* The five we started with. They are only a starting point: the list is
+     edited from the log's own toolbar and kept in the shared settings, so
+     everybody sees the same categories. An entry already written keeps the
+     words it was written with even if you later drop that category, which
+     is why entries store the text and not an id. */
+  var O_CATS_DEFAULT=[["Late","con"],["No Call/No Show","con"],
+                      ["Unwilling to Follow Direction","con"],
+                      ["Positive Note","pro"],["Other","neutral"]];
+  var O_CATKEY="wlog:cats";
+  function oCats(){
+    var raw=SETTINGS[O_CATKEY];
+    if(raw){
+      try{
+        var list=JSON.parse(raw);
+        if(Array.isArray(list)&&list.length){
+          var out=[];
+          list.forEach(function(x){
+            var n=String((x&&x.n)||"").trim();
+            if(n) out.push([n,(x&&x.k==="pro")?"pro":((x&&x.k==="con")?"con":"neutral")]);
+          });
+          if(out.length) return out;
+        }
+      }catch(e){}
+    }
+    return O_CATS_DEFAULT.slice();
+  }
+  /* categories on file, plus any an older entry still refers to */
+  function oCatsSeen(){
+    var out=oCats(), have={};
+    out.forEach(function(c){ have[c[0]]=true; });
+    (OFF&&OFF.log||[]).forEach(function(e){
+      if(e.category&&!have[e.category]){ have[e.category]=true; out.push([e.category,"neutral"]); }
+    });
+    return out;
+  }
+  function oCatKind(c){ var k="neutral"; oCatsSeen().forEach(function(x){ if(x[0]===c) k=x[1]; }); return k; }
+  function oCatUsed(name){
+    var n=0; (OFF&&OFF.log||[]).forEach(function(e){ if(e.category===name) n++; });
+    return n;
+  }
   var O_VIEWS=[["list","By date"],["person","By person"],["prep","One on one"]];
   var oLogView="list", oLogCat="", oLogWho="", oLogForm=false, oLogEdit=0;
+  var oCatEdit=false, oCatDraft=null;
 
   function oPerson(id){ var p=oById(id); return p?(p.full_name||p.name):(id||"Nobody named"); }
   function oShortName(id){ var p=oById(id); return p?p.name:(id||"—"); }
@@ -2838,7 +2875,7 @@
       + '</select></label>'
       + '<label class="offf">Category<select id="lgCat"'+(ed?" disabled":"")+'>'
         + '<option value="">Pick a category…</option>'
-        + O_CATS.map(function(c){
+        + oCats().map(function(c){
             return '<option'+((ed&&ed.category===c[0])?" selected":"")+'>'+esc(c[0])+'</option>'; }).join("")
       + '</select></label>'
       + '<label class="offf">Expected in<input type="time" id="lgExp" value="'+esc(ed?ed.expected:"")+'"'+(ed?" disabled":"")+'></label>'
@@ -2855,6 +2892,68 @@
       + '<div class="offrow"><button type="button" class="btn" id="lgCancel">Cancel</button>'
       + '<button type="submit" class="btn go">'+(ed?"Save changes":"Save entry")+'</button></div>'
       + '</form>';
+  }
+
+  var O_KINDS=[["con","Counts against"],["pro","Counts for"],["neutral","Neither"]];
+  function oCatFormHtml(){
+    if(!oCatEdit) return "";
+    if(!oCatDraft) oCatDraft=oCats().map(function(c){ return {n:c[0],k:c[1]}; });
+    return '<form class="oflogform ofcatform" id="ofCatForm">'
+      + '<h3>What you can log</h3>'
+      + '<p class="ofcathint">These are the choices in the category dropdown. Net on the By person '
+      + 'page is whatever counts for someone minus whatever counts against. Neither does neither, it '
+      + 'still gets counted in the total. Entries already written keep the words they were written '
+      + 'with, so dropping one here never rewrites history.</p>'
+      + '<div class="ofcatlist">'
+      + oCatDraft.map(function(c,i){
+          var used=oCatUsed(c.n);
+          return '<div class="ofcatrow">'
+            + '<input type="text" class="ofcatname" maxlength="60" value="'+esc(c.n)+'" '
+            + 'data-ci="'+i+'" aria-label="Category name">'
+            + '<select class="ofcatkind" data-ci="'+i+'" aria-label="How it counts">'
+            + O_KINDS.map(function(k){
+                return '<option value="'+k[0]+'"'+(c.k===k[0]?" selected":"")+'>'+esc(k[1])+'</option>'; }).join("")
+            + '</select>'
+            + '<span class="ofcatused">'+(used?used+" logged":"")+'</span>'
+            + '<button type="button" class="btn ofclear" data-catdel="'+i+'">Remove</button>'
+            + '</div>'; }).join("")
+      + '</div>'
+      + '<div class="ofcatadd"><button type="button" class="btn" id="ofCatAdd">Add a category</button>'
+      + '<button type="button" class="btn" id="ofCatReset">Back to the original five</button></div>'
+      + '<div class="err ofErr" id="ofCatErr" role="alert"></div>'
+      + '<div class="offrow"><button type="button" class="btn" id="ofCatCancel">Cancel</button>'
+      + '<button type="submit" class="btn go">Save the list</button></div></form>';
+  }
+
+  /* read the boxes back before any re-render, so typing is never lost */
+  function oCatRead(){
+    if(!oCatDraft) return;
+    [].forEach.call(officeroot.querySelectorAll(".ofcatname"),function(el){
+      var i=Number(el.getAttribute("data-ci")); if(oCatDraft[i]) oCatDraft[i].n=el.value;
+    });
+    [].forEach.call(officeroot.querySelectorAll(".ofcatkind"),function(el){
+      var i=Number(el.getAttribute("data-ci")); if(oCatDraft[i]) oCatDraft[i].k=el.value;
+    });
+  }
+
+  async function oCatSave(){
+    oCatRead();
+    var err=document.getElementById("ofCatErr");
+    var list=oCatDraft.filter(function(c){ return String(c.n||"").trim(); })
+                      .map(function(c){ return {n:String(c.n).trim(),k:c.k}; });
+    if(!list.length){ err.textContent="Keep at least one category."; return; }
+    var seen={};
+    for(var i=0;i<list.length;i++){
+      var key=list[i].n.toLowerCase();
+      if(seen[key]){ err.textContent='"'+list[i].n+'" is in there twice.'; return; }
+      seen[key]=true;
+    }
+    err.textContent="Saving\u2026";
+    var bad=await saveSetting(O_CATKEY,JSON.stringify(list));
+    if(bad){ err.textContent=bad; return; }
+    oCatEdit=false; oCatDraft=null;
+    if(oLogCat&&!list.some(function(c){ return c.n===oLogCat; })) oLogCat="";
+    renderOffice(); flash("Categories saved.");
   }
 
   function oEntryHtml(e,showWho){
@@ -2902,7 +3001,7 @@
       + '</div><span class="wksp"></span>'
       + (oLogView==="list"
           ? '<label class="offilter">Category<select id="ofCat"><option value="">All categories</option>'
-            + O_CATS.map(function(c){ return '<option'+(oLogCat===c[0]?" selected":"")+'>'+esc(c[0])+'</option>'; }).join("")
+            + oCats().map(function(c){ return '<option'+(oLogCat===c[0]?" selected":"")+'>'+esc(c[0])+'</option>'; }).join("")
             + '</select></label>'
             + '<button type="button" class="btn" id="ofCsv">Download CSV</button>'
           : "")
@@ -2913,22 +3012,23 @@
             + '</select></label>'
             + (oLogWho?'<button type="button" class="btn" id="ofPrint">Print</button>':"")
           : "")
-      + (!oLogForm&&!oLogEdit
-          ? '<button type="button" class="btn ofnew" id="ofAdd">Add an entry</button>' : "")
-      + '</div>'+oLogFormHtml();
+      + (!oLogForm&&!oLogEdit&&!oCatEdit
+          ? '<button type="button" class="btn" id="ofCats">Categories</button>'
+            + '<button type="button" class="btn ofnew" id="ofAdd">Add an entry</button>' : "")
+      + '</div>'+oCatFormHtml()+oLogFormHtml();
 
     if(oLogView==="person"){
-      var t=oTallies();
+      var t=oTallies(), CATS=oCatsSeen();
       if(!t.length) return tools+'<p class="dempty">Nothing logged yet.</p>';
       return tools
         + '<div class="oftally"><table><thead><tr><th>Who</th>'
-        + O_CATS.map(function(c){ return '<th>'+esc(c[0])+'</th>'; }).join("")
+        + CATS.map(function(c){ return '<th>'+esc(c[0])+'</th>'; }).join("")
         + '<th>Entries</th><th>Net</th></tr></thead><tbody>'
         + t.map(function(r){
             var net=r.pro-r.con;
             return '<tr><th scope="row"><button type="button" class="oflink" data-prep="'+esc(r.id)+'">'
               + esc(oPerson(r.id))+'</button></th>'
-              + O_CATS.map(function(c){ return '<td>'+(r.cats[c[0]]||"")+'</td>'; }).join("")
+              + CATS.map(function(c){ return '<td>'+(r.cats[c[0]]||"")+'</td>'; }).join("")
               + '<td>'+r.n+'</td>'
               + '<td class="ofnet '+(net>0?"ofpos":(net<0?"ofneg":""))+'">'+(net>0?"+":"")+net+'</td></tr>'; }).join("")
         + '</tbody></table></div>'
@@ -3027,7 +3127,8 @@
 
   if(officeroot){
     officeroot.addEventListener("submit",function(e){
-      if(e.target.id==="ofLogForm"){ e.preventDefault(); ofLogSave(); }
+      if(e.target.id==="ofLogForm"){ e.preventDefault(); return ofLogSave(); }
+      if(e.target.id==="ofCatForm"){ e.preventDefault(); return oCatSave(); }
     });
     officeroot.addEventListener("click",async function(e){
       if(!e.target.closest) return;
@@ -3035,8 +3136,27 @@
 
       /* ---- the worker log ---- */
       var lv=e.target.closest("[data-logview]");
-      if(lv){ oLogView=lv.getAttribute("data-logview"); oLogForm=false; oLogEdit=0; renderOffice(); return; }
-      if(e.target.closest("#ofAdd")){ oLogForm=true; oLogEdit=0; renderOffice(); return; }
+      if(lv){ oLogView=lv.getAttribute("data-logview"); oLogForm=false; oLogEdit=0;
+              oCatEdit=false; oCatDraft=null; renderOffice(); return; }
+      if(e.target.closest("#ofAdd")){ oLogForm=true; oLogEdit=0; oCatEdit=false; renderOffice(); return; }
+      if(e.target.closest("#ofCats")){ oCatEdit=true; oCatDraft=null; oLogForm=false; oLogEdit=0; renderOffice(); return; }
+      if(e.target.closest("#ofCatCancel")){ oCatEdit=false; oCatDraft=null; renderOffice(); return; }
+      if(e.target.closest("#ofCatAdd")){
+        oCatRead(); oCatDraft.push({n:"",k:"con"}); renderOffice();
+        var boxes=officeroot.querySelectorAll(".ofcatname");
+        if(boxes.length) boxes[boxes.length-1].focus();
+        return;
+      }
+      if(e.target.closest("#ofCatReset")){
+        oCatDraft=O_CATS_DEFAULT.map(function(c){ return {n:c[0],k:c[1]}; });
+        renderOffice(); return;
+      }
+      var cd=e.target.closest("[data-catdel]");
+      if(cd){
+        oCatRead();
+        oCatDraft.splice(Number(cd.getAttribute("data-catdel")),1);
+        renderOffice(); return;
+      }
       if(e.target.closest("#lgCancel")){ oLogForm=false; oLogEdit=0; renderOffice(); return; }
       if(e.target.closest("#ofPrint")) return window.print();
       if(e.target.closest("#ofCsv")){

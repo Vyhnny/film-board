@@ -997,10 +997,36 @@ dialog.login,dialog.hist,dialog.cands{border-radius:3px}
   .slim{border-bottom:1px solid #999}
 }
 
-/* ================= checklist tabs ================= */
-.tleft{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.tabg{gap:2px}
-.tabg .btn{font-size:13px;letter-spacing:.06em}
+/* ================= checklist tabs =================
+   The dark ribbon holds two things: where you are, and whether the page is
+   live. The tabs run left, the sync dot and the gear sit hard right, one row
+   at every width. If nine tabs do not fit they scroll and fade at both ends
+   rather than wrapping a stray tab onto a line of its own. */
+.tools{flex-wrap:nowrap;gap:10px}
+.tabg{display:flex;gap:2px;flex:1 1 auto;min-width:0;flex-wrap:nowrap;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 42px),transparent);
+  mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 42px),transparent);
+  padding:0 42px 0 18px;margin:0 0 0 -18px}
+.tabg::-webkit-scrollbar{display:none}
+.tabg .btn{font-size:13px;letter-spacing:.06em;white-space:nowrap;flex:0 0 auto;
+  background:none;border:0;border-bottom:2px solid transparent;border-radius:0;
+  padding:7px 11px 6px;color:rgba(255,255,255,.62);transition:color .15s,border-color .15s}
+.tabg .btn:hover{color:#fff;border-bottom-color:rgba(255,255,255,.28)}
+.tabg .btn[aria-pressed="true"]{background:none;color:#fff;border-bottom-color:var(--tsky)}
+.tabg .btn:focus-visible{outline:2px solid var(--tsky);outline-offset:-3px}
+.tools .tright{margin-left:auto;flex:0 0 auto}
+
+/* Only what's left / Collapse all / By game act on the board, so they live
+   on the page with the board rather than up in the site ribbon. */
+.boardbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:2px 0 14px}
+.boardbar .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 12px;border-radius:2px;cursor:pointer}
+.boardbar .btn:hover:not(:disabled):not([aria-pressed="true"]){color:var(--ink);border-color:var(--ink3)}
+.boardbar .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.boardbar .btn:disabled{opacity:.4;cursor:default}
+
 body.wk-mode #root,body.wk-mode .key,body.wk-mode .foot:not(.ckfoot),body.wk-mode .quick,
 body.wk-mode .bdonly,body.wk-mode #fExport{display:none !important}
 body:not(.on-week) #weekroot{display:none}
@@ -1104,19 +1130,12 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
 .ckfoot{margin-top:18px;color:var(--ink3);font-size:12.5px;line-height:1.6}
 
 @media (max-width:980px){
-  .tools{flex-wrap:wrap}
-  .tleft{width:100%}
-  .tright{width:100%;justify-content:flex-end}
+  .tools{flex-wrap:nowrap}
+  .tright{width:auto}
 }
 @media (max-width:720px){
-  /* nine tabs do not fit a phone. Fade both ends so it is obvious there is
-     more either side, not just a word chopped off at the edge. */
-  .tabg{width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;
-    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 42px),transparent);
-    mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 42px),transparent);
-    padding:0 42px 0 18px;margin-left:-18px;scrollbar-width:none}
-  .tabg::-webkit-scrollbar{display:none}
-  .tabg .btn{white-space:nowrap}
+  .tabg{padding-right:34px}
+  .boardbar{padding-bottom:11px}
   .dhead{gap:8px;padding:11px 12px}
   .dabbr{width:32px;font-size:13px}
   .dhead .dtag{font-size:9.5px;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1439,6 +1458,12 @@ dialog#allNotes .n-gen .btn.go{background:var(--accent);border:1px solid var(--a
   font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;
   text-transform:uppercase;padding:7px 13px;border-radius:2px;cursor:pointer;white-space:nowrap}
 
+/* ---- the song player with more than one song in it ---- */
+.song-next{padding:5px 7px !important;line-height:0}
+.song-next svg{width:13px;height:13px;fill:currentColor;stroke:currentColor}
+#songName{white-space:nowrap}
+@media (max-width:720px){ .song-bar{width:54px} }
+
 /* ================= the Office ================= */
 body:not(.on-office) #officeroot{display:none}
 #officeroot{padding-top:4px}
@@ -1662,6 +1687,27 @@ body:not(.on-office) #officeroot{display:none}
   body.of-prep .ofprephead h2{font-size:24px}
 }
 
+/* ---- editing what can be logged ---- */
+.ofcathint{margin:0 0 14px;font-size:13px;line-height:1.6;color:var(--ink3);max-width:72ch}
+.ofcatlist{display:flex;flex-direction:column;gap:8px}
+.ofcatrow{display:grid;grid-template-columns:minmax(0,1fr) 150px 72px auto;gap:9px;align-items:center}
+.ofcatrow input,.ofcatrow select{font:14px "Archivo",sans-serif;padding:7px 9px;
+  border:1px solid var(--line2);border-radius:2px;background:var(--bg);color:var(--ink);
+  width:100%;box-sizing:border-box}
+.ofcatrow input:focus,.ofcatrow select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.ofcatused{font-family:var(--narrow),sans-serif;font-size:11px;letter-spacing:.05em;
+  color:var(--ink3);white-space:nowrap;text-align:right}
+.ofcatadd{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0 4px}
+.ofcatadd .btn{border:1px dashed var(--line2);background:none;color:var(--ink3);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:7px 12px;border-radius:2px;cursor:pointer}
+.ofcatadd .btn:hover{color:var(--accent);border-color:var(--accent);border-style:solid}
+@media (max-width:620px){
+  .ofcatrow{grid-template-columns:1fr auto;gap:7px}
+  .ofcatrow input{grid-column:1/3}
+  .ofcatused{text-align:left}
+}
+
 /* ================= the purchase list ================= */
 body:not(.on-buy) #buyroot{display:none}
 #buyroot{padding-top:4px}
@@ -1793,18 +1839,17 @@ body:not(.on-buy) #buyroot{display:none}
       <div class="tot"><b><span id="sGame">0</span><small> / <span id="sGameT">0</span></small></b><span>played games still open</span><i class="sbar"><i id="bGame"></i></i></div>
       <div class="tot pace" id="pace" hidden></div>
       <div class="song">
-        <button class="btn" id="songBtn" aria-pressed="false" aria-label="Play Tulane All The Way"><svg id="songIcon" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 0l9 5-9 5z"/></svg><span>Fight Song</span></button>
+        <button class="btn" id="songBtn" aria-pressed="false" aria-label="Play Tulane All The Way"><svg id="songIcon" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 0l9 5-9 5z"/></svg><span id="songName">Fight Song</span></button><button class="btn ibtn song-next" id="songNext" type="button" aria-label="Next song" title="Next song"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l7 5-7 5z"/><path d="M12 3v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
         <div class="song-bar" id="songBar" role="slider" aria-label="Song position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><i id="songFill"></i></div>
         <button class="btn song-loop" id="songLoop" type="button" aria-pressed="false" aria-label="Loop the fight song" title="Loop"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 7V6a2 2 0 0 1 2-2h7.5M10.5 1.8 12.8 4l-2.3 2.2M13 9v1a2 2 0 0 1-2 2H3.5M5.5 14.2 3.2 12l2.3-2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <span class="song-time" id="songTime">0:00</span>
-        <audio id="songAudio" src="tulane-all-the-way.mp3" preload="none"></audio>
+        <audio id="songAudio" preload="none"></audio>
       </div>
     </div>
   </div>
 </div>
 <div class="toolbar">
   <div class="tools">
-    <div class="tleft">
     <div class="tgroup tabg" role="group" aria-label="Section">
       <button class="btn" data-tab="board" aria-pressed="true">Film Board</button>
       <button class="btn" data-tab="week" aria-pressed="false">Week</button>
@@ -1815,13 +1860,6 @@ body:not(.on-buy) #buyroot{display:none}
       <button class="btn" data-tab="air" aria-pressed="false">Trackers</button>
       <button class="btn" data-tab="buy" aria-pressed="false">Buy List</button>
       <button class="btn" data-tab="office" aria-pressed="false">Office</button>
-    </div>
-    <span class="tsep bdonly" aria-hidden="true"></span>
-    <div class="tgroup bdonly" role="group" aria-label="View">
-      <button class="btn" id="fLeft" aria-pressed="false">Only what's left</button>
-      <button class="btn" id="fShut">Collapse all</button>
-      <button class="btn" id="fView" aria-pressed="false">By game</button>
-    </div>
     </div>
     <div class="tgroup tright" role="group" aria-label="Actions">
       <button class="btn" id="fPrint">Print</button>
@@ -1839,6 +1877,13 @@ body:not(.on-buy) #buyroot{display:none}
 <div class="wrap">
   <div class="notice hide" id="notice"></div>
   
+  <div class="boardbar bdonly">
+    <div class="tgroup" role="group" aria-label="View">
+      <button class="btn" id="fLeft" aria-pressed="false">Only what's left</button>
+      <button class="btn" id="fShut">Collapse all</button>
+      <button class="btn" id="fView" aria-pressed="false">By game</button>
+    </div>
+  </div>
   <div id="root"></div>
   <div id="weekroot"></div>
   <div id="packroot"></div>
@@ -1948,20 +1993,47 @@ body:not(.on-buy) #buyroot{display:none}
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=5.1"></script>
-<script src="app.js?v=5.1"></script>
+<script src="config.js?v=5.2"></script>
+<script src="app.js?v=5.2"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
       ic=document.getElementById("songIcon"),bar=document.getElementById("songBar"),
       fill=document.getElementById("songFill"),t=document.getElementById("songTime");
   if(!a||!b)return;
+  /* Add a song: drop the mp3 in the repo and add a line here. Keep the file
+     name plain, no spaces or apostrophes, or the browser has to guess at the
+     encoding and sometimes guesses wrong. */
+  var SONGS=[
+    {src:"tulane-all-the-way.mp3", name:"Fight Song",    full:"Tulane All The Way"},
+    {src:"paytons-song.mp3",       name:"Payton's Song", full:"Payton's Song (Why Am I Even Here)"}
+  ];
+  var nm=document.getElementById("songName"), nx=document.getElementById("songNext");
+  var at=0;
+  try{ var k=parseInt(localStorage.getItem("fpb_song"),10); if(k>=0&&k<SONGS.length) at=k; }catch(e){}
+  if(SONGS.length<2&&nx) nx.hidden=true;
+
   var PLAY='<path d="M1 0l9 5-9 5z"/>',PAUSE='<path d="M1 0h3v10H1zM6 0h3v10H6z"/>';
   function fmt(x){x=Math.max(0,Math.floor(x||0));return Math.floor(x/60)+":"+("0"+x%60).slice(-2)}
   function paint(){var on=!a.paused;b.setAttribute("aria-pressed",on);ic.innerHTML=on?PAUSE:PLAY;
-    b.setAttribute("aria-label",(on?"Pause":"Play")+" Tulane All The Way")}
+    b.setAttribute("aria-label",(on?"Pause":"Play")+" "+SONGS[at].full);
+    if(nm) nm.textContent=SONGS[at].name;
+    if(nx) nx.title="Next: "+SONGS[(at+1)%SONGS.length].full;}
+  function load(i,go){
+    at=((i%SONGS.length)+SONGS.length)%SONGS.length;
+    try{ localStorage.setItem("fpb_song",String(at)); }catch(e){}
+    a.src=SONGS[at].src; a.currentTime=0;
+    if(fill) fill.style.width="0%";
+    if(t) t.textContent="0:00";
+    paint();
+    if(go){ var pr=a.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+  }
+  load(at,false);
+  if(nx) nx.addEventListener("click",function(){ load(at+1,!a.paused||a.currentTime>0); });
   b.addEventListener("click",function(){if(a.paused){a.play()}else{a.pause()}});
   a.addEventListener("play",paint);a.addEventListener("pause",paint);
+  /* Loop repeats this song. With it off a song simply ends, it does not run
+     on into the next one: nobody wants a jukebox starting up mid practice. */
   a.addEventListener("ended",function(){a.currentTime=0;paint()});
   var lp=document.getElementById("songLoop");
   function setLoop(on){ a.loop=on; lp.setAttribute("aria-pressed",String(on)); lp.title=on?"Loop is on":"Loop"; try{localStorage.setItem("fpb_loop",on?"1":"0")}catch(e){} }
