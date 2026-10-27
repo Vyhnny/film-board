@@ -13,6 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # If the script is not where this file expects it, say so in words
+      # instead of letting python fail with a bare exit code.
+      - name: Check the script is where it should be
+        run: |
+          if [ ! -f .github/scripts/trackers.py ]; then
+            echo "::error::.github/scripts/trackers.py is missing. Here is everything that IS in .github:"
+            find .github -type f -o -type d | sort | sed 's/^/    /'
+            exit 1
+          fi
+          echo "Found .github/scripts/trackers.py"
+
       - name: Read the base schema from Airtable
         env:
           AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
@@ -21,12 +32,15 @@ jobs:
 
       - name: Commit if anything moved
         run: |
-          if git diff --quiet -- trackers.json; then
+          # git add first. "git diff" alone cannot see a file git has never
+          # tracked, so on the very first run it would report no change and
+          # trackers.json would never get committed.
+          git add trackers.json
+          if git diff --cached --quiet -- trackers.json; then
             echo "nothing changed"
             exit 0
           fi
           git config user.name  "Tracker Link Updater"
           git config user.email "tracker-link-updater@users.noreply.github.com"
-          git add trackers.json
           git commit -m "Tracker links refresh"
           git push
