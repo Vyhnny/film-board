@@ -1,0 +1,32 @@
+name: Refresh Airtable tracker links
+
+on:
+  schedule:
+    - cron: "17 11 * * 1,4"      # Monday and Thursday, 11:17 UTC
+  workflow_dispatch:              # or run it by hand from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the base schema from Airtable
+        env:
+          AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+          AIRTABLE_BASES: ${{ vars.AIRTABLE_BASES }}
+        run: python3 .github/scripts/trackers.py
+
+      - name: Commit if anything moved
+        run: |
+          if git diff --quiet -- trackers.json; then
+            echo "nothing changed"
+            exit 0
+          fi
+          git config user.name  "Tracker Link Updater"
+          git config user.email "tracker-link-updater@users.noreply.github.com"
+          git add trackers.json
+          git commit -m "Tracker links refresh"
+          git push
