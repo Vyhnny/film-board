@@ -1,0 +1,17 @@
+name: Refresh purchase list prices
+
+on:
+  schedule:
+    - cron: "41 13 * * 2"       # Tuesdays, 13:41 UTC
+  workflow_dispatch:             # or run it by hand from the Actions tab
+
+jobs:
+  prices:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Amazon and B&H, write the prices back to Supabase
+        env:
+          FVO_PASSCODE: ${{ secrets.FVO_PASSCODE }}
+        run: python3 .github/scripts/prices.py
