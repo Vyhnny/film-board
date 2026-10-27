@@ -1463,6 +1463,7 @@ dialog#allNotes .n-gen .btn.go{background:var(--accent);border:1px solid var(--a
 .song-next svg{width:13px;height:13px;fill:currentColor;stroke:currentColor}
 #songName{white-space:nowrap}
 @media (max-width:720px){ .song-bar{width:54px} }
+#songName.song-bad{color:#ffb4a2;text-decoration:underline wavy rgba(255,120,90,.8);text-underline-offset:3px}
 
 /* ================= the Office ================= */
 body:not(.on-office) #officeroot{display:none}
@@ -1993,8 +1994,8 @@ body:not(.on-buy) #buyroot{display:none}
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=5.2"></script>
-<script src="app.js?v=5.2"></script>
+<script src="config.js?v=5.3"></script>
+<script src="app.js?v=5.3"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
@@ -2019,17 +2020,36 @@ body:not(.on-buy) #buyroot{display:none}
     b.setAttribute("aria-label",(on?"Pause":"Play")+" "+SONGS[at].full);
     if(nm) nm.textContent=SONGS[at].name;
     if(nx) nx.title="Next: "+SONGS[(at+1)%SONGS.length].full;}
+  /* A song that will not load used to do nothing at all, silently, which
+     looks exactly like a broken button. Say what happened instead. */
+  var dead=false;
+  function bad(){
+    dead=true;
+    if(t) t.textContent="not found";
+    if(b) b.title="Could not load "+SONGS[at].src+". Is that file uploaded to the repo, spelled exactly that way?";
+    if(nm){ nm.textContent=SONGS[at].name; nm.classList.add("song-bad"); }
+  }
+  function ok(){ dead=false; if(nm) nm.classList.remove("song-bad"); if(b) b.title=""; }
+  a.addEventListener("error",bad);
+  a.addEventListener("loadedmetadata",ok);
+
   function load(i,go){
     at=((i%SONGS.length)+SONGS.length)%SONGS.length;
     try{ localStorage.setItem("fpb_song",String(at)); }catch(e){}
+    ok();
     a.src=SONGS[at].src; a.currentTime=0;
     if(fill) fill.style.width="0%";
     if(t) t.textContent="0:00";
     paint();
-    if(go){ var pr=a.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+    if(go){
+      var pr=a.play();
+      if(pr&&pr.catch) pr.catch(function(){ bad(); paint(); });
+    }
   }
   load(at,false);
-  if(nx) nx.addEventListener("click",function(){ load(at+1,!a.paused||a.currentTime>0); });
+  /* Next plays. A next button that silently selects a song and waits for a
+     second click is not what anybody expects of a next button. */
+  if(nx) nx.addEventListener("click",function(){ load(at+1,true); });
   b.addEventListener("click",function(){if(a.paused){a.play()}else{a.pause()}});
   a.addEventListener("play",paint);a.addEventListener("pause",paint);
   /* Loop repeats this song. With it off a song simply ends, it does not run
@@ -2039,7 +2059,7 @@ body:not(.on-buy) #buyroot{display:none}
   function setLoop(on){ a.loop=on; lp.setAttribute("aria-pressed",String(on)); lp.title=on?"Loop is on":"Loop"; try{localStorage.setItem("fpb_loop",on?"1":"0")}catch(e){} }
   try{ setLoop(localStorage.getItem("fpb_loop")==="1"); }catch(e){ setLoop(false); }
   lp.addEventListener("click",function(){ setLoop(!a.loop); });
-  a.addEventListener("timeupdate",function(){var d=a.duration||0,p=d?a.currentTime/d*100:0;
+  a.addEventListener("timeupdate",function(){if(dead)return;var d=a.duration||0,p=d?a.currentTime/d*100:0;
     fill.style.width=p+"%";bar.setAttribute("aria-valuenow",Math.round(p));
     t.textContent=fmt(a.currentTime)+(d?" / "+fmt(d):"")});
   function seek(f){if(a.duration){a.currentTime=Math.min(Math.max(f,0),1)*a.duration}}
