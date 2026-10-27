@@ -1109,9 +1109,12 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
   .tright{width:100%;justify-content:flex-end}
 }
 @media (max-width:720px){
+  /* nine tabs do not fit a phone. Fade both ends so it is obvious there is
+     more either side, not just a word chopped off at the edge. */
   .tabg{width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;
-    -webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent);
-    padding-right:34px;scrollbar-width:none}
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 42px),transparent);
+    mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 42px),transparent);
+    padding:0 42px 0 18px;margin-left:-18px;scrollbar-width:none}
   .tabg::-webkit-scrollbar{display:none}
   .tabg .btn{white-space:nowrap}
   .dhead{gap:8px;padding:11px 12px}
@@ -1147,6 +1150,36 @@ body.wk-mode .totals .tot,body.wk-mode .ondeck{display:none}
   body.wk-mode .pastdue{background:none;border-bottom:2px solid #000}
   body.wk-mode .pdhead,body.wk-mode .tfrom{color:#000}
   body.wk-mode .wkshort{background:none;border-left:3px solid #000}
+}
+
+/* ---- the explainer, folded away ---- */
+.howto{margin:16px 0 0;border-top:1px solid var(--line2);padding-top:10px}
+.howto summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;list-style:none;
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink3);padding:2px 0}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"\203A";font-size:15px;line-height:1;transition:transform .15s;
+  display:inline-block;transform:translateY(-1px)}
+.howto[open] summary::before{transform:rotate(90deg) translateX(-1px)}
+.howto summary:hover{color:var(--ink2)}
+.howto summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+.howbody{margin-top:8px;max-width:76ch;color:var(--ink3);font-size:12.5px;line-height:1.65}
+
+/* the short-week banner says the one thing that matters; the rest folds */
+.wkwhy{margin-top:7px}
+.wkwhy summary{display:inline-flex;align-items:center;gap:5px;cursor:pointer;list-style:none;
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--away)}
+.wkwhy summary::-webkit-details-marker{display:none}
+.wkwhy summary::before{content:"\203A";font-size:14px;line-height:1;display:inline-block;transition:transform .15s}
+.wkwhy[open] summary::before{transform:rotate(90deg)}
+.wkwhy > div{margin-top:6px;font-size:13px;line-height:1.55;color:var(--ink2)}
+
+/* the fight song belongs on the board, not on top of every checklist */
+body.wk-mode .song{display:none !important}
+
+@media print{
+  .howto,.wkwhy{display:none !important}
 }
 
 
@@ -1353,6 +1386,389 @@ dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--acc
   #packroot .trow.thead .tname{font-weight:700}
 }
 
+/* Trackers: an index of the Airtable bases */
+body:not(.on-air) #airroot{display:none}
+.airbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0 14px;
+  border-bottom:1px solid var(--line2);margin-bottom:4px}
+.airbar .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer}
+.airbar .btn:hover{color:var(--ink);border-color:var(--ink3)}
+.trkwhen{font-family:var(--narrow),sans-serif;font-size:12px;color:var(--ink3);white-space:nowrap}
+.trklink{color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor}
+.trkcard .dhead{cursor:pointer}
+.trkn{font-family:var(--narrow),sans-serif;font-size:12px;color:var(--ink3);white-space:nowrap}
+.trkgo{border:1px solid var(--accent) !important;background:none !important;color:var(--accent) !important;
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  padding:4px 11px !important;border-radius:2px;text-decoration:none;white-space:nowrap}
+.trkgo:hover{background:var(--accent) !important;color:#fff !important}
+a.trow.trkrow{display:grid;grid-template-columns:22px minmax(0,1fr) auto 18px;gap:12px;align-items:center;
+  text-decoration:none;color:inherit}
+.trkdot{width:7px;height:7px;border-radius:50%;background:var(--line2);justify-self:center}
+a.trkrow:hover .trkdot{background:var(--accent)}
+a.trkrow:hover .tname{color:var(--accent)}
+.trkarrow{color:var(--ink3);font-size:14px;text-align:center}
+a.trkrow:hover .trkarrow{color:var(--accent)}
+.airsetup{max-width:700px;padding:4px 0 24px}
+.airsetup h2{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:23px;margin:4px 0 10px}
+.airsetup p{color:var(--ink2);font-size:14px;line-height:1.6;margin:0 0 12px}
+.airsetup ol{color:var(--ink2);font-size:14px;line-height:1.8;padding-left:22px;margin:0 0 14px}
+.airsetup code{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--chip);padding:2px 6px;border-radius:3px}
+.airnote{border-left:3px solid var(--accent);background:var(--chip);padding:10px 13px;border-radius:0 2px 2px 0;
+  font-size:13.5px !important}
+@media (max-width:720px){
+  .trkn{display:none}
+  a.trow.trkrow{grid-template-columns:18px minmax(0,1fr) 18px}
+  a.trow.trkrow .tflags{display:none}
+}
+@media print{.trkgo,.airbar .btn,.trkarrow{display:none}
+  .trkcard.shut .dbody{display:block}}
+
+/* ---- a note that is not about one checkbox ---- */
+dialog#allNotes .n-gen{margin:0 0 12px;padding:11px 12px;background:var(--chip);
+  border:1px solid var(--line);border-radius:3px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) dialog#allNotes .n-gen{background:var(--surface2)}}
+:root[data-theme="dark"] dialog#allNotes .n-gen{background:var(--surface2)}
+dialog#allNotes .n-gen textarea{width:100%;box-sizing:border-box;display:block;
+  font:14px "Archivo",sans-serif;line-height:1.5;padding:8px 10px;resize:vertical;
+  border:1px solid var(--line2);border-radius:3px;background:var(--surface);color:var(--ink)}
+dialog#allNotes .n-gen textarea:focus{outline:2px solid var(--accent2);outline-offset:1px}
+.n-genrow{display:flex;align-items:center;gap:10px;margin-top:8px}
+.n-generr{flex:1 1 auto;font-size:12.5px;color:#b4472f;min-height:16px}
+dialog#allNotes .n-gen .btn.go{background:var(--accent);border:1px solid var(--accent);color:#fff;
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;
+  text-transform:uppercase;padding:7px 13px;border-radius:2px;cursor:pointer;white-space:nowrap}
+
+/* ================= the Office ================= */
+body:not(.on-office) #officeroot{display:none}
+#officeroot{padding-top:4px}
+
+.oflock{display:flex;justify-content:center;padding:34px 0 10px}
+.ofbox{max-width:430px;width:100%;background:var(--surface);border:1px solid var(--line);
+  border-radius:3px;padding:26px 26px 22px;box-shadow:var(--shadow);text-align:left}
+.oficon{width:34px;height:34px;color:var(--ink3);display:block;margin-bottom:10px}
+.ofbox h2{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:24px;
+  margin:0 0 8px;letter-spacing:.01em}
+.ofbox p{margin:0 0 16px;color:var(--ink2);font-size:13.5px;line-height:1.6}
+.ofbox label{display:block;font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.ofbox input{width:100%;box-sizing:border-box;padding:9px 11px;font-size:16px;
+  background:var(--bg);color:var(--ink);border:1px solid var(--line2);border-radius:2px}
+.ofbox input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.ofErr{min-height:17px;margin:7px 0 10px;font-size:12.5px;color:#b4472f}
+.ofbox .btn.go{width:100%;padding:10px;background:var(--accent);border:1px solid var(--accent);
+  color:#fff;font-family:var(--narrow),sans-serif;font-weight:700;font-size:13px;
+  letter-spacing:.07em;text-transform:uppercase;border-radius:2px;cursor:pointer}
+.ofsmall{margin:14px 0 0 !important;font-size:12px;color:var(--ink3);line-height:1.55}
+
+.ofbar{border-bottom:1px solid var(--line2)}
+.ofsubs{display:flex;gap:2px}
+.ofsubs .btn,.ofbar .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer}
+.ofsubs .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.ofbar .btn:hover:not(:disabled):not([aria-pressed="true"]){color:var(--ink);border-color:var(--ink3)}
+#ofLock{margin-left:8px}
+
+.oftrips{display:flex;gap:6px;flex-wrap:wrap;padding:14px 0 4px}
+.oftrip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+  border:1px solid var(--line2) !important;background:var(--surface) !important;color:var(--ink2) !important;
+  padding:8px 13px !important;border-radius:2px;cursor:pointer;text-transform:none !important}
+.oftrip b{font-family:var(--narrow),sans-serif;font-weight:700;font-size:13.5px;letter-spacing:.03em;color:var(--ink)}
+.oftrip span{font-size:11.5px;color:var(--ink3)}
+.oftrip[aria-pressed="true"]{background:var(--accent) !important;border-color:var(--accent) !important}
+.oftrip[aria-pressed="true"] b,.oftrip[aria-pressed="true"] span{color:#fff}
+
+.ofstat{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0 14px}
+.ofstat > span:first-child{font-family:var(--narrow),sans-serif;font-size:13px;color:var(--ink2)}
+.ofstat b{font-size:16px;color:var(--ink)}
+.ofall{display:flex !important;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2);
+  text-transform:none !important;letter-spacing:0 !important;font-weight:400 !important;cursor:pointer}
+.ofall input{width:17px;height:17px;margin:0;accent-color:var(--accent);cursor:pointer}
+#ofFill{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer}
+#ofFill:hover{color:var(--ink);border-color:var(--ink3)}
+
+.ofslot .dhead{cursor:pointer}
+.ofslotname{display:flex;flex-direction:column;gap:1px;flex:1 1 auto !important;min-width:0}
+.ofslotname b{font-family:var(--narrow),sans-serif;font-weight:700;font-size:15px;letter-spacing:.05em}
+.ofsub{font-size:11.5px;color:var(--ink3)}
+.ofwho{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:18px;
+  color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%}
+.ofwho.ofopen{color:var(--none);font-weight:700;font-size:14px;font-family:var(--narrow),sans-serif;
+  letter-spacing:.07em;text-transform:uppercase}
+.ofclear{border:1px solid var(--line2);background:var(--surface);color:var(--ink3);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;padding:4px 9px;border-radius:2px;cursor:pointer}
+.ofclear:hover{color:#b4472f;border-color:#b4472f}
+
+.ofnow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 15px;
+  background:var(--chip);border-bottom:1px solid var(--line)}
+.ofnow b{font-family:var(--narrow),sans-serif;font-weight:700;font-size:14px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ofnow{background:var(--surface2)}}
+:root[data-theme="dark"] .ofnow{background:var(--surface2)}
+
+.ofrow{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr) auto;gap:12px;
+  align-items:center;width:100%;text-align:left;padding:10px 15px;
+  background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;font:inherit;color:inherit}
+.ofrow:last-child{border-bottom:0}
+.ofrow:hover{background:var(--chip)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ofrow:hover{background:var(--surface2)}}
+:root[data-theme="dark"] .ofrow:hover{background:var(--surface2)}
+.ofname{font-family:var(--narrow),sans-serif;font-weight:700;font-size:14px;color:var(--ink);
+  display:flex;align-items:center;gap:7px}
+.ofsug{font-family:var(--narrow),sans-serif;font-weight:700;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);
+  border-radius:2px;padding:1px 5px}
+.ofwhy{font-size:12.5px;color:var(--ink3);line-height:1.45}
+.oftags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+
+.ofaside{margin:14px 0 0;padding:11px 14px;border-left:3px solid var(--line2);background:var(--chip);
+  border-radius:0 2px 2px 0}
+.ofaside b{font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink2)}
+.ofaside p{margin:4px 0 0;font-size:13px;color:var(--ink2);line-height:1.55}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ofaside{background:var(--surface2)}}
+:root[data-theme="dark"] .ofaside{background:var(--surface2)}
+
+@media (max-width:620px){
+  .ofbox{padding:20px}
+  .ofbar .wknow{order:1}
+  .ofsubs{order:4;width:100%;padding-top:8px}
+  #ofLock{order:5;margin:8px 0 0}
+  .ofwho{max-width:none;font-size:16px}
+  .ofslot .dhead{flex-wrap:wrap;gap:8px}
+  .ofrow{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:10px 12px}
+  .ofname{grid-column:1;grid-row:1}
+  .oftags{grid-column:2;grid-row:1}
+  .ofwhy{grid-column:1/3;grid-row:2}
+}
+
+/* The roster: hidden on screen, the only thing the depth chart puts on paper. */
+.ofroster{display:none}
+.ofroster h2{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:30px;margin:0}
+.ofrwhen{margin:2px 0 16px;font-size:14px;color:#333}
+.ofrtab{border-collapse:collapse;width:100%;max-width:420px}
+.ofrtab th,.ofrtab td{border-bottom:1px solid #000;padding:11px 4px;text-align:left;font-size:16px}
+.ofrtab th{font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;width:92px;vertical-align:middle}
+.ofropen{color:#777;font-style:italic}
+.ofnoprint{display:none}
+.ofnoprint h2{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:22px;margin:0 0 6px}
+.ofnoprint p{margin:0;font-size:14px;line-height:1.6;color:#333;max-width:52ch}
+.ofrnote{margin:14px 0 0;font-size:13px;color:#555}
+
+/* ---- the worker log ---- */
+.oflogtools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 0 12px}
+.oflogtools .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer}
+.oflogtools .btn:hover:not([aria-pressed="true"]):not(.ofnew){color:var(--ink);border-color:var(--ink3)}
+.oflogtools .btn.ofnew{background:var(--accent);border-color:var(--accent);color:#fff}
+.offilter{display:flex;align-items:center;gap:7px;font-family:var(--narrow),sans-serif;
+  font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.offilter select{font:13px "Archivo",sans-serif;padding:6px 8px;border:1px solid var(--line2);
+  border-radius:2px;background:var(--surface);color:var(--ink);text-transform:none;letter-spacing:0}
+
+.oflogform{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  padding:16px 18px 14px;margin:0 0 16px;box-shadow:var(--shadow)}
+.oflogform h3{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:19px;
+  margin:0 0 12px;letter-spacing:.01em}
+.offgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px 14px;margin-bottom:11px}
+.offf{display:block;font-family:var(--narrow),sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)}
+.offf.offwide{margin-bottom:11px}
+.offf input[type="date"],.offf input[type="time"],.offf input[type="text"],
+.offf select,.offf textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;
+  font:14px "Archivo",sans-serif;padding:7px 9px;border:1px solid var(--line2);border-radius:2px;
+  background:var(--bg);color:var(--ink);text-transform:none;letter-spacing:0;font-weight:400}
+.offf textarea{line-height:1.5;resize:vertical}
+.offf :focus{outline:2px solid var(--accent);outline-offset:1px}
+.offf input:disabled,.offf select:disabled{opacity:.55;cursor:not-allowed}
+.offf.offcheck{display:flex;align-items:center;gap:8px;align-self:end;padding-bottom:8px;
+  text-transform:none;letter-spacing:0;font-weight:400;font-size:13px;color:var(--ink2);
+  font-family:"Archivo",sans-serif;cursor:pointer}
+.offf.offcheck input{width:17px;height:17px;margin:0;accent-color:var(--accent);flex:0 0 auto}
+.offrow{display:flex;justify-content:flex-end;gap:9px}
+.offrow .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:7px 13px;border-radius:2px;cursor:pointer}
+.offrow .btn.go{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.oflog .oflogh{gap:10px;flex-wrap:wrap;border-left-width:3px;border-left-style:solid}
+.oflog.ofk-con .oflogh{border-left-color:#b4472f}
+.oflog.ofk-pro .oflogh{border-left-color:var(--done)}
+.oflog.ofk-neutral .oflogh{border-left-color:var(--line2)}
+.ofdate{font-family:var(--narrow),sans-serif;font-weight:700;font-size:13px;letter-spacing:.05em;
+  color:var(--ink3);white-space:nowrap}
+.ofperson{font-family:var(--narrow),sans-serif;font-weight:700;font-size:15.5px;color:var(--ink)}
+.ofcat{font-family:var(--narrow),sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;border:1px solid currentColor;border-radius:2px;padding:2px 7px;white-space:nowrap}
+.ofc-con{color:#b4472f}
+.ofc-pro{color:var(--done)}
+.ofc-neutral{color:var(--ink3)}
+.oftimes,.ofmsg{font-family:var(--narrow),sans-serif;font-size:12px;color:var(--ink3);white-space:nowrap}
+.ofmsg{font-style:italic}
+.oflogb{padding:12px 15px}
+.ofwhat{margin:0;font-size:14px;line-height:1.6;color:var(--ink);white-space:pre-wrap}
+.ofout{margin:9px 0 0;font-size:13.5px;line-height:1.6;color:var(--ink2);white-space:pre-wrap}
+.ofout b{font-family:var(--narrow),sans-serif;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink3);margin-right:7px}
+.ofby{margin:9px 0 0;font-family:var(--narrow),sans-serif;font-size:11.5px;letter-spacing:.05em;color:var(--ink3)}
+
+.oftally{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+  overflow-x:auto;box-shadow:var(--shadow)}
+.oftally table{width:100%;border-collapse:collapse;font-size:13.5px}
+.oftally th,.oftally td{padding:10px 12px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+.oftally thead th{font-family:var(--narrow),sans-serif;font-weight:700;font-size:10.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);text-align:center}
+.oftally tbody th{text-align:left}
+.oftally tbody tr:last-child th,.oftally tbody tr:last-child td{border-bottom:0}
+.oflink{background:none;border:0;padding:0;font:inherit;font-family:var(--narrow),sans-serif;
+  font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;text-align:left}
+.oflink:hover{color:var(--accent);text-decoration:underline}
+.ofnet{font-family:var(--narrow),sans-serif;font-weight:700;font-size:15px}
+.ofnet.ofpos{color:var(--done)}
+.ofnet.ofneg{color:#b4472f}
+
+.ofprephead{padding:4px 0 14px;border-bottom:1px solid var(--line2);margin-bottom:14px}
+.ofprephead h2{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:28px;margin:0;letter-spacing:.01em}
+.ofprephead p{margin:4px 0 0;font-size:13px;color:var(--ink3)}
+
+@media (max-width:620px){
+  .oflogtools{gap:8px}
+  .offgrid{grid-template-columns:1fr}
+  .oflog .oflogh{gap:7px}
+  .ofdate{width:100%}
+}
+
+/* On paper the Office gives you two things and nothing else: the trip
+   roster off the depth chart, and one person's page out of the worker log.
+   Everything else here is either a control or a record that should not be
+   coming out of a printer by accident. */
+@media print{
+  #officeroot .ofbar,#officeroot .oftrips,#officeroot .ofstat,#officeroot .ofslot,
+  #officeroot .ofaside,#officeroot .oflogtools,#officeroot .oflogform,
+  #officeroot .ofclear,#officeroot .ofprepfoot{display:none !important}
+  body.of-depth .ofroster{display:block !important}
+  body.on-office:not(.of-depth):not(.of-prep) .ofnoprint{display:block !important}
+  /* the log only prints as the one-on-one page */
+  body.on-office:not(.of-prep) .oflog,
+  body.on-office:not(.of-prep) .oftally,
+  body.on-office:not(.of-prep) .ofprephead{display:none !important}
+  body.of-prep .oflog{break-inside:avoid;border:1px solid #000;box-shadow:none;margin-bottom:9px}
+  body.of-prep .ofcat{border-color:#000;color:#000}
+  body.of-prep .ofprephead h2{font-size:24px}
+}
+
+/* ================= the purchase list ================= */
+body:not(.on-buy) #buyroot{display:none}
+#buyroot{padding-top:4px}
+#buyroot .wkctx b{color:var(--ink);font-size:16px;font-family:var(--narrow),sans-serif}
+
+.buyhead{gap:11px;cursor:pointer}
+.buybox{appearance:none;-webkit-appearance:none;width:22px;height:22px;min-width:22px;border-radius:5px;
+  border:1.5px solid var(--line2);background:var(--surface);cursor:pointer;display:grid;place-items:center;margin:0}
+.buybox:checked{background:var(--done);border-color:var(--done)}
+.buybox:checked::after{content:"";display:block;width:11px;height:6px;
+  border-left:2.4px solid #fff;border-bottom:2.4px solid #fff;transform:rotate(-45deg) translate(1px,-1.5px)}
+.buybox:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.buywhat{display:flex;flex-direction:column;gap:1px;flex:1 1 auto !important;min-width:0}
+.buywhat b{font-family:var(--narrow),sans-serif;font-weight:700;font-size:16px;line-height:1.25}
+.buytop{display:flex;align-items:baseline;gap:8px;min-width:0}
+.buytop b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.buyqty{font-family:var(--narrow),sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;
+  color:var(--accent2);white-space:nowrap;flex:0 0 auto}
+.buynote{font-size:12.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46ch}
+.buybest,.buyspent{font-family:var(--narrow),sans-serif;font-weight:700;font-size:16px;color:var(--ink);white-space:nowrap}
+.buybest i,.buyspent i{font-style:normal;font-size:11px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink3);margin-left:5px}
+.buyaddp{border:1px dashed var(--line2);background:none;color:var(--ink3);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;padding:5px 10px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.buyaddp:hover{color:var(--accent);border-color:var(--accent);border-style:solid}
+.buyspent{color:var(--done)}
+.buydrop{font-family:var(--narrow),sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink3);border:1px solid var(--line2);border-radius:2px;padding:2px 6px}
+.buydoneline .buywhat b{color:var(--ink3);text-decoration:line-through;text-decoration-color:var(--line2)}
+.buydropline{opacity:.62}
+.buybody{padding:13px 15px}
+
+.buydone{margin:0 0 12px;font-size:13.5px;color:var(--ink2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.buydone b{font-family:var(--narrow),sans-serif;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink3)}
+.buygot{background:var(--chip);border:1px solid var(--line);border-radius:3px;padding:13px 14px;margin:0 0 13px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .buygot{background:var(--surface2)}}
+:root[data-theme="dark"] .buygot{background:var(--surface2)}
+.buygot h4{font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink3);margin:0 0 10px}
+
+.vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:9px}
+.vcell{position:relative;display:flex;align-items:stretch}
+.vcell.vopen{grid-column:1/-1;flex-direction:column}
+.vchip{flex:1 1 auto;display:flex;flex-direction:column;gap:1px;align-items:flex-start;text-align:left;
+  background:var(--surface);border:1px solid var(--line2);border-radius:2px;padding:8px 10px;cursor:pointer;
+  font:inherit;color:inherit}
+.vchip:hover{border-color:var(--ink3)}
+.vname{font-family:var(--narrow),sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink3)}
+.vamt{font-family:var(--narrow),sans-serif;font-weight:700;font-size:17px;color:var(--ink);line-height:1.15}
+.vchip.vnone .vamt{color:var(--line2)}
+.vwhen,.vref{font-size:11px;color:var(--ink3)}
+.vref{font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.vchip.vbest{border-color:var(--done);box-shadow:inset 3px 0 0 var(--done)}
+.vchip.vbest .vamt{color:var(--done)}
+.vlink{flex:0 0 auto;display:grid;place-items:center;width:28px;border:1px solid var(--line2);
+  border-left:0;border-radius:0 2px 2px 0;color:var(--ink3);text-decoration:none;font-size:14px}
+.vlink:hover{color:var(--accent);border-color:var(--ink3)}
+
+.vform{margin-top:8px;padding:12px 13px;background:var(--chip);border:1px solid var(--line);border-radius:2px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 13px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .vform{background:var(--surface2)}}
+:root[data-theme="dark"] .vform{background:var(--surface2)}
+.vform label{display:block;font-family:var(--narrow),sans-serif;font-weight:700;font-size:10.5px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--ink3)}
+.vform input{display:block;width:100%;box-sizing:border-box;margin-top:4px;font:14px "Archivo",sans-serif;
+  padding:7px 9px;border:1px solid var(--line2);border-radius:2px;background:var(--bg);color:var(--ink);
+  text-transform:none;letter-spacing:0;font-weight:400}
+.vform input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.vrow{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.vrow .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer}
+.vrow .btn.go{background:var(--accent);border-color:var(--accent);color:#fff}
+.vrow .vclear:hover{color:#b4472f;border-color:#b4472f}
+.vhint{grid-column:1/-1;margin:0;font-size:11.5px;color:var(--ink3);line-height:1.5}
+
+.buyfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px;padding-top:11px;
+  border-top:1px solid var(--line);font-family:var(--narrow),sans-serif;font-size:11.5px;
+  letter-spacing:.04em;color:var(--ink3)}
+.buyform .buygrid{grid-template-columns:minmax(0,3fr) minmax(90px,1fr)}
+#byAdd{margin-left:8px}
+
+@media (max-width:620px){
+  .buyhead{flex-wrap:wrap;gap:9px}
+  .buywhat{flex:1 1 60% !important}
+  .buynote{max-width:100%;white-space:normal}
+  .vgrid{grid-template-columns:1fr 1fr}
+  .buyform .buygrid{grid-template-columns:1fr}
+  #byAdd{order:5;margin:8px 0 0}
+}
+
+@media print{
+  #buyroot .ofbar,#buyroot .buyfoot,#buyroot .vform,#buyroot .buygot,#buyroot .buyform{display:none !important}
+  #buyroot .buyline{break-inside:avoid;border:1px solid #000;box-shadow:none;margin-bottom:8px}
+  #buyroot .buyline.shut .dbody{display:block}
+  .vchip{border:1px solid #000}
+  .vchip.vbest{box-shadow:none;border-width:2px}
+}
+
+/* each chip keeps to one line, the row wraps instead of running off a phone */
+#buyroot .ofsubs{flex-wrap:wrap}
+#buyroot .ofsubs .btn{white-space:nowrap}
+@media print{ #buyroot .buyaddp{display:none !important} }
+
 </style>
 </head>
 <body>
@@ -1396,6 +1812,9 @@ dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--acc
       <button class="btn" data-tab="road" aria-pressed="false">Away Game</button>
       <button class="btn" data-tab="stay" aria-pressed="false">Staycation</button>
       <button class="btn" data-tab="bowl" aria-pressed="false">Bowl</button>
+      <button class="btn" data-tab="air" aria-pressed="false">Trackers</button>
+      <button class="btn" data-tab="buy" aria-pressed="false">Buy List</button>
+      <button class="btn" data-tab="office" aria-pressed="false">Office</button>
     </div>
     <span class="tsep bdonly" aria-hidden="true"></span>
     <div class="tgroup bdonly" role="group" aria-label="View">
@@ -1412,7 +1831,7 @@ dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--acc
       <button class="btn ibtn" id="fUndo" disabled aria-label="Undo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3 2.5 6.5 6 10M3 6.5h6.5a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button class="btn ibtn" id="fRedo" disabled aria-label="Redo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3l3.5 3.5L10 10M13 6.5H6.5a4 4 0 0 0 0 8H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="sync"><span class="dot" id="sdot"></span><span id="stext">Loading…</span></div>
-      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="hist">History</button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button><div class="gver" id="gVer"></div></div></span>
+      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="hist">History</button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button><button type="button" data-g="lock" hidden>Lock the office</button><div class="gver" id="gVer"></div></div></span>
     </div>
   </div>
 
@@ -1423,6 +1842,9 @@ dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--acc
   <div id="root"></div>
   <div id="weekroot"></div>
   <div id="packroot"></div>
+  <div id="airroot"></div>
+  <div id="buyroot"></div>
+  <div id="officeroot"></div>
   <nav class="quick" id="quick" aria-label="Jump to next opponent" hidden><button type="button" class="q-main" id="quickGo"></button><button type="button" class="q-top" id="quickTop" aria-label="Back to top"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 10 8 5.5 12.5 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></nav>
   <div class="key">
     <span><b>TV cut</b>: broadcast cutup, offense &amp; special teams</span>
@@ -1512,15 +1934,22 @@ dialog#allNotes label.n-showdone input:focus-visible{outline:2px solid var(--acc
       <label class="n-showdone"><input type="checkbox" id="nDone"> Show handled</label>
       <span class="n-count" id="nCount"></span>
     </div>
-    <p>Every note anyone has left, newest first. Each one says what it was attached to. Checking one off here marks it handled, which saves straight away. Copy puts the list on your clipboard, Download writes it to a text file.</p>
+    <form class="n-gen" id="nGenForm">
+      <textarea id="nGen" rows="2" maxlength="2000" placeholder="Something to remember that isn&rsquo;t about one checkbox"></textarea>
+      <div class="n-genrow">
+        <span class="n-generr" id="nGenErr" role="alert"></span>
+        <button type="submit" class="btn go">Add a general note</button>
+      </div>
+    </form>
+    <p>Every note anyone has left, newest first. Notes left on a checkbox say what they were attached to; general ones say General note. Checking one off here marks it handled, which saves straight away. Copy puts the list on your clipboard, Download writes it to a text file.</p>
     <textarea id="nFallback" hidden readonly aria-label="Notes text"></textarea>
     <div class="h-list" id="nAll"></div>
   </div>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=3.10"></script>
-<script src="app.js?v=3.10"></script>
+<script src="config.js?v=5.1"></script>
+<script src="app.js?v=5.1"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),

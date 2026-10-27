@@ -1300,6 +1300,15 @@
   }
   function wkDayDate(sun,i){ var d=new Date(sun.getTime()); d.setDate(d.getDate()+i); return d; }
   function wkId(sun,sheet,t){ return "wk|"+ckISO(sun)+"|"+WK_DAYS[sheet].k+"|"+ckSlug(t); }
+  /* The explainer that used to sit at the bottom of every tab, every day,
+     forever. Still here when somebody new needs it, folded away when they
+     do not. The browser remembers nothing, which is right: closed is the
+     default and opening it is one click. */
+  function howto(html,label){
+    return '<details class="howto"><summary>'+(label||"How this tab works")+'</summary>'
+      + '<div class="howbody">'+html+'</div></details>';
+  }
+
   function ckNice(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
 
   /* A week date can still be a flex window the conference has not set, like
@@ -1542,10 +1551,11 @@
         +'Bowl prep lives on the <button type="button" class="qlink" data-golist="bowl">Bowl</button> tab.</div>';
     } else if(g&&!g.bye&&g.i<6){
       banner='<div class="wkshort"><b>Short week.</b> Kickoff is '+WK_DAYS[g.i].n+'. '
+        +'The count on each card is days to kickoff.'
+        +'<details class="wkwhy"><summary>What moved</summary><div>'
         +'The game-day list slid onto '+WK_DAYS[g.i].n+'. The semi load and the box pack moved with it, '
         +'and the staff-meeting travel list and the huddlebox charge stayed the same number of days from kickoff. '
-        +'The rest kept its weekday. '
-        +'The count on each card is days to kickoff.</div>';
+        +'The rest kept its weekday.</div></details></div>';
     }
 
     /* Focus mode: today only, no week bar, no other days. The phone lands
@@ -1589,9 +1599,9 @@
       + '</div>'
       + banner
       + '<div class="wkdays">'+cards+'</div>'
-      + '<p class="foot ckfoot">Straight off your <b>DO NOT FORGET THIS SHIZ</b> sheet. <b>STUDENT</b> marks the items the sheet flags as a weekly student task. '
+      + howto('Straight off your <b>DO NOT FORGET THIS SHIZ</b> sheet. <b>STUDENT</b> marks the items the sheet flags as a weekly student task. '
       + 'Anything left unticked from earlier in the week rides along at the top of today, under Past due, and ticking it there ticks it on its own day too. '
-      + 'Boxes are keyed to the week, so every week starts empty on its own and the weeks behind you stay on the record.</p>';
+      + 'Boxes are keyed to the week, so every week starts empty on its own and the weeks behind you stay on the record.');
   }
 
   (function(){
@@ -1753,9 +1763,9 @@
       + (key==="semi"?semiBar(w):"")
       + (p.sub?'<p class="pksub">'+esc(p.sub)+'</p>':"")
       + '<div class="wkdays">'+body+notes+'</div>'
-      + '<p class="foot ckfoot">'+esc(p.name)+' off your travel sheet. '
+      + howto(esc(p.name)+' off your travel sheet. '
       + (p.scope==="season"?'One list for the season.':'Boxes are keyed to the game above, so every trip starts empty on its own and past trips stay on the record.')
-      + ' Checkmarks are shared: everyone with this link sees the same list.</p>';
+      + ' Checkmarks are shared: everyone with this link sees the same list.');
   }
 
   /* "Loads Wednesday, two days before kickoff" plus a day picker, because
@@ -1904,10 +1914,14 @@
   function showTab(which){
     TAB=which;
     var onBoard=which==="board", onWeek=which==="week", onPack=!!PACKS[which];
+    var onAir=which==="air", onOffice=which==="office", onBuy=which==="buy";
     var b=document.body;
     b.classList.toggle("wk-mode",!onBoard);
     b.classList.toggle("on-week",onWeek);
     b.classList.toggle("on-pack",onPack);
+    b.classList.toggle("on-air",onAir);
+    b.classList.toggle("on-office",onOffice);
+    b.classList.toggle("on-buy",onBuy);
     [].forEach.call(document.querySelectorAll(".tabg .btn"),function(t){
       t.setAttribute("aria-pressed",t.getAttribute("data-tab")===which?"true":"false");
     });
@@ -1915,13 +1929,14 @@
     if(h){
       if(!h.getAttribute("data-board")) h.setAttribute("data-board",h.textContent);
       h.textContent=onBoard?h.getAttribute("data-board")
-        :(onWeek?"Weekly Checklist":PACKS[which].name);
+        :(onWeek?"Weekly Checklist":(onAir?"Trackers":(onOffice?"Office":(onBuy?"Purchase List":PACKS[which].name))));
     }
     var pm=document.querySelector(".printmeta");
     if(pm){
       if(!pm.getAttribute("data-board")) pm.setAttribute("data-board",pm.innerHTML);
       pm.innerHTML=onBoard?pm.getAttribute("data-board")
-        :'Printed <span id="printDate"></span><span class="pm-sep"></span>Done by ____________';
+        :((onOffice||onBuy)?'Printed <span id="printDate"></span>'
+                  :'Printed <span id="printDate"></span><span class="pm-sep"></span>Done by ____________');
       try{ stampPrint(); }catch(e){}
     }
     var tb=document.querySelector('.tabg .btn[data-tab="'+which+'"]');
@@ -1929,15 +1944,142 @@
     lsSet("fpb_tab",which);
     if(onWeek) renderWeek();
     if(onPack) renderPack(which);
+    if(onAir) renderAir();
+    if(onOffice){ renderOffice(); if(officeCode()&&!OFF) officeBoot(); }
+    if(onBuy) renderBuy();
     window.scrollTo({top:0,behavior:"auto"});
   }
   function renderCurrentList(){
     if(TAB==="week") renderWeek();
+    else if(TAB==="air") renderAir();
+    else if(TAB==="office") renderOffice();
+    else if(TAB==="buy") renderBuy();
     else if(PACKS[TAB]) renderPack(TAB);
   }
   [].forEach.call(document.querySelectorAll(".tabg .btn"),function(t){
     t.addEventListener("click",function(){ showTab(t.getAttribute("data-tab")); });
   });
+
+  /* ================================================================
+     Trackers: an index of the Airtable bases, tables and views, so the
+     site is the front door and Airtable stays the app. The list comes
+     from trackers.json, which a GitHub Action rebuilds from Airtable's
+     metadata API. That API returns the shape of a base and none of its
+     records, so nothing anybody typed into Airtable passes through here.
+     ================================================================ */
+  var airroot=document.getElementById("airroot");
+  var TRK=null, trkState={};
+
+  async function loadTrackers(){
+    try{
+      var r=await fetch("trackers.json?t="+Date.now(),{cache:"no-cache"});
+      if(!r.ok) throw 0;
+      TRK=await r.json();
+    }catch(e){ TRK=null; }
+  }
+  function trkLink(baseId,tableId,viewId){
+    return "https://airtable.com/"+baseId+"/"+tableId+(viewId?"/"+viewId:"");
+  }
+  function trkWhen(iso){
+    if(!iso) return "";
+    var d=new Date(iso); if(isNaN(d)) return "";
+    return d.toLocaleDateString("en-US",{month:"short",day:"numeric"})
+      +" "+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+  }
+
+  function renderAir(){
+    if(!airroot) return;
+    if(!TRK||!TRK.bases||!TRK.bases.length){
+      airroot.innerHTML=
+        '<div class="airsetup">'
+        + '<h2>Not connected to Airtable yet</h2>'
+        + '<p>This tab lists every table in your Airtable bases and links straight to them, '
+        + 'so you land in the real Airtable with editing and AI rather than a read-only copy. '
+        + 'The list rebuilds itself whenever you add or rename a table.</p>'
+        + '<ol>'
+        + '<li>In Airtable: your avatar, <b>Builder hub</b>, <b>Personal access tokens</b>, <b>Create token</b>.</li>'
+        + '<li>Give it one scope only: <code>schema.bases:read</code>. Add the bases you want listed.</li>'
+        + '<li>Copy the token. You only get to see it once.</li>'
+        + '<li>In GitHub: <b>Vyhnny/film-board</b>, Settings, Secrets and variables, Actions, '
+        + '<b>New repository secret</b>, named <code>AIRTABLE_TOKEN</code>.</li>'
+        + '<li>Actions tab, <b>Refresh Airtable tracker links</b>, <b>Run workflow</b>.</li>'
+        + '</ol>'
+        + '<p class="airnote">That scope reads the shape of a base and none of its contents. It can see that '
+        + 'a table called Student Stuff exists. It cannot read a row out of it.</p>'
+        + '</div>';
+      return;
+    }
+    var tabs=0, views=0;
+    TRK.bases.forEach(function(b){ tabs+=b.tables.length;
+      b.tables.forEach(function(t){ views+=(t.views||[]).length; }); });
+
+    var body="";
+    TRK.bases.forEach(function(b){
+      body+='<div class="pkhead"><b>'+esc(b.name)+'</b>'
+          + '<span>'+b.tables.length+' table'+(b.tables.length===1?"":"s")
+          + ' &middot; <a class="trklink" href="'+esc(trkLink(b.id,""))+'" target="_blank" rel="noopener noreferrer">open the base</a></span></div>';
+      if(!b.tables.length){ body+='<p class="dempty">No tables in this base.</p>'; return; }
+      b.tables.forEach(function(t){
+        var vs=t.views||[], k=b.id+"|"+t.id, open=!!trkState[k];
+        body+='<section class="dcard pkgroup trkcard'+(open?"":" shut")+'" data-trk="'+esc(k)+'">'
+          + '<div class="dhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
+          + '<span class="dmeta"><b>'+esc(t.name)+'</b>'
+          + (t.desc?'<span class="ddate">'+esc(t.desc)+'</span>':"")+'</span>'
+          + '<span class="trkn">'+vs.length+' view'+(vs.length===1?"":"s")
+          + (t.fields?' &middot; '+t.fields+' field'+(t.fields===1?"":"s"):"")+'</span>'
+          + '<a class="btn trkgo" href="'+esc(trkLink(b.id,t.id,vs.length?vs[0].id:""))+'" '
+          + 'target="_blank" rel="noopener noreferrer">Open</a>'
+          + '<span class="caret" aria-hidden="true">&#9662;</span></div>'
+          + '<div class="dbody">';
+        if(!vs.length) body+='<p class="dempty">No views.</p>';
+        vs.forEach(function(v){
+          body+='<a class="trow trkrow" href="'+esc(trkLink(b.id,t.id,v.id))+'" target="_blank" rel="noopener noreferrer">'
+            + '<span class="trkdot" aria-hidden="true"></span>'
+            + '<span class="tmain"><span class="tname">'+esc(v.name)+'</span></span>'
+            + '<span class="tflags">'+(v.type?'<span class="tqty">'+esc(v.type)+'</span>':"")+'</span>'
+            + '<span class="trkarrow" aria-hidden="true">&#8599;</span></a>';
+        });
+        body+='</div></section>';
+      });
+    });
+
+    airroot.innerHTML=
+      '<div class="airbar">'
+      + '<span class="wknow">Trackers</span>'
+      + '<span class="wkctx">'+TRK.bases.length+' base'+(TRK.bases.length===1?"":"s")
+      + ' &middot; '+tabs+' table'+(tabs===1?"":"s")+' &middot; '+views+' view'+(views===1?"":"s")+'</span>'
+      + '<span class="wksp"></span>'
+      + '<span class="trkwhen">'+(TRK.built?"Listed "+esc(trkWhen(TRK.built)):"")+'</span>'
+      + '<button class="btn" id="trkAll">Expand</button>'
+      + '<button class="btn" id="trkShut">Collapse</button>'
+      + '</div>'
+      + '<div class="wkdays">'+body+'</div>'
+      + howto('Every link opens Airtable itself, so editing, search and Airtable’s AI all work '
+      + 'and its own permissions still apply. This page only knows the names of your tables and views, never what is in them. '
+      + 'Add or rename a table in Airtable and it shows up here on the next refresh.');
+  }
+
+  if(airroot){
+    airroot.addEventListener("click",function(e){
+      if(!e.target.closest) return;
+      if(e.target.closest("a")) return;                 /* let links be links */
+      if(e.target.closest("#trkAll")||e.target.closest("#trkShut")){
+        var on=!!e.target.closest("#trkAll");
+        (TRK&&TRK.bases||[]).forEach(function(b){ b.tables.forEach(function(t){ trkState[b.id+"|"+t.id]=on; }); });
+        renderAir(); return;
+      }
+      var h=e.target.closest(".trkcard .dhead"); if(!h) return;
+      var card=h.parentNode, k=card.getAttribute("data-trk");
+      trkState[k]=!trkState[k];
+      card.classList.toggle("shut",!trkState[k]);
+      h.setAttribute("aria-expanded",trkState[k]?"true":"false");
+    });
+    airroot.addEventListener("keydown",function(e){
+      if(e.key!=="Enter"&&e.key!==" ") return;
+      var h=e.target.closest&&e.target.closest(".trkcard .dhead"); if(!h) return;
+      e.preventDefault(); h.click();
+    });
+  }
 
   /* ================================================================
      Notes. Right-click (or long-press) any checkbox on any tab to
@@ -1949,6 +2091,7 @@
   var allDlg=document.getElementById("allNotes");
   var noteRef="", noteLabel="";
   var noteQ="", noteShowDone=false;
+  var GENREF="general", GENLABEL="General note";
 
   /* A half-typed note is kept as a draft on this device until you either
      click Add note or clear the box. Closing the window does not lose it. */
@@ -2113,7 +2256,7 @@
     else if(!noteShowDone) out.splice(2,0,"Handled notes hidden");
     if(!list.length) out.push("(none)");
     list.forEach(function(n){
-      out.push((n.done?"[x] ":"[ ] ")+(n.label||"(not attached)"));
+      out.push((n.done?"[x] ":"[ ] ")+(n.label||GENLABEL));
       out.push("    "+n.body.replace(/\n/g,"\n    "));
       out.push("    "+(n.who||"Someone")+", "+shortDate(n.created_at));
       out.push("");
@@ -2128,12 +2271,12 @@
     if(head) head.textContent=list.length+" shown"+(hid?", "+hid+" hidden":"");
     var cp=document.getElementById("nCopy");
     if(cp&&cp.textContent.indexOf("Copied")<0) cp.textContent="Copy "+list.length;
-    if(!NOTES.length){ box.innerHTML='<p class="h-empty">No notes yet. Right-click any checkbox to leave one.</p>'; return; }
+    if(!NOTES.length){ box.innerHTML='<p class="h-empty">No notes yet. Right-click any checkbox to leave one there, or use the box above for anything that is not about one checkbox.</p>'; return; }
     if(!list.length){ box.innerHTML='<p class="h-empty">Nothing matches. Clear the filter, or tick Show handled.</p>'; return; }
     box.innerHTML=list.map(function(n){
       return '<div class="h-row n-all'+(n.done?" ndone":"")+'">'
         + '<input type="checkbox" class="nchk" data-note-id="'+n.id+'"'+(n.done?" checked":"")+' aria-label="Mark handled">'
-        + '<span class="h-what"><b>'+esc(n.label||"(not attached)")+'</b>'
+        + '<span class="h-what"><b>'+esc(n.label||GENLABEL)+'</b>'
         + '<span class="n-body">'+esc(n.body)+'</span>'
         + '<span class="h-when">'+esc((n.who||"Someone")+" · "+shortDate(n.created_at))+'</span></span>'
         + '<button type="button" class="btn n-del" data-note-del="'+n.id+'">Delete</button></div>';
@@ -2143,9 +2286,30 @@
     if(!allDlg) return;
     if(allDlg.showModal) allDlg.showModal(); else allDlg.setAttribute("open","");
     document.getElementById("nAll").innerHTML='<p class="h-empty">Loading…</p>';
+    var g=document.getElementById("nGen");
+    if(g){ g.value=draftFor(GENREF); document.getElementById("nGenErr").textContent=""; }
     await loadNotes(); drawAllNotes(); paintNoteMarks(); syncGearBadge();
   }
   if(allDlg){
+    /* a note that is not about any one checkbox: it hangs on nothing and
+       shows up in the same list, the dump and the gear count */
+    var genForm=document.getElementById("nGenForm");
+    if(genForm) genForm.addEventListener("submit",async function(e){
+      e.preventDefault();
+      var box=document.getElementById("nGen"), err=document.getElementById("nGenErr");
+      var body=box.value.trim();
+      if(!body){ err.textContent="Type the note first."; box.focus(); return; }
+      err.textContent="Saving…";
+      var bad=await noteRpc("add_note",{p_ref:GENREF,p_label:GENLABEL,p_body:body,p_who:lsGet("fpb_who")||""});
+      if(bad){ err.textContent=bad; return; }
+      err.textContent=""; box.value=""; setDraft(GENREF,"");
+      await loadNotes(); drawAllNotes(); syncGearBadge();
+      flash("Note saved.");
+    });
+    if(genForm) document.getElementById("nGen").addEventListener("input",function(e){
+      setDraft(GENREF,e.target.value);
+      document.getElementById("nGenErr").textContent="";
+    });
     document.getElementById("nClose").addEventListener("click",function(){ allDlg.close?allDlg.close():allDlg.removeAttribute("open"); });
     document.getElementById("nFind").addEventListener("input",function(e){ noteQ=e.target.value; drawAllNotes(); });
     document.getElementById("nDone").addEventListener("change",function(e){ noteShowDone=e.target.checked; drawAllNotes(); });
@@ -2263,12 +2427,15 @@
      run in Supabase, MINOR when only index.html and app.js change. The
      check below is what actually matters: it asks the database what it
      has rather than trusting the number. */
-  var VER="3.10";
+  var VER="5.1";
   var DBNEED=[{t:"checks",sql:"setup.sql"},
               {t:"check_log",sql:"database-update.sql"},
               {t:"candidates",sql:"database-update.sql"},
               {t:"notes",sql:"notes-setup.sql"},
-              {t:"settings",sql:"notes-setup.sql"}];
+              {t:"settings",sql:"notes-setup.sql"},
+              {t:"buy",sql:"buy-setup.sql"}];
+  /* the Office tables are deliberately unreadable, so a select on them
+     always fails and tells us nothing. The Office tab reports itself. */
   var DBMISS=[];
   async function checkDb(){
     DBMISS=[];
@@ -2341,6 +2508,990 @@
   }
   (function(){ var t=lsGet("fpb_theme"); if(t) document.documentElement.setAttribute("data-theme",t); })();
 
+  /* ================================================================
+     The Office: the part of the site that is not public.
+     Its tables have row level security on and no read policy at all,
+     so the key in this page cannot see a row of them. Everything here
+     goes through office_read / set_assign, which check a SECOND code,
+     the office code, that students do not get.
+     ================================================================ */
+  var officeroot=document.getElementById("officeroot");
+  var OFF=null;                       /* {crew, assign, log} once unlocked */
+  var OKEY="fvo_office";              /* the office code, on this device */
+  var oSub="depth";
+  var oBusy=false;
+
+  function officeCode(){ return lsGet(OKEY)||""; }
+  function isUnlocked(){ return !!officeCode()&&!!OFF; }
+
+  async function officeRpc(fn,args){
+    if(!sb) return {err:"Not connected."};
+    args=args||{}; args.p_code=officeCode();
+    var r;
+    try{ r=await sb.rpc(fn,args); }catch(e){ r={error:e}; }
+    if(r.error){
+      var m=String(r.error.message||"");
+      if(/does not exist|schema|function/i.test(m)) return {err:"Run office-setup.sql in Supabase first."};
+      if(/office code/i.test(m)){ lsDel(OKEY); OFF=null; return {err:"That office code is not right."}; }
+      return {err:"That did not go through. Try again."};
+    }
+    return {data:r.data};
+  }
+
+  async function officeLoad(){
+    var r=await officeRpc("office_read",{});
+    if(r.err){ OFF=null; return r.err; }
+    var d=r.data||{};
+    OFF={crew:d.crew||[],assign:d.assign||[],log:d.log||[]};
+    return "";
+  }
+
+  function lockOffice(){
+    lsDel(OKEY); OFF=null;
+    document.body.classList.remove("of-prep","of-depth");
+    if(TAB==="office") renderOffice();
+    syncLockItem();
+    flash("Office locked.");
+  }
+
+  /* ---------------- the away trips, off the real schedule ---------------- */
+  function oGames(){
+    var out=[];
+    (DATA.weeks||[]).forEach(function(w){ if(w.site==="A") out.push(w); });
+    try{ postWeeks().forEach(function(w){
+      if(w.official&&w.date&&(w.site==="A"||w.site==="N")) out.push(w); }); }catch(e){}
+    return out.filter(function(w){
+      var p=wkDate(w); if(!p) return false;
+      var d=new Date(p.y,p.mo,p.d); d.setHours(23,59,59);
+      return d.getTime()>Date.now()-86400000*2;        /* drop trips already gone */
+    });
+  }
+  function oGameKey(w){ return O_KEY[w.opp]||ckSlug(w.opp); }
+
+  /* ---------------- how available a person is for one trip ---------------- */
+  var O_SLOTS=[["SL","SL"],["EZ","EZ"],["EZ2","EZ2"],["BOOTH","Booth"],["IPADS","iPads"]];
+  var O_ORDER=["req","flex","unranked","nosheet"];
+  function oNeed(slot){ return slot==="SL"?"SL":(slot==="EZ"||slot==="EZ2")?"EZ":""; }
+  function oList(v){ return Array.isArray(v)?v:[]; }
+  function oObj(v){ return (v&&typeof v==="object"&&!Array.isArray(v))?v:{}; }
+
+  function oStatus(p,key){
+    if(p.grp==="out") return {t:"out",label:p.out_note||"Not traveling"};
+    if(oList(p.cant).indexOf(key)>-1) return {t:"cant",label:"Can't go"};
+    if(!p.on_sheet) return {t:"nosheet",label:"No preference sheet"};
+    if(p.flex) return {t:"flex",label:"Flexible, any trip"};
+    var r=oObj(p.ranks)[key];
+    if(r) return {t:"req",label:"Asked for this trip, ranked "+r,rank:r};
+    return {t:"unranked",label:"Did not rank this trip"};
+  }
+  function oFree(t){ return O_ORDER.indexOf(t)>-1; }
+
+  function oBench(key,slot,takenIds){
+    var need=oNeed(slot);
+    return OFF.crew.filter(function(p){
+      if(takenIds.indexOf(p.id)>-1) return false;
+      if(!oFree(oStatus(p,key).t)) return false;
+      if(!oShowUntagged&&need&&oList(p.tags).indexOf(need)<0) return false;
+      return true;
+    }).sort(function(x,y){
+      if(need){
+        var tx=oList(x.tags).indexOf(need)>-1?0:1, ty=oList(y.tags).indexOf(need)>-1?0:1;
+        if(tx!==ty) return tx-ty;
+      }
+      var sx=oStatus(x,key), sy=oStatus(y,key);
+      var ox=O_ORDER.indexOf(sx.t), oy=O_ORDER.indexOf(sy.t);
+      if(ox!==oy) return ox-oy;
+      if(sx.rank&&sy.rank&&sx.rank!==sy.rank) return sx.rank-sy.rank;
+      return (x.sort||0)-(y.sort||0);
+    });
+  }
+  var oShowUntagged=false;
+  var oView="";
+
+  function oAssigned(key){
+    var m={};
+    OFF.assign.forEach(function(a){ if(a.game_key===key&&a.person_id) m[a.slot]=a.person_id; });
+    return m;
+  }
+  function oById(id){
+    var hit=null; OFF.crew.forEach(function(p){ if(p.id===id) hit=p; }); return hit;
+  }
+  function oTagChips(p){
+    var nice={SL:"SL",EZ:"EZ",POLE:"Pole",GROUND:"Ground",EDITOR:"Editor",BUBBLE:"Bubble"};
+    return oList(p.tags).filter(function(t){ return nice[t]; })
+      .map(function(t){ return '<span class="tqty">'+esc(nice[t])+'</span>'; }).join("");
+  }
+
+  /* opponent to the key the depth chart uses */
+  var O_KEY={"Duke":"duke","Kansas State":"kstate","Army":"army",
+             "Charlotte":"charlotte","Rice":"rice","South Florida":"usf"};
+
+  /* ---------------- locked state ---------------- */
+  function drawLocked(msg){
+    officeroot.innerHTML=
+      '<div class="oflock"><div class="ofbox">'
+      + '<svg class="oficon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" '
+      + 'stroke-width="1.7" stroke-linecap="round"><rect x="4" y="10.5" width="16" height="11" rx="2"/>'
+      + '<path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>'
+      + '<h2>Office only</h2>'
+      + '<p>Travel assignments and worker notes sit behind a second code. The staff passcode '
+      + 'does not open this, and the key that runs the rest of the site cannot read these tables at all, '
+      + 'so a link to this page gets nobody anywhere.</p>'
+      + '<form id="ofForm" autocomplete="off">'
+      + '<label for="ofCode">Office code</label>'
+      + '<input type="password" id="ofCode" autocomplete="off" autocapitalize="off" spellcheck="false">'
+      + '<div class="err ofErr" id="ofErr" role="alert">'+esc(msg||"")+'</div>'
+      + '<button type="submit" class="btn go">Unlock</button>'
+      + '</form>'
+      + '<p class="ofsmall">This computer stays unlocked until you choose <b>Lock the office</b> in the gear menu.</p>'
+      + '</div></div>';
+    var f=document.getElementById("ofForm");
+    if(f) f.addEventListener("submit",async function(e){
+      e.preventDefault();
+      var el=document.getElementById("ofCode"), er=document.getElementById("ofErr");
+      var code=el.value; if(!code){ er.textContent="Enter the office code."; return; }
+      er.textContent="Checking…";
+      lsSet(OKEY,code);
+      var bad=await officeLoad();
+      if(bad){ drawLocked(bad); return; }
+      flash("Office unlocked."); syncLockItem(); renderOffice();
+    });
+    setTimeout(function(){ var c=document.getElementById("ofCode"); if(c) c.focus(); },30);
+  }
+
+  /* ---------------- the trip picker ---------------- */
+  function ofTripBar(games,key){
+    var out='<div class="oftrips">';
+    games.forEach(function(w){
+      var k=oGameKey(w), p=wkDate(w);
+      out+='<button type="button" class="btn oftrip" data-trip="'+esc(k)+'" aria-pressed="'
+        + (k===key?"true":"false")+'"><b>'+esc(w.opp)+'</b><span>'
+        + esc(p?ckNice(new Date(p.y,p.mo,p.d)):String(w.date||""))+'</span></button>';
+    });
+    return out+'</div>';
+  }
+
+  /* ---------------- one slot ---------------- */
+  function ofSlotCard(key,slot,label,taken){
+    var who=taken[slot]?oById(taken[slot]):null;
+    var need=oNeed(slot);
+    /* nobody already on this trip shows up as a pick, including whoever is in this spot */
+    var others=[]; O_SLOTS.forEach(function(s){ if(taken[s[0]]) others.push(taken[s[0]]); });
+    var bench=oBench(key,slot,others);
+    var open=!who;
+    var sub=need?("Wants the "+need+" tag"):(slot==="BOOTH"?"Up in the booth":"Hands out the iPads");
+
+    var head='<div class="dhead ofhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
+      + '<span class="ofslotname"><b>'+esc(label)+'</b><span class="ofsub">'+esc(sub)+'</span></span>'
+      + '<span class="ofwho'+(who?"":" ofopen")+'">'+(who?esc(who.name):"Open")+'</span>'
+      + (who?'<button type="button" class="btn ofclear" data-clear="'+esc(slot)+'">Clear</button>':"")
+      + '<span class="caret" aria-hidden="true">&#9662;</span></div>';
+
+    var body='<div class="dbody">';
+    if(who){
+      var st=oStatus(who,key);
+      body+='<div class="ofnow"><b>'+esc(who.full_name||who.name)+'</b>'
+          + '<span class="ofwhy">'+esc(st.label)+'</span>'+oTagChips(who)+'</div>';
+    }
+    if(!bench.length){
+      body+='<p class="dempty">Nobody left who is free for this trip'
+          + (need&&!oShowUntagged?' and carries the '+esc(need)+' tag. Turn on "everyone" below to see the rest.':'.')+'</p>';
+    }
+    bench.forEach(function(p,i){
+      var st=oStatus(p,key), last=oObj(p.past)[key];
+      body+='<button type="button" class="ofrow" data-pick="'+esc(slot)+'|'+esc(p.id)+'">'
+        + '<span class="ofname">'+esc(p.name)+(i===0&&!who?'<span class="ofsug">suggested</span>':"")+'</span>'
+        + '<span class="ofwhy">'+esc(st.label)+(last?" · had "+esc(last)+" here last time":"")+'</span>'
+        + '<span class="oftags">'+oTagChips(p)+'</span></button>';
+    });
+    body+='</div>';
+    return '<section class="dcard ofslot'+(open?"":" shut")+'" data-slot="'+esc(slot)+'">'+head+body+'</section>';
+  }
+
+  /* ---------------- the depth chart ---------------- */
+  function drawDepth(){
+    var games=oGames();
+    if(!games.length) return '<p class="dempty">No away trips left on the schedule.</p>';
+    if(!oView||!games.some(function(w){ return oGameKey(w)===oView; })) oView=oGameKey(games[0]);
+    var w=null; games.forEach(function(g){ if(oGameKey(g)===oView) w=g; });
+    var key=oView, taken=oAssigned(key);
+
+    var filled=0; O_SLOTS.forEach(function(s){ if(taken[s[0]]) filled++; });
+    var ids=[]; O_SLOTS.forEach(function(s){ if(taken[s[0]]) ids.push(taken[s[0]]); });
+
+    /* people who asked for this trip and are not on it */
+    var asked=OFF.crew.filter(function(p){
+      if(ids.indexOf(p.id)>-1) return false;
+      var st=oStatus(p,key); return st.t==="req";
+    }).sort(function(a,b){ return (oObj(a.ranks)[key]||9)-(oObj(b.ranks)[key]||9); });
+    var out=OFF.crew.filter(function(p){ return oStatus(p,key).t==="cant"; });
+
+    var cards=""; O_SLOTS.forEach(function(s){ cards+=ofSlotCard(key,s[0],s[1],taken); });
+
+    /* What goes on paper: the trip, the five spots, who has each one.
+       Built on screen but only ever shown by the print stylesheet, so the
+       page you post on the wall is not a screenshot of a web page. */
+    var gp=w?wkDate(w):null;
+    var roster='<div class="ofroster"><h2>'+esc(w?("at "+w.opp):key)+'</h2>'
+      + '<p class="ofrwhen">'+esc(gp?new Date(gp.y,gp.mo,gp.d).toLocaleDateString("en-US",
+          {weekday:"long",month:"long",day:"numeric"}):String(w?w.date:""))+'</p>'
+      + '<table class="ofrtab"><tbody>'
+      + O_SLOTS.map(function(s){
+          var who=taken[s[0]]?oById(taken[s[0]]):null;
+          return '<tr><th scope="row">'+esc(s[1])+'</th><td>'
+            + (who?esc(who.full_name||who.name):'<span class="ofropen">open</span>')+'</td></tr>'; }).join("")
+      + '</tbody></table>'
+      + (filled<O_SLOTS.length
+          ? '<p class="ofrnote">'+(O_SLOTS.length-filled)+' spot'
+            + ((O_SLOTS.length-filled)===1?" is":"s are")+' still open.</p>' : "")
+      + '</div>';
+
+    return roster
+      + ofTripBar(games,key)
+      + '<div class="ofstat"><span><b>'+filled+'</b> of '+O_SLOTS.length+' spots filled</span>'
+      + '<span class="wksp"></span>'
+      + '<label class="ofall"><input type="checkbox" id="ofAll"'+(oShowUntagged?" checked":"")
+      + '> Show everyone, tagged or not</label>'
+      + '<button type="button" class="btn" id="ofFill">Fill the empty spots</button></div>'
+      + '<div class="wkdays">'+cards+'</div>'
+      + (asked.length?'<div class="ofaside"><b>Asked for '+esc(w?w.opp:key)+' and not on it yet</b><p>'
+          + asked.map(function(p){ return esc(p.name)+" ("+(oObj(p.ranks)[key]||"?")+")"; }).join(", ")
+          + '</p></div>':"")
+      + (out.length?'<div class="ofaside"><b>Said they cannot make this one</b><p>'
+          + out.map(function(p){ return esc(p.name); }).join(", ")+'</p></div>':"")
+      + howto('Suggested picks read the preference sheets: who asked for this trip and how high they '
+      + 'ranked it, who is flexible, who carries the tag the spot wants, and who already covered it on an earlier trip. '
+      + 'It is a starting point, not a decision. Nothing here is readable without the office code.','How the suggestions work');
+  }
+
+  /* ---------------- the frame ---------------- */
+  function renderOffice(){
+    if(!officeroot) return;
+    if(!officeCode()||!OFF){ drawLocked(""); return; }
+    var body=oSub==="log"?drawLog():drawDepth();
+    document.body.classList.toggle("of-prep",oSub==="log"&&oLogView==="prep"&&!!oLogWho);
+    document.body.classList.toggle("of-depth",oSub!=="log");
+    officeroot.innerHTML=
+      '<div class="airbar ofbar">'
+      + '<span class="wknow">Office</span>'
+      + '<span class="wkctx">'+(oSub==="log"
+          ? ((OFF.log||[]).length+" entr"+((OFF.log||[]).length===1?"y":"ies")+" logged")
+          : (OFF.crew.length+" on the crew list"))+'</span>'
+      + '<span class="wksp"></span>'
+      + '<div class="tgroup ofsubs" role="group" aria-label="Office section">'
+      + '<button type="button" class="btn" data-sub="depth" aria-pressed="'+(oSub==="depth"?"true":"false")+'">Travel Crew</button>'
+      + '<button type="button" class="btn" data-sub="log" aria-pressed="'+(oSub==="log"?"true":"false")+'">Worker Log</button>'
+      + '</div>'
+      + '<button type="button" class="btn" id="ofLock">Lock</button>'
+      + '</div>'
+      + '<div class="ofbody">'+body+'</div>';
+  }
+
+  /* ================================================================
+     The worker log. Attendance and conduct, one entry at a time, so a
+     conversation later can start from what actually happened and when
+     rather than from memory.
+     ================================================================ */
+  var O_CATS=[["Late","con"],["No Call/No Show","con"],
+              ["Unwilling to Follow Direction","con"],
+              ["Positive Note","pro"],["Other","neutral"]];
+  function oCatKind(c){ var k="neutral"; O_CATS.forEach(function(x){ if(x[0]===c) k=x[1]; }); return k; }
+  var O_VIEWS=[["list","By date"],["person","By person"],["prep","One on one"]];
+  var oLogView="list", oLogCat="", oLogWho="", oLogForm=false, oLogEdit=0;
+
+  function oPerson(id){ var p=oById(id); return p?(p.full_name||p.name):(id||"Nobody named"); }
+  function oShortName(id){ var p=oById(id); return p?p.name:(id||"—"); }
+  function oDay(iso){
+    if(!iso) return "";
+    var b=String(iso).slice(0,10).split("-");
+    if(b.length!==3) return String(iso);
+    var d=new Date(+b[0],+b[1]-1,+b[2]);
+    return d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  }
+  function oLogList(){
+    return (OFF.log||[]).filter(function(e){
+      if(oLogCat&&e.category!==oLogCat) return false;
+      if(oLogView==="prep"&&oLogWho&&e.person_id!==oLogWho) return false;
+      return true;
+    });
+  }
+
+  /* who can have an entry logged against them: everyone still on the crew */
+  function oLogPeople(){
+    return OFF.crew.slice().sort(function(a,b){ return (a.sort||0)-(b.sort||0); });
+  }
+
+  function oLogFormHtml(){
+    var ed=oLogEdit?(OFF.log||[]).filter(function(e){ return e.id===oLogEdit; })[0]:null;
+    if(!oLogForm&&!ed) return "";
+    var who=lsGet("fpb_who")||"";
+    return '<form class="oflogform" id="ofLogForm">'
+      + '<h3>'+(ed?"Edit this entry":"New entry")+'</h3>'
+      + '<div class="offgrid">'
+      + '<label class="offf">Date<input type="date" id="lgAt" value="'
+        + esc(ed?String(ed.at).slice(0,10):ckISO(new Date()))+'"'+(ed?" disabled":"")+'></label>'
+      + '<label class="offf">Student worker<select id="lgWho"'+(ed?" disabled":"")+'>'
+        + '<option value="">Pick someone…</option>'
+        + oLogPeople().map(function(p){
+            return '<option value="'+esc(p.id)+'"'+((ed&&ed.person_id===p.id)?" selected":"")
+                 + '>'+esc(p.full_name||p.name)+'</option>'; }).join("")
+      + '</select></label>'
+      + '<label class="offf">Category<select id="lgCat"'+(ed?" disabled":"")+'>'
+        + '<option value="">Pick a category…</option>'
+        + O_CATS.map(function(c){
+            return '<option'+((ed&&ed.category===c[0])?" selected":"")+'>'+esc(c[0])+'</option>'; }).join("")
+      + '</select></label>'
+      + '<label class="offf">Expected in<input type="time" id="lgExp" value="'+esc(ed?ed.expected:"")+'"'+(ed?" disabled":"")+'></label>'
+      + '<label class="offf">Actually in<input type="time" id="lgAct" value="'+esc(ed?ed.actual:"")+'"'+(ed?" disabled":"")+'></label>'
+      + '<label class="offf offcheck"><input type="checkbox" id="lgMsg"'+((ed&&ed.messaged)?" checked":"")+(ed?" disabled":"")+'> Let us know ahead of time</label>'
+      + '</div>'
+      + '<label class="offf offwide">What happened<textarea id="lgWhat" rows="3" maxlength="4000" '
+        + 'placeholder="Just the facts: what, what time, who else was there">'+esc(ed?ed.what:"")+'</textarea></label>'
+      + '<label class="offf offwide">Follow-up or outcome<textarea id="lgOut" rows="2" maxlength="4000" '
+        + 'placeholder="What you did about it, or what you agreed on. Can be filled in later.">'+esc(ed?ed.outcome:"")+'</textarea></label>'
+      + '<label class="offf offwide">Written up by<input type="text" id="lgBy" maxlength="60" value="'
+        + esc(ed?ed.logged_by:who)+'"'+(ed?" disabled":"")+'></label>'
+      + '<div class="err ofErr" id="lgErr" role="alert"></div>'
+      + '<div class="offrow"><button type="button" class="btn" id="lgCancel">Cancel</button>'
+      + '<button type="submit" class="btn go">'+(ed?"Save changes":"Save entry")+'</button></div>'
+      + '</form>';
+  }
+
+  function oEntryHtml(e,showWho){
+    var k=oCatKind(e.category);
+    var times="";
+    if(e.expected||e.actual) times=(e.expected||"?")+" → "+(e.actual||"?");
+    return '<section class="dcard oflog ofk-'+k+'">'
+      + '<div class="dhead nohit oflogh">'
+      + '<span class="ofdate">'+esc(oDay(e.at))+'</span>'
+      + (showWho?'<span class="ofperson">'+esc(oShortName(e.person_id))+'</span>':"")
+      + '<span class="ofcat ofc-'+k+'">'+esc(e.category)+'</span>'
+      + (times?'<span class="oftimes">'+esc(times)+'</span>':"")
+      + (e.messaged?'<span class="ofmsg">let us know</span>':"")
+      + '<span class="wksp"></span>'
+      + '<button type="button" class="btn ofclear" data-logedit="'+e.id+'">Edit</button>'
+      + '<button type="button" class="btn ofclear" data-logdel="'+e.id+'">Delete</button>'
+      + '</div>'
+      + '<div class="dbody oflogb">'
+      + '<p class="ofwhat">'+esc(e.what||"(nothing written down)")+'</p>'
+      + (e.outcome?'<p class="ofout"><b>Follow-up</b> '+esc(e.outcome)+'</p>':"")
+      + '<p class="ofby">'+esc(e.logged_by||"Someone")+'</p>'
+      + '</div></section>';
+  }
+
+  function oTallies(){
+    var m={};
+    (OFF.log||[]).forEach(function(e){
+      var k=e.person_id||"";
+      if(!m[k]) m[k]={id:k,n:0,pro:0,con:0,cats:{}};
+      m[k].n++;
+      m[k].cats[e.category]=(m[k].cats[e.category]||0)+1;
+      var kind=oCatKind(e.category);
+      if(kind==="pro") m[k].pro++; else if(kind==="con") m[k].con++;
+    });
+    return Object.keys(m).map(function(k){ return m[k]; })
+      .sort(function(a,b){ return (a.pro-a.con)-(b.pro-b.con)||b.n-a.n; });
+  }
+
+  function drawLog(){
+    var tools='<div class="oflogtools">'
+      + '<div class="tgroup ofsubs" role="group" aria-label="Log view">'
+      + O_VIEWS.map(function(v){
+            return '<button type="button" class="btn" data-logview="'+v[0]+'" aria-pressed="'
+                 + (oLogView===v[0]?"true":"false")+'">'+v[1]+'</button>'; }).join("")
+      + '</div><span class="wksp"></span>'
+      + (oLogView==="list"
+          ? '<label class="offilter">Category<select id="ofCat"><option value="">All categories</option>'
+            + O_CATS.map(function(c){ return '<option'+(oLogCat===c[0]?" selected":"")+'>'+esc(c[0])+'</option>'; }).join("")
+            + '</select></label>'
+            + '<button type="button" class="btn" id="ofCsv">Download CSV</button>'
+          : "")
+      + (oLogView==="prep"
+          ? '<label class="offilter">Who<select id="ofWho"><option value="">Pick someone…</option>'
+            + oLogPeople().map(function(p){ return '<option value="'+esc(p.id)+'"'+(oLogWho===p.id?" selected":"")
+                + '>'+esc(p.full_name||p.name)+'</option>'; }).join("")
+            + '</select></label>'
+            + (oLogWho?'<button type="button" class="btn" id="ofPrint">Print</button>':"")
+          : "")
+      + (!oLogForm&&!oLogEdit
+          ? '<button type="button" class="btn ofnew" id="ofAdd">Add an entry</button>' : "")
+      + '</div>'+oLogFormHtml();
+
+    if(oLogView==="person"){
+      var t=oTallies();
+      if(!t.length) return tools+'<p class="dempty">Nothing logged yet.</p>';
+      return tools
+        + '<div class="oftally"><table><thead><tr><th>Who</th>'
+        + O_CATS.map(function(c){ return '<th>'+esc(c[0])+'</th>'; }).join("")
+        + '<th>Entries</th><th>Net</th></tr></thead><tbody>'
+        + t.map(function(r){
+            var net=r.pro-r.con;
+            return '<tr><th scope="row"><button type="button" class="oflink" data-prep="'+esc(r.id)+'">'
+              + esc(oPerson(r.id))+'</button></th>'
+              + O_CATS.map(function(c){ return '<td>'+(r.cats[c[0]]||"")+'</td>'; }).join("")
+              + '<td>'+r.n+'</td>'
+              + '<td class="ofnet '+(net>0?"ofpos":(net<0?"ofneg":""))+'">'+(net>0?"+":"")+net+'</td></tr>'; }).join("")
+        + '</tbody></table></div>'
+        + howto('Net is positive notes minus the three that are not. Anything logged as Other '
+        + 'counts in the total and nowhere else. A row only exists once somebody has an entry, so a blank '
+        + 'name on this page means a clean season, not a missing one. Click a name to pull up their entries.','How Net is counted');
+    }
+
+    if(oLogView==="prep"&&!oLogWho)
+      return tools+'<p class="dempty">Pick someone above and this becomes their page: every entry in order, ready to print.</p>';
+
+    var list=oLogList();
+    var head="";
+    if(oLogView==="prep"){
+      var tl=oTallies().filter(function(r){ return r.id===oLogWho; })[0];
+      head='<div class="ofprephead"><h2>'+esc(oPerson(oLogWho))+'</h2>'
+        + '<p>'+(tl?(tl.n+" entr"+(tl.n===1?"y":"ies")+", "+tl.pro+" positive, "+tl.con+" not")
+                  :"Nothing logged")+' · printed '+esc(oDay(ckISO(new Date())))+'</p></div>';
+    }
+    return tools
+      + '<div class="ofnoprint"><h2>Nothing to print from this view</h2>'
+      + '<p>The worker log only goes to paper one person at a time. Switch to '
+      + '<b>One on one</b>, pick who it is about, and print that.</p></div>'
+      + head
+      + (list.length
+          ? '<div class="wkdays">'+list.map(function(e){ return oEntryHtml(e,oLogView!=="prep"); }).join("")+'</div>'
+          : '<p class="dempty">'+(oLogCat?"Nothing in that category.":"Nothing logged yet.")+'</p>')
+      + (oLogView==="prep"
+          ? '<p class="foot ckfoot ofprepfoot">Working notes, not a personnel file. If any of this turns into a '
+            + 'formal record it belongs in whatever system Tulane sanctions for it.</p>' : "");
+  }
+
+  function oCsv(){
+    var rows=[["Date","Who","Category","Expected","Actual","Let us know","What happened","Follow-up","Written up by"]];
+    oLogList().forEach(function(e){
+      rows.push([String(e.at).slice(0,10),oPerson(e.person_id),e.category,e.expected,e.actual,
+                 e.messaged?"yes":"no",e.what,e.outcome,e.logged_by]);
+    });
+    return rows.map(function(r){
+      return r.map(function(c){ return '"'+String(c==null?"":c).replace(/"/g,'""')+'"'; }).join(",");
+    }).join("\r\n");
+  }
+
+  /* ---------------- clicks ---------------- */
+  async function ofAssign(slot,person){
+    if(oBusy) return;
+    oBusy=true;
+    var r=await officeRpc("set_assign",{p_game:oView,p_slot:slot,p_person:person||null,p_who:lsGet("fpb_who")||""});
+    oBusy=false;
+    if(r.err){ flash(r.err); if(!OFF) renderOffice(); return; }
+    var hit=false;
+    OFF.assign.forEach(function(a){
+      if(a.game_key===oView&&a.slot===slot){ a.person_id=person||null; hit=true; }
+    });
+    if(!hit&&person) OFF.assign.push({game_key:oView,slot:slot,person_id:person});
+    renderOffice();
+  }
+
+  async function ofLogSave(){
+    var err=document.getElementById("lgErr");
+    if(oLogEdit){
+      var r2=await officeRpc("edit_log",{p_id:oLogEdit,
+        p_what:document.getElementById("lgWhat").value.trim(),
+        p_outcome:document.getElementById("lgOut").value.trim()});
+      if(r2.err){ err.textContent=r2.err; return; }
+      var id=oLogEdit;
+      (OFF.log||[]).forEach(function(x){ if(x.id===id){
+        x.what=document.getElementById("lgWhat").value.trim();
+        x.outcome=document.getElementById("lgOut").value.trim(); } });
+      oLogEdit=0; renderOffice(); flash("Entry updated."); return;
+    }
+    var who=document.getElementById("lgWho").value;
+    var cat=document.getElementById("lgCat").value;
+    var what=document.getElementById("lgWhat").value.trim();
+    if(!who){ err.textContent="Pick who this is about."; return; }
+    if(!cat){ err.textContent="Pick a category."; return; }
+    if(!what){ err.textContent="Write down what happened."; return; }
+    var row={at:document.getElementById("lgAt").value||ckISO(new Date()),
+             person_id:who,category:cat,
+             expected:document.getElementById("lgExp").value,
+             actual:document.getElementById("lgAct").value,
+             messaged:document.getElementById("lgMsg").checked,
+             what:what,
+             outcome:document.getElementById("lgOut").value.trim(),
+             logged_by:document.getElementById("lgBy").value.trim()};
+    err.textContent="Saving…";
+    var r=await officeRpc("add_log",{p_at:row.at,p_person:row.person_id,p_category:row.category,
+      p_expected:row.expected,p_actual:row.actual,p_messaged:row.messaged,
+      p_what:row.what,p_by:row.logged_by,p_outcome:row.outcome});
+    if(r.err){ err.textContent=r.err; return; }
+    row.id=r.data||Date.now();
+    OFF.log=[row].concat(OFF.log||[]);
+    OFF.log.sort(function(a,b){ return String(b.at).localeCompare(String(a.at))||b.id-a.id; });
+    oLogForm=false; renderOffice(); flash("Entry saved.");
+  }
+
+  if(officeroot){
+    officeroot.addEventListener("submit",function(e){
+      if(e.target.id==="ofLogForm"){ e.preventDefault(); ofLogSave(); }
+    });
+    officeroot.addEventListener("click",async function(e){
+      if(!e.target.closest) return;
+      if(e.target.closest("#ofLock")) return lockOffice();
+
+      /* ---- the worker log ---- */
+      var lv=e.target.closest("[data-logview]");
+      if(lv){ oLogView=lv.getAttribute("data-logview"); oLogForm=false; oLogEdit=0; renderOffice(); return; }
+      if(e.target.closest("#ofAdd")){ oLogForm=true; oLogEdit=0; renderOffice(); return; }
+      if(e.target.closest("#lgCancel")){ oLogForm=false; oLogEdit=0; renderOffice(); return; }
+      if(e.target.closest("#ofPrint")) return window.print();
+      if(e.target.closest("#ofCsv")){
+        var blob=new Blob([oCsv()],{type:"text/csv"});
+        var a=document.createElement("a");
+        a.href=URL.createObjectURL(blob);
+        a.download="worker-log-"+ckISO(new Date())+".csv";
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+        return;
+      }
+      var pr=e.target.closest("[data-prep]");
+      if(pr){ oLogWho=pr.getAttribute("data-prep"); oLogView="prep"; renderOffice(); return; }
+      var le=e.target.closest("[data-logedit]");
+      if(le){ oLogEdit=Number(le.getAttribute("data-logedit")); oLogForm=false; renderOffice(); return; }
+      var ld=e.target.closest("[data-logdel]");
+      if(ld){
+        var id=Number(ld.getAttribute("data-logdel"));
+        if(ld.getAttribute("data-sure")!=="1"){
+          ld.setAttribute("data-sure","1"); ld.textContent="Really delete?";
+          setTimeout(function(){ if(ld.isConnected){ ld.removeAttribute("data-sure"); ld.textContent="Delete"; } },4000);
+          return;
+        }
+        var rd=await officeRpc("del_log",{p_id:id});
+        if(rd.err){ flash(rd.err); return; }
+        OFF.log=(OFF.log||[]).filter(function(x){ return x.id!==id; });
+        renderOffice(); flash("Entry deleted."); return;
+      }
+      var sb2=e.target.closest("[data-sub]");
+      if(sb2){ oSub=sb2.getAttribute("data-sub"); renderOffice(); return; }
+      var tp=e.target.closest("[data-trip]");
+      if(tp){ oView=tp.getAttribute("data-trip"); renderOffice(); return; }
+      var cl=e.target.closest("[data-clear]");
+      if(cl){ e.stopPropagation(); return ofAssign(cl.getAttribute("data-clear"),""); }
+      var pk=e.target.closest("[data-pick]");
+      if(pk){ var bits=pk.getAttribute("data-pick").split("|"); return ofAssign(bits[0],bits[1]); }
+      if(e.target.closest("#ofFill")){
+        if(oBusy) return;
+        var taken=oAssigned(oView), ids=[];
+        O_SLOTS.forEach(function(s){ if(taken[s[0]]) ids.push(taken[s[0]]); });
+        for(var i=0;i<O_SLOTS.length;i++){
+          var s=O_SLOTS[i][0]; if(taken[s]) continue;
+          var b=oBench(oView,s,ids); if(!b.length) continue;
+          ids.push(b[0].id);
+          await ofAssign(s,b[0].id);
+        }
+        return;
+      }
+      var h=e.target.closest(".ofslot .dhead"); if(!h) return;
+      var card=h.parentNode, shut=!card.classList.contains("shut");
+      card.classList.toggle("shut",shut);
+      h.setAttribute("aria-expanded",shut?"false":"true");
+    });
+    officeroot.addEventListener("change",function(e){
+      if(e.target.id==="ofAll"){ oShowUntagged=e.target.checked; renderOffice(); return; }
+      if(e.target.id==="ofCat"){ oLogCat=e.target.value; renderOffice(); return; }
+      if(e.target.id==="ofWho"){ oLogWho=e.target.value; renderOffice(); return; }
+    });
+    officeroot.addEventListener("keydown",function(e){
+      if(e.key!=="Enter"&&e.key!==" ") return;
+      var h=e.target.closest&&e.target.closest(".ofslot .dhead"); if(!h) return;
+      e.preventDefault(); h.click();
+    });
+  }
+
+  /* ---------------- the gear's Lock item ---------------- */
+  function syncLockItem(){
+    var b=gMenu&&gMenu.querySelector('[data-g="lock"]');
+    if(b) b.hidden=!officeCode();
+  }
+  if(gMenu) gMenu.addEventListener("click",function(e){
+    var b=e.target.closest&&e.target.closest('[data-g="lock"]');
+    if(b) lockOffice();
+  });
+
+  async function officeBoot(){
+    if(!officeCode()) return;
+    await officeLoad();
+    syncLockItem();
+    if(TAB==="office") renderOffice();
+  }
+
+  /* ================================================================
+     The purchase list. Type what we are talking about buying, cross it
+     off when it is bought with what it actually cost, or drop it when
+     we decide we do not need it. Four vendor prices sit on each line:
+     Amazon and B&H can be refreshed by the scheduled job, CDW and
+     MediaRight are the quotes you were given, typed in with the date.
+     ================================================================ */
+  var buyroot=document.getElementById("buyroot");
+  var BUY=[], BUY_OK=false;
+  var buyFilter="open", buyOpen={}, buyForm=false, buyEdit=0, buyMark=0, buyPrice="";
+
+  var VENDORS=[["amazon","Amazon",true],["bh","B&H",true],
+               ["cdw","CDW",false],["mediaright","MediaRight",false]];
+  function vName(k){ var n=k; VENDORS.forEach(function(v){ if(v[0]===k) n=v[1]; }); return n; }
+  function vAuto(k){ var a=false; VENDORS.forEach(function(v){ if(v[0]===k) a=v[2]; }); return a; }
+
+  async function loadBuy(){
+    if(!sb) return;
+    var r=await sb.from("buy")
+      .select("id,what,qty,note,status,prices,bought_at,spent,vendor,po,added_by,added_at,sort")
+      .order("added_at",{ascending:false}).limit(1000);
+    BUY=r.error?[]:(r.data||[]);
+    BUY_OK=!r.error;
+  }
+  function applyBuyRow(msg){
+    var row=msg.new&&msg.new.id?msg.new:(msg.old||null); if(!row) return;
+    BUY=BUY.filter(function(x){ return x.id!==row.id; });
+    if(msg.eventType!=="DELETE"&&msg.new&&msg.new.id) BUY.unshift(msg.new);
+    BUY.sort(function(a,b){ return String(b.added_at).localeCompare(String(a.added_at)); });
+    if(TAB==="buy") renderBuy();
+  }
+
+  async function buyRpc(fn,args){
+    if(!sb) return {err:"Not connected."};
+    if(!lsGet("fpb_code")){ var ok=await askLogin(); if(!ok) return {err:"Sign in to change the list."}; }
+    args=args||{}; args.p_code=lsGet("fpb_code");
+    var r;
+    try{ r=await sb.rpc(fn,args); }catch(e){ r={error:e}; }
+    if(r.error){
+      var m=String(r.error.message||"");
+      if(/does not exist|schema|function/i.test(m)) return {err:"Run buy-setup.sql in Supabase first."};
+      if(/passcode/i.test(m)){ lsDel("fpb_code"); return {err:"Passcode changed. Try again."}; }
+      return {err:"That did not save. Try again."};
+    }
+    return {data:r.data};
+  }
+
+  /* ---------------- money ---------------- */
+  function money(n){
+    if(n===null||n===undefined||n==="") return "";
+    var v=Number(n); if(isNaN(v)) return "";
+    return "$"+v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function priceOf(b,k){
+    var p=(b.prices||{})[k];
+    if(!p||p.price===null||p.price===undefined||p.price==="") return null;
+    var v=Number(p.price); return isNaN(v)?null:v;
+  }
+  function bestVendor(b){
+    var best=null;
+    VENDORS.forEach(function(v){
+      var n=priceOf(b,v[0]);
+      if(n===null) return;
+      if(!best||n<best.n) best={k:v[0],n:n};
+    });
+    return best;
+  }
+  function buyTotals(){
+    var open=0, spent=0, planned=0, bought=0;
+    BUY.forEach(function(b){
+      if(b.status==="bought"){ bought++; if(b.spent!==null) spent+=Number(b.spent)||0; return; }
+      if(b.status!=="open") return;
+      open++;
+      var best=bestVendor(b);
+      if(best) planned+=best.n*(b.qty||1);
+    });
+    return {open:open,bought:bought,spent:spent,planned:planned};
+  }
+
+  /* ---------------- one vendor's chip ---------------- */
+  function vChip(b,k){
+    var p=(b.prices||{})[k]||{}, n=priceOf(b,k);
+    var best=bestVendor(b);
+    var isBest=best&&best.k===k&&n!==null;
+    var when=p.at?("as of "+p.at.slice(5).split("-").join("/")):"";
+    var src=p.src==="auto"?"refreshed":(p.src==="quote"?"quoted":"");
+    var open=buyPrice===(b.id+"|"+k);
+    var head='<button type="button" class="vchip'+(isBest?" vbest":"")+(n===null?" vnone":"")
+      + '" data-price="'+b.id+"|"+k+'">'
+      + '<span class="vname">'+esc(vName(k))+'</span>'
+      + '<span class="vamt">'+(n===null?"&mdash;":esc(money(n)))+'</span>'
+      + '<span class="vwhen">'+esc([when,src].filter(Boolean).join(" · "))+'</span>'
+      + (p.ref?'<span class="vref">'+esc(p.ref)+'</span>':"")
+      + '</button>';
+    if(!open) return head
+      + (p.url?'<a class="vlink" href="'+esc(p.url)+'" target="_blank" rel="noopener noreferrer" '
+             + 'aria-label="Open '+esc(vName(k))+'">&#8599;</a>':"");
+    return head
+      + '<form class="vform" data-pform="'+b.id+"|"+k+'">'
+      + '<label>Price<input type="number" step="0.01" min="0" class="vp" value="'+esc(n===null?"":n)+'" autocomplete="off"></label>'
+      + (vAuto(k)
+          ? '<label>Product link<input type="url" class="vu" value="'+esc(p.url||"")+'" placeholder="https://…" autocomplete="off"></label>'
+          : '<label>Quote number or who quoted it<input type="text" class="vr" maxlength="200" value="'
+            + esc(p.ref||"")+'" autocomplete="off"></label>')
+      + '<div class="vrow"><button type="button" class="btn vclear">Clear</button>'
+      + '<button type="button" class="btn" data-pcancel="1">Cancel</button>'
+      + '<button type="submit" class="btn go">Save</button></div>'
+      + '<p class="vhint">'+(vAuto(k)
+          ? "Paste the product page and the scheduled job keeps this one current on its own."
+          : "They do not publish prices, so this is whatever you were quoted. The date is stamped for you.")
+        + '</p></form>';
+  }
+
+  /* ---------------- one line ---------------- */
+  function buyCard(b){
+    var open=!!buyOpen[b.id], done=b.status==="bought", dropped=b.status==="dropped";
+    var best=bestVendor(b);
+    var head='<div class="dhead buyhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
+      + '<input type="checkbox" class="buybox" data-got="'+b.id+'"'+(done?" checked":"")
+      + ' aria-label="'+(done?"Put back on the list":"Mark as bought")+'">'
+      + '<span class="buywhat"><span class="buytop"><b>'+esc(b.what)+'</b>'
+      + (b.qty>1?'<span class="buyqty">×'+b.qty+'</span>':"")+'</span>'
+      + (b.note?'<span class="buynote">'+esc(b.note)+'</span>':"")+'</span>'
+      + '<span class="wksp"></span>'
+      + (done
+          ? '<span class="buyspent">'+esc(money(b.spent))+(b.vendor?' <i>'+esc(b.vendor)+'</i>':"")+'</span>'
+          : (best?'<span class="buybest">'+esc(money(best.n))+' <i>'+esc(vName(best.k))+'</i></span>'
+                 :'<button type="button" class="btn buyaddp" data-addprice="'+b.id+'">Add a price</button>'))
+      + (dropped?'<span class="buydrop">dropped</span>':"")
+      + '<span class="caret" aria-hidden="true">&#9662;</span></div>';
+
+    var body='<div class="dbody buybody">';
+    if(buyMark===b.id){
+      body+='<form class="buygot" data-gotform="'+b.id+'">'
+        + '<h4>What did it come to?</h4>'
+        + '<div class="offgrid">'
+        + '<label class="offf">What we spent<input type="number" step="0.01" min="0" class="gSpent" value="'
+          + esc(b.spent===null||b.spent===undefined?(best?best.n*(b.qty||1):""):b.spent)+'"></label>'
+        + '<label class="offf">Bought from<input type="text" class="gVendor" maxlength="60" value="'
+          + esc(b.vendor||(best?vName(best.k):""))+'"></label>'
+        + '<label class="offf">Date<input type="date" class="gAt" value="'
+          + esc(b.bought_at?String(b.bought_at).slice(0,10):ckISO(new Date()))+'"></label>'
+        + '<label class="offf">PO or order number<input type="text" class="gPo" maxlength="60" value="'+esc(b.po||"")+'"></label>'
+        + '</div>'
+        + '<div class="offrow"><button type="button" class="btn" data-gotcancel="1">Cancel</button>'
+        + '<button type="submit" class="btn go">Cross it off</button></div></form>';
+    } else if(done){
+      body+='<p class="buydone"><b>Bought</b> '+esc(b.bought_at?String(b.bought_at).slice(0,10):"")
+        + (b.vendor?' from '+esc(b.vendor):"")+(b.spent!==null?' for '+esc(money(b.spent)):"")
+        + (b.po?' · '+esc(b.po):"")
+        + ' <button type="button" class="btn ofclear" data-mark="'+b.id+'">Fix this</button></p>';
+    }
+    body+='<div class="vgrid">'+VENDORS.map(function(v){
+        return '<div class="vcell'+(buyPrice===(b.id+"|"+v[0])?" vopen":"")+'">'+vChip(b,v[0])+'</div>'; }).join("")+'</div>';
+    body+='<div class="buyfoot"><span>'+esc(b.added_by||"Someone")+' added this'
+      + (b.added_at?" "+esc(shortDate(b.added_at)):"")+'</span><span class="wksp"></span>'
+      + '<button type="button" class="btn ofclear" data-buyedit="'+b.id+'">Edit</button>'
+      + '<button type="button" class="btn ofclear" data-buydrop="'+b.id+'">'
+      + (dropped?"Put back":"No longer needed")+'</button>'
+      + '<button type="button" class="btn ofclear" data-buydel="'+b.id+'">Delete</button></div>';
+    body+='</div>';
+    return '<section class="dcard buyline'+(open?"":" shut")+(done?" buydoneline":"")
+      + (dropped?" buydropline":"")+'" data-buy="'+b.id+'">'+head+body+'</section>';
+  }
+
+  function buyFormHtml(){
+    var ed=buyEdit?BUY.filter(function(b){ return b.id===buyEdit; })[0]:null;
+    if(!buyForm&&!ed) return "";
+    return '<form class="oflogform buyform" id="buyForm">'
+      + '<h3>'+(ed?"Edit this line":"What are we thinking about buying?")+'</h3>'
+      + '<div class="offgrid buygrid">'
+      + '<label class="offf offwide">The thing<input type="text" id="byWhat" maxlength="300" value="'
+        + esc(ed?ed.what:"")+'" placeholder="Sony FX3, 128GB CFexpress card, a longer SDI run" autocomplete="off"></label>'
+      + '<label class="offf">How many<input type="number" id="byQty" min="1" step="1" value="'+(ed?ed.qty:1)+'"></label>'
+      + '</div>'
+      + '<label class="offf offwide">Anything worth noting<textarea id="byNote" rows="2" maxlength="2000" '
+        + 'placeholder="Why we want it, what it replaces, which bag it lives in">'+esc(ed?ed.note:"")+'</textarea></label>'
+      + '<div class="err ofErr" id="byErr" role="alert"></div>'
+      + '<div class="offrow"><button type="button" class="btn" id="byCancel">Cancel</button>'
+      + '<button type="submit" class="btn go">'+(ed?"Save changes":"Add it")+'</button></div></form>';
+  }
+
+  function renderBuy(){
+    if(!buyroot) return;
+    if(!BUY_OK){
+      buyroot.innerHTML='<div class="airsetup"><h2>One thing to run first</h2>'
+        + '<p>The purchase list needs its table. Open <b>buy-setup.sql</b>, paste the whole file into '
+        + 'Supabase, SQL Editor, New query, and Run it. Nothing in that file needs editing.</p>'
+        + '<p class="airnote">Writing to this list uses the staff passcode you already have.</p></div>';
+      return;
+    }
+    var t=buyTotals();
+    var list=BUY.filter(function(b){
+      if(buyFilter==="all") return true;
+      if(buyFilter==="open") return b.status==="open";
+      if(buyFilter==="bought") return b.status==="bought";
+      return b.status==="dropped";
+    });
+    var FILT=[["open","Still want"],["bought","Bought"],["dropped","Dropped"],["all","Everything"]];
+    buyroot.innerHTML=
+      '<div class="airbar ofbar">'
+      + '<span class="wknow">Purchase List</span>'
+      + '<span class="wkctx"><b>'+t.open+'</b> still want'
+      + (t.planned?' · about '+esc(money(t.planned))+' at the best price we have':"")
+      + (t.spent?' · '+esc(money(t.spent))+' spent on '+t.bought+' so far':"")+'</span>'
+      + '<span class="wksp"></span>'
+      + '<div class="tgroup ofsubs" role="group" aria-label="Show">'
+      + FILT.map(function(f){
+          return '<button type="button" class="btn" data-buyfilter="'+f[0]+'" aria-pressed="'
+               + (buyFilter===f[0]?"true":"false")+'">'+f[1]+'</button>'; }).join("")
+      + '</div>'
+      + (buyForm||buyEdit?"":'<button type="button" class="btn ofnew" id="byAdd">Add an item</button>')
+      + '</div>'
+      + '<div class="ofbody">'
+      + buyFormHtml()
+      + (list.length
+          ? '<div class="wkdays">'+list.map(buyCard).join("")+'</div>'
+          : '<p class="dempty">'+(BUY.length?"Nothing in here.":"Nothing on the list yet. Add the first thing you are thinking about.")+'</p>')
+      + howto('Amazon and B&amp;H prices refresh on their own if you paste the product link. '
+      + 'CDW and MediaRight do not publish prices, so those are whatever you were quoted, with the date stamped on '
+      + 'so you can see when a number went stale. The best price we know about is the one on the line.','How the prices work')
+      + '</div>';
+  }
+
+  /* ---------------- saving ---------------- */
+  async function buySave(){
+    var err=document.getElementById("byErr");
+    var what=document.getElementById("byWhat").value.trim();
+    var qty=Math.max(1,parseInt(document.getElementById("byQty").value,10)||1);
+    var note=document.getElementById("byNote").value.trim();
+    if(!what){ err.textContent="Type what it is first."; return; }
+    err.textContent="Saving…";
+    if(buyEdit){
+      var r2=await buyRpc("edit_buy",{p_id:buyEdit,p_what:what,p_qty:qty,p_note:note});
+      if(r2.err){ err.textContent=r2.err; return; }
+      BUY.forEach(function(b){ if(b.id===buyEdit){ b.what=what; b.qty=qty; b.note=note; } });
+      buyEdit=0; renderBuy(); flash("Saved."); return;
+    }
+    var r=await buyRpc("add_buy",{p_what:what,p_qty:qty,p_note:note,p_who:lsGet("fpb_who")||""});
+    if(r.err){ err.textContent=r.err; return; }
+    BUY.unshift({id:r.data||Date.now(),what:what,qty:qty,note:note,status:"open",prices:{},
+                 bought_at:null,spent:null,vendor:"",po:"",
+                 added_by:lsGet("fpb_who")||"",added_at:new Date().toISOString(),sort:0});
+    buyForm=false; renderBuy(); flash("Added.");
+  }
+
+  async function buyGot(id,form){
+    var b=BUY.filter(function(x){ return x.id===id; })[0]; if(!b) return;
+    var spent=form.querySelector(".gSpent").value;
+    var vendor=form.querySelector(".gVendor").value.trim();
+    var at=form.querySelector(".gAt").value||ckISO(new Date());
+    var po=form.querySelector(".gPo").value.trim();
+    var r=await buyRpc("set_buy_status",{p_id:id,p_status:"bought",
+      p_spent:spent===""?null:Number(spent),p_vendor:vendor,p_at:at,p_po:po});
+    if(r.err){ flash(r.err); return; }
+    b.status="bought"; b.spent=spent===""?null:Number(spent);
+    b.vendor=vendor; b.bought_at=at; b.po=po;
+    buyMark=0; renderBuy(); flash("Crossed off.");
+  }
+
+  async function buyStatus(id,status){
+    var b=BUY.filter(function(x){ return x.id===id; })[0]; if(!b) return;
+    var r=await buyRpc("set_buy_status",{p_id:id,p_status:status});
+    if(r.err){ flash(r.err); return; }
+    b.status=status;
+    if(status!=="bought"){ b.spent=null; b.vendor=""; b.po=""; b.bought_at=null; }
+    renderBuy();
+  }
+
+  async function buySavePrice(id,vend,form){
+    var b=BUY.filter(function(x){ return x.id===id; })[0]; if(!b) return;
+    var pIn=form.querySelector(".vp"), uIn=form.querySelector(".vu"), rIn=form.querySelector(".vr");
+    var price=pIn&&pIn.value!==""?Number(pIn.value):null;
+    var url=uIn?uIn.value.trim():"";
+    var ref=rIn?rIn.value.trim():"";
+    var r=await buyRpc("set_buy_price",{p_id:id,p_vendor:vend,p_price:price,p_url:url,
+      p_ref:ref,p_src:vAuto(vend)?"hand":"quote"});
+    if(r.err){ flash(r.err); return; }
+    b.prices=b.prices||{};
+    if(price===null&&!url&&!ref) delete b.prices[vend];
+    else b.prices[vend]={price:price,url:url,ref:ref,src:vAuto(vend)?"hand":"quote",at:ckISO(new Date())};
+    buyPrice=""; renderBuy();
+  }
+
+  if(buyroot){
+    buyroot.addEventListener("submit",function(e){
+      if(e.target.id==="buyForm"){ e.preventDefault(); return buySave(); }
+      var g=e.target.getAttribute("data-gotform");
+      if(g){ e.preventDefault(); return buyGot(Number(g),e.target); }
+      var pf=e.target.getAttribute("data-pform");
+      if(pf){ e.preventDefault(); var bits=pf.split("|"); return buySavePrice(Number(bits[0]),bits[1],e.target); }
+    });
+    buyroot.addEventListener("change",async function(e){
+      var g=e.target.closest&&e.target.closest("[data-got]"); if(!g) return;
+      var id=Number(g.getAttribute("data-got"));
+      if(g.checked){ buyMark=id; buyOpen[id]=true; renderBuy(); }
+      else { await buyStatus(id,"open"); }
+    });
+    buyroot.addEventListener("click",async function(e){
+      if(!e.target.closest) return;
+      if(e.target.closest(".buybox")) return;                 /* the change handler owns it */
+      if(e.target.closest("a")) return;
+      var f=e.target.closest("[data-buyfilter]");
+      if(f){ buyFilter=f.getAttribute("data-buyfilter"); renderBuy(); return; }
+      if(e.target.closest("#byAdd")){ buyForm=true; buyEdit=0; renderBuy(); return; }
+      if(e.target.closest("#byCancel")){ buyForm=false; buyEdit=0; renderBuy(); return; }
+      var be=e.target.closest("[data-buyedit]");
+      if(be){ buyEdit=Number(be.getAttribute("data-buyedit")); buyForm=false; renderBuy(); return; }
+      var mk=e.target.closest("[data-mark]");
+      if(mk){ buyMark=Number(mk.getAttribute("data-mark")); renderBuy(); return; }
+      if(e.target.closest("[data-gotcancel]")){
+        var card=e.target.closest(".buyline"), cid=Number(card.getAttribute("data-buy"));
+        var cur=BUY.filter(function(x){ return x.id===cid; })[0];
+        buyMark=0; renderBuy();
+        if(cur&&cur.status!=="bought"){ var cb=buyroot.querySelector('[data-got="'+cid+'"]'); if(cb) cb.checked=false; }
+        return;
+      }
+      var dp=e.target.closest("[data-buydrop]");
+      if(dp){
+        var did=Number(dp.getAttribute("data-buydrop"));
+        var cur2=BUY.filter(function(x){ return x.id===did; })[0];
+        return buyStatus(did,cur2&&cur2.status==="dropped"?"open":"dropped");
+      }
+      var dl=e.target.closest("[data-buydel]");
+      if(dl){
+        var id2=Number(dl.getAttribute("data-buydel"));
+        if(dl.getAttribute("data-sure")!=="1"){
+          dl.setAttribute("data-sure","1"); dl.textContent="Really delete?";
+          setTimeout(function(){ if(dl.isConnected){ dl.removeAttribute("data-sure"); dl.textContent="Delete"; } },4000);
+          return;
+        }
+        var rr=await buyRpc("del_buy",{p_id:id2});
+        if(rr.err){ flash(rr.err); return; }
+        BUY=BUY.filter(function(x){ return x.id!==id2; });
+        renderBuy(); flash("Deleted."); return;
+      }
+      var ap=e.target.closest("[data-addprice]");
+      if(ap){
+        var aid=Number(ap.getAttribute("data-addprice"));
+        buyOpen[aid]=true; buyPrice=aid+"|amazon"; renderBuy();
+        var fld=buyroot.querySelector('.vform[data-pform="'+aid+'|amazon"] .vp');
+        if(fld) fld.focus();
+        return;
+      }
+      if(e.target.closest("[data-pcancel]")){ buyPrice=""; renderBuy(); return; }
+      if(e.target.closest(".vclear")){
+        var pform=e.target.closest(".vform"), pb=pform.getAttribute("data-pform").split("|");
+        var p1=pform.querySelector(".vp"); if(p1) p1.value="";
+        var u1=pform.querySelector(".vu"); if(u1) u1.value="";
+        var r1=pform.querySelector(".vr"); if(r1) r1.value="";
+        return buySavePrice(Number(pb[0]),pb[1],pform);
+      }
+      var pc=e.target.closest("[data-price]");
+      if(pc){
+        var key=pc.getAttribute("data-price");
+        buyPrice=(buyPrice===key)?"":key;
+        var cid2=Number(key.split("|")[0]); buyOpen[cid2]=true;
+        renderBuy(); return;
+      }
+      var h=e.target.closest(".buyline .dhead"); if(!h) return;
+      var c2=h.parentNode, bid=Number(c2.getAttribute("data-buy"));
+      buyOpen[bid]=!buyOpen[bid];
+      c2.classList.toggle("shut",!buyOpen[bid]);
+      h.setAttribute("aria-expanded",buyOpen[bid]?"true":"false");
+    });
+    buyroot.addEventListener("keydown",function(e){
+      if(e.key!=="Enter"&&e.key!==" ") return;
+      if(e.target.classList&&e.target.classList.contains("buybox")) return;
+      var h=e.target.closest&&e.target.closest(".buyline .dhead"); if(!h) return;
+      e.preventDefault(); h.click();
+    });
+  }
+
   /* ---------- start ---------- */
   setSync("busy","Loading…");
   try{
@@ -2360,7 +3511,7 @@
   var qt=document.getElementById("quickTop"); if(qt) qt.addEventListener("click",function(){ window.scrollTo({top:0,behavior:RM?"auto":"smooth"}); });
   wkDefaultOpen();
   var savedTab=lsGet("fpb_tab")||"board";
-  showTab((savedTab!=="board"&&(savedTab==="week"||PACKS[savedTab]))?savedTab:"board");
+  showTab((savedTab!=="board"&&(savedTab==="week"||savedTab==="air"||savedTab==="office"||savedTab==="buy"||PACKS[savedTab]))?savedTab:"board");
   render();
   syncUndoButtons();
   setInterval(tick,30000);
@@ -2379,9 +3530,12 @@
     showNotice("Could not load checkmarks. Refresh the page.");
     return;
   }
+  try{ await loadTrackers(); }catch(e){}
   try{ await loadNotes(); }catch(e){}
   try{ await loadSettings(); renderCurrentList(); }catch(e){}
   try{ await checkDb(); }catch(e){}
+  try{ await officeBoot(); }catch(e){}
+  try{ await loadBuy(); renderBuy(); }catch(e){}
   paintNoteMarks(); syncGearBadge();
   flushQueue();
 
@@ -2401,6 +3555,7 @@
     })
     .on("postgres_changes",{event:"*",schema:"public",table:"notes"},function(msg){ applyNoteRow(msg); })
     .on("postgres_changes",{event:"*",schema:"public",table:"settings"},function(msg){ applySetting(msg.new); renderCurrentList(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"buy"},function(msg){ applyBuyRow(msg); })
     .subscribe(function(status){
       if(status==="SUBSCRIBED"){ if(!qGet().length) setSync("ok","Live"); else showQueue(); }
       else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED") setSync("busy","Reconnecting…");
@@ -2410,6 +3565,6 @@
   document.addEventListener("visibilitychange",async function(){
     if(document.visibilityState!=="visible") return;
     flushQueue();
-    try{ await loadChecks(); await loadCandidates(); await loadNotes(); await loadSettings(); render(); renderCurrentList(); paintNoteMarks(); syncGearBadge(); }catch(e){}
+    try{ await loadChecks(); await loadCandidates(); await loadNotes(); await loadSettings(); await loadBuy(); render(); renderCurrentList(); paintNoteMarks(); syncGearBadge(); }catch(e){}
   });
 })();
