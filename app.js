@@ -885,7 +885,7 @@
     if(!w||!w.by) return '<span class="who-tag" aria-hidden="true"></span>';
     var tip=isListId(id)?("Done by "+whoName(w.by)+(w.at?" · "+shortDate(w.at):""))
       :((label?label+" pulled by ":"Pulled by ")+whoName(w.by)+(w.at?" · "+shortDate(w.at):""));
-    return '<span class="who-tag on" title="'+esc(tip)+'">'+esc(initials(whoName(w.by)))+'</span>';
+    return '<span class="who-tag on'+whoTagCls(w.by)+'" title="'+esc(tip)+'">'+esc(whoTagText(w.by))+'</span>';
   }
   function refreshTag(box){
     var cell=box.parentNode; if(!cell) return;
@@ -1322,6 +1322,17 @@
     }catch(e){}
     return m;
   }
+  /* Names that read better whole than squeezed into two letters. The board
+     tag sits inside the checkbox itself, so a full name there gets its own
+     much smaller size rather than overflowing the box. */
+  var WHO_FULLTAG={"bulldog":1};
+  function whoTagText(s){
+    var n=whoName(s);
+    return WHO_FULLTAG[String(n).toLowerCase()]?n.toUpperCase():initials(n);
+  }
+  function whoTagCls(s){
+    return WHO_FULLTAG[String(whoName(s)).toLowerCase()]?" wt-full":"";
+  }
   function whoName(s){
     s=String(s==null?"":s).trim();
     if(!s) return s;
@@ -1657,10 +1668,12 @@
       + '</div>'
       + banner
       + bldUndoHtml()
+      + bldCutHtml(BLD_WK)
       + '<div class="wkdays">'+cards+'</div>'
       + howto('Straight off your <b>DO NOT FORGET THIS SHIZ</b> sheet. <b>STUDENT</b> marks the items the sheet flags as a weekly student task. '
       + 'Anything left unticked from earlier in the week rides along at the top of today, under Past due, and ticking it there ticks it on its own day too. '
       + 'Boxes are keyed to the week, so every week starts empty on its own and the weeks behind you stay on the record.');
+    bldReArm(weekroot);
   }
 
   (function(){
@@ -1847,13 +1860,13 @@
       + '<span class="wkstat"><b>'+st.done+'</b>/'+st.total+' '+(p.word||(p.prep?'done':'packed'))+'</span>'
       + '<button class="btn" id="pkAll">Expand</button>'
       + '<button class="btn" id="pkShut">Collapse</button>'
-      + (p.build?'<button class="btn" id="pkBuild" aria-pressed="'+(hgBuild?"true":"false")+'">'
+      + (p.build?'<button class="btn" id="pkBuild" data-arm="takeover:'+esc(key)+'" aria-pressed="'+(hgBuild?"true":"false")+'">'
           +(hgBuild?"Done building":(pkAllGroups(p).length?"Edit this list":"Build the list"))
           +'</button>':"")
       + ((p.build&&hgBuild)
           ?'<button class="btn" id="pkHist" aria-pressed="'+(hgHist?"true":"false")+'">Earlier versions</button>':"")
       + ((p.build&&hgBuild&&p.gen.length&&bldOwned(key))
-          ?'<button class="btn" id="pkReset">Reset to the sheet</button>':"")
+          ?'<button class="btn" id="pkReset" data-arm="reset:'+esc(key)+'">Reset to the sheet</button>':"")
       + '</div>'
       + (key==="semi"?semiBar(w):"")
       + (p.sub?'<p class="pksub">'+esc(p.sub)+'</p>':"")
@@ -1862,12 +1875,14 @@
             + '<p>This list is yours to write. Hit <b>Build the list</b>, add a section, '
             + 'then add rows to it. Everybody sees the same list and every home game gets '
             + 'its own set of checkmarks.</p></div>' : "")
+      + bldCutHtml(bldTabKey(key))
       + (p.build?bldSugHtml(key):"")
       + '<div class="wkdays">'+body+notes+'</div>'
       + (p.build?bldHistHtml(bldTabKey(key))+hgBuilderHtml():"")
       + howto(esc(p.name)+' off your travel sheet. '
       + (p.scope==="season"?'One list for the season.':'Boxes are keyed to the game above, so every trip starts empty on its own and past trips stay on the record.')
       + ' Checkmarks are shared: everyone with this link sees the same list.');
+    bldReArm(packroot);
   }
 
   /* "Loads Wednesday, two days before kickoff" plus a day picker, because
@@ -1981,7 +1996,7 @@
       var wd=e.target.closest("[data-wkdel]");
       if(wd){
         e.preventDefault(); e.stopPropagation();
-        if(bldArm(wd,"Remove it?")) return;
+        if(bldArm(wd,"wdel:"+wd.getAttribute("data-wkdel"),"Remove it?")) return;
         bldWeekDel(wd.getAttribute("data-wkdel")); return;
       }
 
@@ -1989,6 +2004,9 @@
       if(gl){ e.preventDefault(); e.stopPropagation(); showTab(gl.getAttribute("data-golist")); return; }
       if(e.target.closest("#bldUndoBtn")) return bldDoUndo();
       if(e.target.closest("#bldUndoNo")){ bldUndo=null; renderWeek(); return; }
+      var cc=e.target.closest("[data-cutclear]");
+      if(cc){ if(bldArm(cc,"cut:"+cc.getAttribute("data-cutclear"),"Start it fresh?")) return;
+              return bldCutClear(cc.getAttribute("data-cutclear")); }
       if(e.target.closest("#wkPrev")){ wkState.off--; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkNext")){ wkState.off++; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkNow")){ wkState.off=0; wkState.todayOnly=true; wkDefaultOpen(); renderWeek(); return; }
@@ -2054,7 +2072,7 @@
       if(e.target.closest("#pkBuild")){
         if(!hgBuild&&p.gen&&p.gen.length&&!bldOwned(TAB)){
           var btn=e.target.closest("#pkBuild");
-          if(bldArm(btn,"Take this list over?")) return;
+          if(bldArm(btn,"takeover:"+TAB,"Take this list over?")) return;
           var k=TAB;
           bldTakeOver(k).then(function(ok){
             if(!ok) return;
@@ -2066,10 +2084,13 @@
         hgBuild=!hgBuild; hgAdd=""; hgEdit=""; renderPack(TAB); return;
       }
       if(e.target.closest("#bldSugBtn")){ bldSugOpen=!bldSugOpen; renderPack(TAB); return; }
+      var cc=e.target.closest("[data-cutclear]");
+      if(cc){ if(bldArm(cc,"cut:"+cc.getAttribute("data-cutclear"),"Start it fresh?")) return;
+              return bldCutClear(cc.getAttribute("data-cutclear")); }
       if(e.target.closest("#pkHist")){ hgHist=!hgHist; renderPack(TAB); return; }
       var hr=e.target.closest("[data-hrest]");
       if(hr){
-        if(bldArm(hr,"Go back to it?")) return;
+        if(bldArm(hr,"hrest:"+TAB+":"+hr.getAttribute("data-hrest"),"Go back to it?")) return;
         var kk=bldTabKey(TAB), ii=Number(hr.getAttribute("data-hrest"));
         bldRestore(kk,ii).then(function(bad){
           if(bad){ flash(bad); return; }
@@ -2089,7 +2110,7 @@
       if(ss) return bldSugSkip(TAB,ss.getAttribute("data-sugskip"));
       if(e.target.closest("#pkReset")){
         var rb=e.target.closest("#pkReset");
-        if(bldArm(rb,"Throw away your edits?")) return;
+        if(bldArm(rb,"reset:"+TAB,"Throw away your edits?")) return;
         bldResetList(TAB); return;
       }
       if(e.target.closest(".bldcancel")){ e.preventDefault(); hgAdd=""; hgEdit=""; renderPack(TAB); return; }
@@ -2097,22 +2118,23 @@
       if(ha){ hgAdd=ha.getAttribute("data-hgadd"); hgEdit=""; renderPack(TAB);
               var f=packroot.querySelector(".bldinline .bldt"); if(f) f.focus(); return; }
       var hi=e.target.closest("[data-in]");
-      if(hi){ var a1=hi.getAttribute("data-in").split("|"); return hgIndent(a1[0],a1[1],1); }
+      if(hi){ var a1=hi.getAttribute("data-in").split("\u241F"); return hgIndent(a1[0],a1[1],1); }
       var ho=e.target.closest("[data-out]");
-      if(ho){ var a2=ho.getAttribute("data-out").split("|"); return hgIndent(a2[0],a2[1],-1); }
+      if(ho){ var a2=ho.getAttribute("data-out").split("\u241F"); return hgIndent(a2[0],a2[1],-1); }
       var hu=e.target.closest("[data-up]");
-      if(hu){ var a=hu.getAttribute("data-up").split("|"); return hgMove(a[0],a[1],-1); }
+      if(hu){ var a=hu.getAttribute("data-up").split("\u241F"); return hgMove(a[0],a[1],-1); }
       var hdn=e.target.closest("[data-down]");
-      if(hdn){ var b2=hdn.getAttribute("data-down").split("|"); return hgMove(b2[0],b2[1],1); }
+      if(hdn){ var b2=hdn.getAttribute("data-down").split("\u241F"); return hgMove(b2[0],b2[1],1); }
       var he=e.target.closest("[data-edit]");
       if(he){ hgEdit=he.getAttribute("data-edit"); hgAdd=""; renderPack(TAB);
               var f2=packroot.querySelector(".bldinline .bldt"); if(f2) f2.focus(); return; }
       var hd=e.target.closest("[data-del]");
       if(hd){
-        var c=hd.getAttribute("data-del").split("|");
+        var c=hd.getAttribute("data-del").split("\u241F");
         /* a section takes everything in it, so say how much before you nod */
         var n=c[1]?0:hgCount(c[0]);
-        if(bldArm(hd,c[1]?"Remove it?":(n?("Remove it and "+n+" row"+(n===1?"":"s")+"?"):"Remove it?"))) return;
+        if(bldArm(hd,"del:"+TAB+":"+hd.getAttribute("data-del"),
+                  c[1]?"Remove it?":(n?("Remove it and "+n+" row"+(n===1?"":"s")+"?"):"Remove it?"))) return;
         return hgDel(c[0],c[1]);
       }
       if(e.target.closest("#pkPrev")||e.target.closest("#pkNext")){
@@ -2152,7 +2174,7 @@
     packroot.addEventListener("dragover",function(e){
       var row=e.target.closest&&e.target.closest("[data-drag]"); if(!row||!dragFrom) return;
       if(row.getAttribute("data-drag")===dragFrom) return;
-      if(row.getAttribute("data-drag").split("|")[0]!==dragFrom.split("|")[0]) return;
+      if(row.getAttribute("data-drag").split("\u241F")[0]!==dragFrom.split("\u241F")[0]) return;
       e.preventDefault();
       [].forEach.call(packroot.querySelectorAll(".bldover"),function(n){ n.classList.remove("bldover"); });
       row.classList.add("bldover");
@@ -2160,7 +2182,7 @@
     packroot.addEventListener("drop",function(e){
       var row=e.target.closest&&e.target.closest("[data-drag]"); if(!row||!dragFrom) return;
       e.preventDefault();
-      var a=dragFrom.split("|"), b=row.getAttribute("data-drag").split("|");
+      var a=dragFrom.split("\u241F"), b=row.getAttribute("data-drag").split("\u241F");
       dragFrom="";
       if(a[0]!==b[0]) return;
       hgDrop(a[0],a[1],b[1]);
@@ -2205,7 +2227,7 @@
     document.title=(tb?tb.textContent.trim()+" \u00b7 ":"")+"Football Video Ops";
     lsSet("fpb_tab",which);
     if(onWeek) renderWeek();
-    if(onPack){ hgBuild=false; hgAdd=""; hgEdit=""; bldSugOpen=false; renderPack(which); }
+    if(onPack){ hgBuild=false; hgAdd=""; hgEdit=""; bldSugOpen=false; hgHist=false; bldArmClear(); renderPack(which); }
     if(onAir) renderAir();
     if(onOffice){ renderOffice(); if(officeCode()&&!OFF) officeBoot(); }
     if(onBuy) renderBuy();
@@ -2269,35 +2291,64 @@
     });
   }
 
+  var BLD_CUT={};
   function bldGet(key){
-    try{ var v=JSON.parse(SETTINGS[key]||"[]"); return Array.isArray(v)?v:[]; }
-    catch(e){ return []; }
+    var raw=SETTINGS[key];
+    try{
+      var v=JSON.parse(raw||"[]");
+      if(Array.isArray(v)){ delete BLD_CUT[key]; return v; }
+    }catch(e){}
+    /* an empty list and a list we cannot read are not the same thing, and
+       showing the second as the first is how work looks like it vanished */
+    if(raw) BLD_CUT[key]=String(raw).length;
+    return [];
   }
+  function bldCut(key){ return BLD_CUT[key]||0; }
   function bldId(){
     return Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3);
   }
 
   /* Read the row back out of the database before changing it, so two people
      editing different rows at the same time do not overwrite each other. */
+  /* A value stored under the old 200 character limit comes back chopped in
+     the middle of a word and will not parse. Say which it is, because the
+     two need completely different things from you. */
+  function bldCutMsg(v){
+    var n=String(v||"").length;
+    if(n>=195&&n<=205){
+      logProblem("a list was cut off in the database",
+        "stored length "+n+", the old set_setting limit was 200. Run settings-bigger.sql.");
+      return "This list was cut off by an old 200 character limit in the database. "
+           + "Run settings-bigger.sql in Supabase, then type it again. Nothing was changed.";
+    }
+    logProblem("a list would not read back","stored length "+n);
+    return "That list did not read back properly. Nothing was changed.";
+  }
+
+  async function bldReadRaw(key){
+    if(!sb) return {err:"Not connected."};
+    var r;
+    try{ r=await sb.from("settings").select("v").eq("k",key).limit(1); }
+    catch(e){ r={error:e}; }
+    if(!r||r.error){ logRead("a list",r&&r.error); return {err:"read failed"}; }
+    return {err:"",v:(r.data&&r.data.length)?(r.data[0].v||""):""};
+  }
+
   async function bldSave(key,mutate){
     if(!sb) return "Not connected.";
     /* The read has to succeed. It used to fall back to whatever was in the
        local cache, which meant that if the cache was empty or stale, the
        next save wrote a short list straight over a good one and the work
        was gone for good. Better to refuse the change than to lose the list. */
-    var cur=null, r;
-    try{ r=await sb.from("settings").select("v").eq("k",key).limit(1); }
-    catch(e){ r={error:e}; }
-    if(!r||r.error){
-      logRead("the list before changing it",r&&r.error);
-      return "Could not reach the list to change it. Nothing was saved.";
-    }
-    if(r.data&&r.data.length){
+    var got=await bldReadRaw(key);
+    if(got.err) return "Could not reach the list to change it. Nothing was saved.";
+    var cur=null;
+    if(got.v){
       try{
-        var fresh=JSON.parse(r.data[0].v||"[]");
-        if(!Array.isArray(fresh)) return "That list is stored oddly. Nothing was changed.";
+        var fresh=JSON.parse(got.v);
+        if(!Array.isArray(fresh)) return bldCutMsg(got.v);
         cur=fresh;
-      }catch(e){ return "That list is stored oddly. Nothing was changed."; }
+      }catch(e){ return bldCutMsg(got.v); }
     } else cur=[];
     SETTINGS[key]=JSON.stringify(cur);          /* the cache was wrong, fix it */
     /* Snapshot BEFORE the change. cur.slice() is a shallow copy, so a mutate
@@ -2310,6 +2361,19 @@
     var after=JSON.stringify(next);
     var bad=await saveSetting(key,after);
     if(bad) return bad;
+    /* Read it straight back. The database silently cut values to 200
+       characters and the page never knew, because it kept showing what it
+       had sent rather than what was stored. Everything looked right until
+       the next reload, when the work was gone. If what comes back is not
+       what went in, say so now, while there is still something to say. */
+    var chk=await bldReadRaw(key);
+    if(chk.err===""&&chk.v!==after){
+      SETTINGS[key]=chk.v;
+      logProblem("the database changed a list while saving it",
+        "sent "+after.length+" characters, got back "+String(chk.v||"").length);
+      return "The database did not store the whole list ("+after.length
+           + " characters in, "+String(chk.v||"").length+" back). Run settings-bigger.sql in Supabase.";
+    }
     if(before!==after) await bldKeep(key,before);
     return "";
   }
@@ -2366,7 +2430,7 @@
         + '<span class="bldhwho">'+esc(whoName(h.by)||"someone")+'</span>'
         + '<span class="bldhn">'+n+' row'+(n===1?"":"s")+'</span>'
         + '<span class="wksp"></span>'
-        + '<button type="button" class="btn" data-hrest="'+i+'">Go back to this</button></div>';
+        + '<button type="button" class="btn" data-hrest="'+i+'" data-arm="hrest:'+esc(TAB)+':'+i+'">Go back to this</button></div>';
     });
     return out+'</div>';
   }
@@ -2543,28 +2607,31 @@
   }
 
   function hgRowTools(gid,iid,i,n,d,maxd){
-    var k=esc(gid)+'|'+esc(iid);
+    var k=esc(gid)+'\u241F'+esc(iid);
     return '<span class="bldtools">'
       + '<button type="button" class="bldico" data-out="'+k+'"'+(d<=0?" disabled":"")+' aria-label="Move out one level">&#8592;</button>'
       + '<button type="button" class="bldico" data-in="'+k+'"'+(d>=maxd?" disabled":"")+' aria-label="Nest under the row above">&#8594;</button>'
       + '<button type="button" class="bldico" data-up="'+k+'"'+(i===0?" disabled":"")+' aria-label="Move up">&#9650;</button>'
       + '<button type="button" class="bldico" data-down="'+k+'"'+(i===n-1?" disabled":"")+' aria-label="Move down">&#9660;</button>'
       + '<button type="button" class="bldico" data-edit="'+k+'" aria-label="Edit">&#9998;</button>'
-      + '<button type="button" class="bldico bldx" data-del="'+k+'" aria-label="Remove">&times;</button>'
+      + '<button type="button" class="bldico bldx" data-del="'+k+'" data-arm="del:'+esc(TAB)+':'+k+'" aria-label="Remove">&times;</button>'
       + '</span>';
   }
 
   async function hgIndent(gid,iid,dir){
+    var touched=0;
     var bad=await bldSave(bldTabKey(),function(list){
+      touched=0;
       list.forEach(function(gr){
         if(gr.id!==gid) return;
         (gr.items||[]).forEach(function(it){
-          if(it.id===iid) it.d=Math.max(0,Math.min(BLD_MAXD,(Number(it.d)||0)+dir));
+          if(it.id===iid){ it.d=Math.max(0,Math.min(BLD_MAXD,(Number(it.d)||0)+dir)); touched++; }
         });
       });
       return list;
     });
     if(bad){ flash(bad); return; }
+    if(!touched){ bldNoMatch("nest",gid,iid); return; }
     renderPack(TAB);
   }
 
@@ -2597,7 +2664,7 @@
     if(iid) bldGet(bldTabKey()).forEach(function(gr){
       if(gr.id===gid) (gr.items||[]).forEach(function(it){ if(it.id===iid) ed=it; });
     });
-    return '<form class="bldadd bldinline" data-hgform="'+esc(gid)+'|'+esc(iid||"")+'">'
+    return '<form class="bldadd bldinline" data-hgform="'+esc(gid)+'\u241F'+esc(iid||"")+'">'
       + '<input type="text" class="bldt" maxlength="200" autocomplete="off" placeholder="What is the step?" value="'+esc(ed?ed.t:"")+'">'
       + '<input type="text" class="bldn" maxlength="300" autocomplete="off" placeholder="A note, if it needs one" value="'+esc(ed&&ed.n?ed.n:"")+'">'
       + '<input type="text" class="bldq" maxlength="12" autocomplete="off" placeholder="How many" value="'+esc(ed&&ed.q?ed.q:"")+'">'
@@ -2617,7 +2684,7 @@
   }
 
   async function hgItemSubmit(form){
-    var bits=form.getAttribute("data-hgform").split("|");
+    var bits=form.getAttribute("data-hgform").split("\u241F");
     var gid=bits[0], iid=bits[1];
     var t=form.querySelector(".bldt").value.trim();
     var n=form.querySelector(".bldn").value.trim();
@@ -2695,20 +2762,20 @@
       out+='<div class="bldgrp"><span class="bldgname">'+esc(gr.g)+'</span>'
         + '<span class="bldgn">'+((gr.items||[]).length)+' row'+((gr.items||[]).length===1?"":"s")+'</span>'
         + '<span class="wksp"></span>'
-        + '<button type="button" class="bldico" data-up="'+esc(gr.id)+'|"'+(gi===0?" disabled":"")+' aria-label="Move section up">&#9650;</button>'
-        + '<button type="button" class="bldico" data-down="'+esc(gr.id)+'|"'+(gi===all.length-1?" disabled":"")+' aria-label="Move section down">&#9660;</button>'
-        + '<button type="button" class="bldico" data-edit="'+esc(gr.id)+'|" aria-label="Rename section">&#9998;</button>'
-        + '<button type="button" class="bldico bldx" data-del="'+esc(gr.id)+'|" aria-label="Remove section">&times;</button>'
+        + '<button type="button" class="bldico" data-up="'+esc(gr.id)+'\u241F"'+(gi===0?" disabled":"")+' aria-label="Move section up">&#9650;</button>'
+        + '<button type="button" class="bldico" data-down="'+esc(gr.id)+'\u241F"'+(gi===all.length-1?" disabled":"")+' aria-label="Move section down">&#9660;</button>'
+        + '<button type="button" class="bldico" data-edit="'+esc(gr.id)+'\u241F" aria-label="Rename section">&#9998;</button>'
+        + '<button type="button" class="bldico bldx" data-del="'+esc(gr.id)+'\u241F" data-arm="del:'+esc(TAB)+':'+esc(gr.id)+'\u241F" aria-label="Remove section">&times;</button>'
         + '</div>';
-      if(hgEdit===gr.id+"|") out+=hgGroupForm(gr.id);
+      if(hgEdit===gr.id+"\u241F") out+=hgGroupForm(gr.id);
       var items=bldNorm((gr.items||[]).slice());
       items.forEach(function(it,ii){
-        if(hgEdit===gr.id+"|"+it.id){ out+=hgItemForm(gr.id,it.id); return; }
+        if(hgEdit===gr.id+"\u241F"+it.id){ out+=hgItemForm(gr.id,it.id); return; }
         var d=it.d||0, prev=ii?(items[ii-1].d||0):-1;
         var maxd=Math.min(BLD_MAXD,prev+1);
         var kid=!!(items[ii+1]&&(items[ii+1].d||0)>d);
         out+='<div class="blditem bd'+d+(kid?" bdparent":"")+'" draggable="true" '
-          + 'data-drag="'+esc(gr.id)+'|'+esc(it.id)+'">'
+          + 'data-drag="'+esc(gr.id)+'\u241F'+esc(it.id)+'">'
           + '<span class="bldgrip" aria-hidden="true">&#8942;&#8942;</span>'
           + '<span class="blditext">'+esc(it.t)
           + (it.q?' <i>&times;'+esc(it.q)+'</i>':"")
@@ -2740,6 +2807,17 @@
      it X, the sheet says Y" instead of a phantom add and delete.
      ================================================================ */
   function bldSkips(k){ return bldGet(bldSkipKey(k)); }
+
+  /* The row the button pointed at is not in the list. That is never the
+     person doing something odd, it is always the page and the stored list
+     disagreeing about what a row is called, which is exactly the shape of
+     bug that hides for weeks because nothing errors and nothing changes. */
+  function bldNoMatch(what,gid,iid){
+    logProblem("could not "+what+" that row",
+      "nothing in the list matched. section id "+JSON.stringify(gid)
+      +", row id "+JSON.stringify(iid)+", on the "+TAB+" tab");
+    flash("That did not match anything. It is in the Problems log.");
+  }
 
   function bldDiff(k){
     var out={add:[],gone:[],changed:[],n:0};
@@ -2785,25 +2863,39 @@
      changes: a confirm cannot land in the same breath as the arming, the
      button says how much it is about to take, and anything destructive can
      be put back. */
-  function bldArm(btn,label){
-    var now=Date.now();
-    if(btn.getAttribute("data-sure")==="1")
-      return (now-Number(btn.getAttribute("data-armed")||0))<500;   /* too quick, ignore */
-    btn.setAttribute("data-sure","1");
-    btn.setAttribute("data-armed",String(now));
+  /* The armed state used to live on the button. Anything that redrew the
+     bar, a realtime echo from the other computer, a background refresh,
+     built a fresh button with no memory of being armed, so the second press
+     armed it again and it looked like the button simply did not work. It
+     lives here now, keyed by what it is about to do, and the look is put
+     back on after every render. */
+  var ARM={key:"",at:0,label:""};
+  function armPaint(btn,label){
+    if(!btn||btn.getAttribute("data-armed")==="1") return;
     btn.setAttribute("data-was",btn.innerHTML);
+    btn.setAttribute("data-armed","1");
     btn.innerHTML=esc(label);
     btn.classList.add("bldsure");
-    function off(){
-      if(!btn.isConnected) return;
-      btn.removeAttribute("data-sure"); btn.removeAttribute("data-armed");
-      btn.innerHTML=btn.getAttribute("data-was")||"&times;";
-      btn.classList.remove("bldsure");
-      btn.removeEventListener("blur",off);
+  }
+  function bldArmClear(){ ARM={key:"",at:0,label:""}; }
+  function bldArm(btn,key,label){
+    var now=Date.now();
+    if(ARM.key===key&&now-ARM.at<15000){
+      if(now-ARM.at<500) return true;        /* same breath, not a decision */
+      bldArmClear();
+      return false;                          /* go ahead */
     }
-    btn.addEventListener("blur",off);
-    setTimeout(off,5000);
+    ARM={key:key,at:now,label:label};
+    armPaint(btn,label);
     return true;
+  }
+  /* called at the end of a render so an armed button still looks armed */
+  function bldReArm(root){
+    if(!ARM.key||!root) return;
+    if(Date.now()-ARM.at>15000){ bldArmClear(); return; }
+    var el=null;
+    try{ el=root.querySelector('[data-arm="'+String(ARM.key).replace(/["\\]/g,"\\$&")+'"]'); }catch(e){}
+    if(el) armPaint(el,ARM.label);
   }
 
   var bldUndo=null;
@@ -2918,6 +3010,30 @@
     });
     if(bad){ flash(bad); return; }
     renderPack(k); flash("Removed.");
+  }
+
+  /* A list the database handed back in pieces. Saying "empty" would be a
+     lie, and it is the lie that made work look like it had vanished. */
+  function bldCutHtml(key){
+    var n=bldCut(key);
+    if(!n) return "";
+    var old=(n>=195&&n<=205);
+    return '<div class="bldcut"><b>This list could not be read back.</b>'
+      + '<p>'+(old
+          ? 'It was cut off at '+n+' characters by an old limit in the database. '
+            + 'Run <b>settings-bigger.sql</b> in Supabase and that stops happening. '
+            + 'What was cut cannot be recovered, so it has to be typed again. Sorry.'
+          : 'What came back from the database was '+n+' characters that did not make sense. '
+            + 'Nothing has been changed or deleted. Send me the Problems log from the gear.')
+      + '</p>'
+      + '<button type="button" class="btn" data-cutclear="'+esc(key)+'">Start this list fresh</button>'
+      + '</div>';
+  }
+  async function bldCutClear(key){
+    var bad=await saveSetting(key,"");
+    if(bad){ flash(bad); return; }
+    delete BLD_CUT[key];
+    renderCurrentList(); flash("Cleared. Start again when you are ready.");
   }
 
   /* ================================================================
@@ -3388,7 +3504,7 @@
      run in Supabase, MINOR when only index.html and app.js change. The
      check below is what actually matters: it asks the database what it
      has rather than trusting the number. */
-  var VER="5.9";
+  var VER="6.0";
   var DBNEED=[{t:"checks",sql:"setup.sql"},
               {t:"check_log",sql:"database-update.sql"},
               {t:"candidates",sql:"database-update.sql"},
@@ -4833,6 +4949,8 @@
       });
       fd.addEventListener("click",function(e){ if(e.target===fd) closeFind(); });
     }
+    var fb=document.getElementById("fFind");
+    if(fb) fb.addEventListener("click",function(e){ e.stopPropagation(); openFind(); });
     /* "/" anywhere that is not a text box opens it, the way search always has */
     document.addEventListener("keydown",function(e){
       if(e.key!=="/"||e.ctrlKey||e.metaKey||e.altKey) return;

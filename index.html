@@ -1465,6 +1465,17 @@ dialog#allNotes .n-gen .btn.go{background:var(--accent);border:1px solid var(--a
 @media (max-width:720px){ .song-bar{width:54px} }
 #songName.song-bad{color:#ffb4a2;text-decoration:underline wavy rgba(255,120,90,.8);text-underline-offset:3px}
 
+/* a name shown whole on a tag, rather than cut to two letters */
+.who-tag.wt-full{letter-spacing:0}
+.cell .who-tag.on.wt-full{font-size:5.5px;font-weight:800;letter-spacing:-.1px;
+  transform:scaleY(1.25);line-height:1}
+#weekroot .who-tag.wt-full,#packroot .who-tag.wt-full{font-size:8.5px;letter-spacing:.02em}
+
+/* the magnifier, beside the live dot */
+.findbtn{padding:5px 6px !important;line-height:0;margin-left:2px}
+.findbtn svg{width:15px;height:15px}
+@media (max-width:620px){ .findbtn svg{width:14px;height:14px} }
+
 /* ================= the Office ================= */
 body:not(.on-office) #officeroot{display:none}
 #officeroot{padding-top:4px}
@@ -1991,6 +2002,16 @@ body:not(.on-buy) #buyroot{display:none}
   100%{box-shadow:0 0 0 3px transparent;}
 }
 
+/* ---- a list the database could not hand back whole ---- */
+.bldcut{margin:4px 0 14px;padding:13px 15px;border-left:3px solid #b4472f;
+  background:color-mix(in srgb,#b4472f 9%,transparent);border-radius:0 2px 2px 0}
+.bldcut b{font-family:var(--narrow),sans-serif;font-weight:700;font-size:14px;color:#b4472f}
+.bldcut p{margin:5px 0 10px;font-size:13.5px;line-height:1.6;color:var(--ink2);max-width:74ch}
+.bldcut .btn{border:1px solid #b4472f;background:none;color:#b4472f;
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:7px 12px;border-radius:2px;cursor:pointer}
+.bldcut .btn:hover{background:#b4472f;color:#fff}
+
 </style>
 </head>
 <body>
@@ -2046,7 +2067,8 @@ body:not(.on-buy) #buyroot{display:none}
       <button class="btn ibtn" id="fUndo" disabled aria-label="Undo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3 2.5 6.5 6 10M3 6.5h6.5a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button class="btn ibtn" id="fRedo" disabled aria-label="Redo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3l3.5 3.5L10 10M13 6.5H6.5a4 4 0 0 0 0 8H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="sync"><span class="dot" id="sdot"></span><span id="stext">Loading…</span></div>
-      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="find">Find anything</button><button type="button" data-g="hist">History</button><button type="button" data-g="prob">Problems<span id="gProbN"></span></button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button><button type="button" data-g="lock" hidden>Lock the office</button><div class="gver" id="gVer"></div></div></span>
+      <button class="btn ibtn findbtn" id="fFind" aria-label="Find anything" title="Find  (/)"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 21 21"/></svg></button>
+      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="find">Find</button><button type="button" data-g="hist">History</button><button type="button" data-g="prob">Problems<span id="gProbN"></span></button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button><button type="button" data-g="lock" hidden>Lock the office</button><div class="gver" id="gVer"></div></div></span>
     </div>
   </div>
 
@@ -2199,8 +2221,8 @@ body:not(.on-buy) #buyroot{display:none}
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=5.9"></script>
-<script src="app.js?v=5.9"></script>
+<script src="config.js?v=6.0"></script>
+<script src="app.js?v=6.0"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
