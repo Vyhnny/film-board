@@ -3504,7 +3504,7 @@
      run in Supabase, MINOR when only index.html and app.js change. The
      check below is what actually matters: it asks the database what it
      has rather than trusting the number. */
-  var VER="6.0";
+  var VER="6.1";
   var DBNEED=[{t:"checks",sql:"setup.sql"},
               {t:"check_log",sql:"database-update.sql"},
               {t:"candidates",sql:"database-update.sql"},
@@ -3528,10 +3528,13 @@
   }
   function drawVersion(){
     var el=document.getElementById("gVer"); if(!el) return;
-    el.innerHTML='<b>Football Video Ops v'+VER+'</b>'
+    el.innerHTML='<button type="button" class="gverbtn" data-g="vers" '
+      + 'title="What changed in this version, and every one before it">'
+      + '<b>Football Video Ops v'+VER+'</b>'
       + (DBMISS.length
           ? '<span class="dbbad">Database needs '+esc(DBMISS.join(", "))+'</span>'
-          : '<span class="dbok">Database up to date</span>');
+          : '<span class="dbok">Database up to date</span>')
+      + '<span class="vmore">What\'s new</span></button>';
   }
 
   /* ---------- the gear ---------- */
@@ -3575,6 +3578,7 @@
       if(g==="notes") return openAllNotes();
       if(g==="find") return openFind();
       if(g==="prob") return openProblems();
+      if(g==="vers") return openVersions();
       if(g==="print") return window.print();
       if(g==="who") return askLogin();
       if(g==="theme"){
@@ -4959,6 +4963,153 @@
       if(document.querySelector("dialog[open]")) return;
       e.preventDefault(); openFind();
     });
+  })();
+
+  /* ================================================================
+     What's new.
+
+     The version line at the bottom of the gear used to be a dead
+     label. CHANGELOG.txt has the long version, but it lives in a
+     folder on one computer, which is no use to anybody standing in
+     the press box wondering why a button moved. This is the same
+     history, short, in the site.
+
+     Keep RELEASES newest first, and keep each line to one sentence.
+     ================================================================ */
+  var RELEASES=[
+   {v:"6.1",d:"Oct 28, 2026",sql:"",n:[
+     "This list. The version line at the bottom of the gear is a button now, and it opens every update with a line or two on each.",
+     "CHANGELOG.txt in the Film Board folder still has the long version of all of it.",
+     "3.11, the Trackers tab, was never written down anywhere. It is here now."]},
+   {v:"6.0",d:"Oct 28, 2026",sql:"settings-bigger.sql",n:[
+     "Found why lists kept disappearing: the database was cutting every saved value to 200 characters.",
+     "Every save now reads itself back, and says so with the numbers if they disagree.",
+     "A list that will not read shows a red panel instead of looking empty.",
+     "Delete, move, nest and rename on a taken-over list had been doing nothing while reporting that they worked.",
+     "Find moved up next to the Live dot, and Bulldog's tag shows the whole word."]},
+   {v:"5.9",d:"Oct 28, 2026",sql:"",n:[
+     "Find, in the gear or by pressing /, across every list, the purchase list and the notes.",
+     "Problems, in the gear: anything that fails is written down with what it was doing.",
+     "Earlier versions of a built list, the last ten, any of them restorable.",
+     "Anyone signed in as SH shows as Bulldog everywhere."]},
+   {v:"5.8",d:"Oct 28, 2026",sql:"",n:[
+     "Lists were losing work. Two faults stacked: a save echoing back empty, and a failed read falling back to it.",
+     "Enter walked straight through “Really?” and took a whole section with it.",
+     "Put it back, offered after anything that removes something.",
+     "Build mode no longer follows you to the next tab."]},
+   {v:"5.7",d:"Oct 28, 2026",sql:"",n:[
+     "The sheet keeps talking after you take a list over: rows it has that you do not, rows worded differently, rows it dropped.",
+     "Nothing is ever applied on its own, and a dismissal sticks.",
+     "A rename reads as a rename instead of a phantom new row plus a phantom deleted one."]},
+   {v:"5.6",d:"Oct 28, 2026",sql:"",n:[
+     "Semi Load, Away Game, Staycation and Bowl can be taken over and edited like Home Game Setup.",
+     "Reset to the sheet puts the generated list back exactly as it was.",
+     "Checkmarks survive a takeover, verified on all 90 Away Game rows.",
+     "Week: the rows you added yourself now move and nest."]},
+   {v:"5.5",d:"Oct 28, 2026",sql:"",n:[
+     "Nesting in the list builder: drag a row onto another, or use the arrows.",
+     "Two levels deep, the same as the pack lists.",
+     "The arrows exist because drag and drop does nothing on the iPad."]},
+   {v:"5.4",d:"Oct 28, 2026",sql:"",n:[
+     "Lists you build yourself, riding the settings table, so no SQL.",
+     "A quiet + at the bottom of each open day on the Week tab: just this week, or every Tuesday.",
+     "Home Game Setup, a new tab, starts empty and is yours to write."]},
+   {v:"5.3",d:"Oct 27, 2026",sql:"",n:[
+     "The next button on the fight song player only switched songs, it never started one. It plays now.",
+     "A song file that is not in the repo says so instead of failing silently."]},
+   {v:"5.2",d:"Oct 27, 2026",sql:"",n:[
+     "The top ribbon stopped wrapping to two ragged rows; the tabs scroll at every width.",
+     "Only what's left, Collapse all and By game moved down onto the page.",
+     "Download Skycasts added to Monday, one row that rides along under Past due.",
+     "Worker Log categories are yours to add, rename and remove.",
+     "The fight song player takes more than one song."]},
+   {v:"5.1",d:"Oct 27, 2026",sql:"",n:[
+     "Printing from the Office gave a blank page. The depth chart now prints a trip roster.",
+     "The grey paragraph at the bottom of every tab folded behind “How this tab works”.",
+     "The fight song is back on the Film Board only."]},
+   {v:"5.0",d:"Oct 27, 2026",sql:"buy-setup.sql",n:[
+     "Worker Log, inside the Office: by date, by person, and a one on one page that prints clean.",
+     "Purchase List, a new tab. Four prices a line, Amazon and B&H refreshing themselves on Tuesdays.",
+     "General notes, not tied to any one checkbox."]},
+   {v:"4.0",d:"Oct 27, 2026",sql:"office-setup.sql, then office-seed.sql",n:[
+     "The Office tab, behind a second code. Its tables have no read policy at all, so the key in the page cannot see a row.",
+     "Travel Crew: the away-trip depth chart, with a ranked bench and the reason showing.",
+     "Lock the office, in the gear, forgets the code on this computer."]},
+   {v:"3.11",d:"Oct 27, 2026",sql:"",n:[
+     "Trackers tab: every Airtable base, table and view, each one a link into the real Airtable.",
+     "The site learns the shape of your bases and never a single record."]},
+   {v:"3.10",d:"Oct 26, 2026",sql:"",n:[
+     "The HMR-10 broke, so it and its power, cards and SDI came off the Away Game list.",
+     "The UMR 20 moved into the SL Potato Bowl bag, and the row says where it came from.",
+     "Away Game: 94 items down to 90."]},
+   {v:"3.9",d:"Oct 26, 2026",sql:"",n:[
+     "The nesting is in. The pack lists show what lives inside what, the way the sheet does.",
+     "Checkmarks keyed by the whole path, so two Power wheels are two boxes."]},
+   {v:"3.8",d:"Oct 26, 2026",sql:"",n:[
+     "Initial Pack of boxes links to the list it needs, and follows the week on its own."]},
+   {v:"3.7",d:"Oct 26, 2026",sql:"",n:[
+     "Two sources on purpose: the Oct 26 PDF for the pack lists, the workbook for Game Week and Bowl.",
+     "Put back what 3.6 wrongly dropped, including the whole 87-item Bowl list."]},
+   {v:"3.6",d:"Oct 26, 2026",sql:"",bad:1,n:[
+     "Rebuilt off the Away Game PDF, and superseded the next day by 3.7. Do not use."]},
+   {v:"3.5",d:"Oct 26, 2026",sql:"",n:[
+     "From Ross's notes: the note popup lost its checkboxes, and the tick stopped landing outside its box.",
+     "SAVE became DOWNLOAD, since it was never saving checkmarks. Those save the moment you click them."]},
+   {v:"3.4",d:"Oct 26, 2026",sql:"",n:[
+     "Before the bowl checklist, in four stages, drafted off the sheet's bowl notes.",
+     "Bowl boxes carry the season year, so next year's bowl starts empty."]},
+   {v:"3.3",d:"Oct 26, 2026",sql:"",n:[
+     "Postseason: announced championship and bowl games show up as trips and as real game weeks.",
+     "A week with no game in it goes quiet instead of listing 34 tasks forever.",
+     "Notes print in grey under their line.",
+     "Today mode, which phones land on by themselves."]},
+   {v:"3.2",d:"Oct 26, 2026",sql:"notes-setup.sql (the new one)",n:[
+     "Semi load day is settable per trip, and two tasks follow it instead of the kickoff.",
+     "On The Semi said Packed Thursday on every game. It works the day out from kickoff now."]},
+   {v:"3.1",d:"Oct 26, 2026",sql:"",n:[
+     "Board controls restyled as pills so they stop reading like more tabs.",
+     "The note window opens at full size, and keeps what you typed as a draft."]},
+   {v:"3.0",d:"Oct 26, 2026",sql:"notes-setup.sql",n:[
+     "Renamed Football Video Ops, with six tabs.",
+     "Week tab, past due, and short weeks that ride the kickoff.",
+     "Notes on any checkbox, by right-click or long-press.",
+     "The settings gear, and a real light and dark toggle."]},
+   {v:"2.0",d:"Sept 2026",sql:"database-update.sql",n:[
+     "Postseason section, so staff can start on every possible opponent.",
+     "History of every tick and untick, with undo."]},
+   {v:"1.0",d:"Sept 2026",sql:"setup.sql",n:[
+     "The opponent film pull board: shared live checkmarks, initials, an offline queue, print, export and the fight song."]}
+  ];
+
+  function drawVersions(){
+    var box=document.getElementById("vrList"); if(!box) return;
+    var head=document.getElementById("vrNow");
+    if(head){
+      head.innerHTML='<b>You are on v'+esc(VER)+'</b>'
+        + (DBMISS.length
+            ? '<span class="dbbad">Database needs '+esc(DBMISS.join(", "))+'</span>'
+            : '<span class="dbok">Database up to date</span>');
+    }
+    box.innerHTML=RELEASES.map(function(r){
+      return '<div class="vrow'+(r.v===VER?" vnow":"")+(r.bad?" vbad":"")+'">'
+        + '<div class="vhead"><span class="vnum">'+esc(r.v)+'</span>'
+        + '<span class="vdate">'+esc(r.d)+'</span>'
+        + (r.v===VER?'<span class="vtag">you are here</span>':"")
+        + (r.sql?'<span class="vsql">needed '+esc(r.sql)+'</span>':"")+'</div>'
+        + '<ul class="vlines">'+r.n.map(function(l){ return '<li>'+esc(l)+'</li>'; }).join("")+'</ul>'
+        + '</div>';
+    }).join("");
+  }
+  function openVersions(){
+    var d=document.getElementById("verDlg"); if(!d) return;
+    drawVersions();
+    if(d.showModal) d.showModal(); else d.setAttribute("open","");
+  }
+  (function(){
+    var d=document.getElementById("verDlg"); if(!d) return;
+    var c=document.getElementById("vrClose");
+    if(c) c.addEventListener("click",function(){ d.close?d.close():d.removeAttribute("open"); });
+    d.addEventListener("click",function(e){ if(e.target===d){ d.close?d.close():d.removeAttribute("open"); } });
   })();
 
   /* ---------- start ---------- */
