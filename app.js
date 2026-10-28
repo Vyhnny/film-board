@@ -1300,6 +1300,10 @@
   }
   function wkDayDate(sun,i){ var d=new Date(sun.getTime()); d.setDate(d.getDate()+i); return d; }
   function wkId(sun,sheet,t){ return "wk|"+ckISO(sun)+"|"+WK_DAYS[sheet].k+"|"+ckSlug(t); }
+  /* one place that knows whether a row came off the sheet or out of the + */
+  function wkIdOf(sun,e){
+    return e.item.cid?bldWeekId(sun,e.sheet,e.item.cid):wkId(sun,e.sheet,e.item.t);
+  }
   /* The explainer that used to sit at the bottom of every tab, every day,
      forever. Still here when somebody new needs it, folded away when they
      do not. The browser remembers nothing, which is right: closed is the
@@ -1386,7 +1390,11 @@
      weekday. Returns a list of {sheet, item}. */
   function wkTasks(i,g,sun){
     var out=[], sd=sun?semiDay(sun,g):-1;
-    if(sun&&!weekIsLive(sun,g)) return out;
+    /* Anything you typed shows up even on a quiet week. You put it there
+       on purpose; the sheet's own routine is what goes dark. */
+    var mine=sun?bldWeekFor(i,sun).map(function(x){
+      return {sheet:i,item:{t:x.t,n:x.n,cid:x.id,every:x.every,nd:x.nd||0}}; }):[];
+    if(sun&&!weekIsLive(sun,g)) return mine;
     WK_DAYS.forEach(function(D,sheet){
       D.t.forEach(function(x){
         if(x.sem!==undefined){
@@ -1405,11 +1413,11 @@
         if(land===i) out.push({sheet:sheet,item:x});
       });
     });
-    return out;
+    return out.concat(mine);
   }
   function wkStat(sun,i,g){
     var list=wkTasks(i,g,sun), done=0;
-    list.forEach(function(e){ if(STATE.checks[wkId(sun,e.sheet,e.item.t)]) done++; });
+    list.forEach(function(e){ if(STATE.checks[wkIdOf(sun,e)]) done++; });
     return {done:done,total:list.length};
   }
   /* Unfinished work from earlier in the same week. */
@@ -1417,7 +1425,7 @@
     var out=[];
     for(var i=0;i<upto;i++){
       wkTasks(i,g,sun).forEach(function(e){
-        if(!STATE.checks[wkId(sun,e.sheet,e.item.t)]) out.push({day:i,sheet:e.sheet,item:e.item});
+        if(!STATE.checks[wkIdOf(sun,e)]) out.push({day:i,sheet:e.sheet,item:e.item});
       });
     }
     return out;
@@ -1457,7 +1465,9 @@
     var on=!!STATE.checks[id];
     var note=noteText(item.n,dayIdx);
     var due=dd?dueNote(item,dd):"";
-    return '<label class="trow'+(on?" tdone":"")+(from!==undefined?" tlate":"")+'">'
+    return '<label class="trow'+(item.cid?" mineRow d"+(item.nd||0):"")
+      +(on?" tdone":"")+(from!==undefined?" tlate":"")+'"'
+      +(item.cid&&from===undefined?' draggable="true" data-wdrag="'+esc(item.cid)+'"':"")+'>'
       + '<input class="box" type="checkbox" data-id="'+esc(id)+'"'+(on?" checked":"")+'>'
       + '<span class="tmain"><span class="tname">'+esc(item.t)+'</span>'
       + (from!==undefined?'<span class="tfrom">from '+WK_DAYS[from].n+'</span>':"")
@@ -1471,6 +1481,15 @@
           return '<button type="button" class="tlink" data-golist="'+esc(k)+'">Open '+esc(PACKS[k].tab)+'</button>';
         })()
       + (item.s?'<span class="stu" title="Your sheet flags this as a weekly student task">Student</span>':"")
+      + (item.cid?'<span class="mine" title="'+(item.every?"Added by hand, every week":"Added by hand, this week only")+'">'
+          +(item.every?"Weekly":"Added")+'</span>'
+          +(from===undefined?
+             '<button type="button" class="bldico" data-wout="'+esc(item.cid)+'"'+((item.nd||0)<=0?" disabled":"")+' aria-label="Move out one level">&#8592;</button>'
+            +'<button type="button" class="bldico" data-win="'+esc(item.cid)+'"'+((item.nd||0)>=2?" disabled":"")+' aria-label="Nest under the row above">&#8594;</button>'
+            +'<button type="button" class="bldico" data-wup="'+esc(item.cid)+'" aria-label="Move up">&#9650;</button>'
+            +'<button type="button" class="bldico" data-wdn="'+esc(item.cid)+'" aria-label="Move down">&#9660;</button>':"")
+          +'<button type="button" class="bldico" data-wkedit="'+esc(item.cid)+'" aria-label="Edit this">&#9998;</button>'
+          +'<button type="button" class="bldico bldx" data-wkdel="'+esc(item.cid)+'" aria-label="Remove this">&times;</button>':"")
       + '</span>'
       + whoTag(id,"")
       + '</label>';
@@ -1481,7 +1500,7 @@
     var isToday=dd.getTime()===today.getTime();
     var isGame=!!(g&&!g.bye&&g.i===i);
     var st={done:0,total:list.length};
-    list.forEach(function(e){ if(STATE.checks[wkId(sun,e.sheet,e.item.t)]) st.done++; });
+    list.forEach(function(e){ if(STATE.checks[wkIdOf(sun,e)]) st.done++; });
     var left=st.total-st.done, complete=st.total>0&&left===0;
     var late=(overdue&&isToday)?overdue:[];
     var open=!!wkState.open[i];
@@ -1500,7 +1519,7 @@
     var body="";
     if(late.length){
       body+='<div class="pastdue"><div class="pdhead">Past due &middot; carried over from earlier this week</div>';
-      late.forEach(function(e){ body+=taskRow(wkId(sun,e.sheet,e.item.t),e.item,e.day,e.day,wkDayDate(sun,e.day),g); });
+      late.forEach(function(e){ body+=taskRow(wkIdOf(sun,e),e.item,e.day,e.day,wkDayDate(sun,e.day),g); });
       body+='</div>';
     }
     if(!list.length){
@@ -1508,8 +1527,9 @@
         :(g?"Clear. The week ended at kickoff on "+WK_DAYS[g.i].n+"."
            :"Nothing on the sheet for this day."))+'</p>';
     } else {
-      list.forEach(function(e){ body+=taskRow(wkId(sun,e.sheet,e.item.t),e.item,i,undefined,dd,g); });
+      list.forEach(function(e){ body+=taskRow(wkIdOf(sun,e),e.item,i,undefined,dd,g); });
     }
+    body+=bldAddForm(i)+bldPlus(i);
 
     return '<section class="'+cls+'" data-day="'+i+'">'
       + '<div class="dhead" role="button" tabindex="0" aria-expanded="'+(open?"true":"false")+'">'
@@ -1636,6 +1656,21 @@
   }
 
   /* ---------------- packing lists ---------------- */
+  /* Home Game Setup starts empty on purpose. Everything in it is typed on
+     the page, and it is keyed per game like the other per-game lists. */
+  /* The sheet's own version, frozen, so Reset always has something to go
+     back to however much you have changed on the page. */
+  ["semi","road","stay","bowl"].forEach(function(k){
+    if(!PACKS[k]) return;
+    PACKS[k].gen=(PACKS[k].prep||[]).concat(PACKS[k].groups||[]);
+    PACKS[k].build=true;
+    PACKS[k].live=(function(kk){ return function(){ return bldPack(kk); }; })(k);
+  });
+
+  PACKS.home={name:"Home Game Setup",tab:"Home Setup",scope:"home",word:"set",
+    sub:"What we set up at the stadium for a home game. Build it with the buttons below; it is yours, not off a sheet.",
+    live:bldHome, build:true, gen:[], groups:[]};
+
   function pkGames(scope){
     if(scope==="season") return [];
     var want=scope==="home"?"H":"A";
@@ -1675,7 +1710,20 @@
     var scope=w?("w"+w.week):("s"+seasonYear());
     return "pk|"+key+"|"+scope+"|"+ckSlug(gname)+"|"+ckSlug(t);
   }
-  function pkAllGroups(p){ return (p.prep||[]).concat(p.groups||[]); }
+  function pkAllGroups(p){
+    if(p.live) return p.live();                 /* a list you built yourself */
+    return (p.prep||[]).concat(p.groups||[]);
+  }
+  /* A row you typed keeps its own id, so renaming it does not lose the tick. */
+  function pkKeyOf(gr,ix){
+    var it=gr.items[ix];
+    if(!it.id) return pkPath(gr,ix);
+    /* A "k|" prefix means the row came off the sheet: its key stays the
+       path it always had, so taking a list over wipes no checkmark. A
+       generated id is base36 and can never contain a pipe, so the two
+       can never be mistaken for each other. */
+    return it.id.slice(0,2)==="k|"?it.id.slice(2):("x"+it.id);
+  }
   /* "Brandon laptop bag / Mouse", so two different bags can both hold a Mouse */
   function pkPath(gr,ix){
     var it=gr.items[ix], d=it.d||0, trail=[], look=d;
@@ -1688,7 +1736,7 @@
   function pkStat(key,w){
     var p=PACKS[key], done=0, total=0;
     pkAllGroups(p).forEach(function(gr){ gr.items.forEach(function(it,ix){
-      total++; if(STATE.checks[pkId(key,w,gr.g,pkPath(gr,ix))]) done++; }); });
+      total++; if(STATE.checks[pkId(key,w,gr.g,pkKeyOf(gr,ix))]) done++; }); });
     return {done:done,total:total};
   }
 
@@ -1714,7 +1762,7 @@
     var foldByDefault=st.total>30;
     function groupHtml(gr,isPrep){
       var gd=0;
-      gr.items.forEach(function(it,ix){ if(STATE.checks[pkId(key,w,gr.g,pkPath(gr,ix))]) gd++; });
+      gr.items.forEach(function(it,ix){ if(STATE.checks[pkId(key,w,gr.g,pkKeyOf(gr,ix))]) gd++; });
       var gleft=gr.items.length-gd, gdone=gleft===0;
       var shut=pkState[key+"|shut|"+gr.g];
       var open=shut===undefined?!foldByDefault:!shut;
@@ -1725,7 +1773,7 @@
         + '<span class="pill '+(gdone?"p-done":"p-part")+'">'+(gdone?"Done":gleft+" left")+'</span>'
         + '<span class="caret" aria-hidden="true">&#9662;</span></div><div class="dbody">';
       gr.items.forEach(function(it,ix){
-        var id=pkId(key,w,gr.g,pkPath(gr,ix)), on=!!STATE.checks[id];
+        var id=pkId(key,w,gr.g,pkKeyOf(gr,ix)), on=!!STATE.checks[id];
         var d=it.d||0, nx=gr.items[ix+1];
         var head=!!(nx&&(nx.d||0)>d);
         body+='<label class="trow d'+d+(head?" thead":"")+(on?" tdone":"")+'">'
@@ -1737,13 +1785,13 @@
       });
       body+='</div></section>';
     }
-    if(p.prep&&p.prep.length){
+    if(p.prep&&p.prep.length&&!bldOwned(key)){
       body+='<div class="pkhead"><b>Before the bowl</b><span>Things to do, in the order they happen. '
           + 'Drafted from last year&#39;s bowl notes, so change whatever is wrong.</span></div>';
       p.prep.forEach(function(gr){ groupHtml(gr,true); });
       body+='<div class="pkhead"><b>Equipment</b><span>What goes in the truck.</span></div>';
     }
-    p.groups.forEach(function(gr){ groupHtml(gr,false); });
+    (p.live?p.live():p.groups).forEach(function(gr){ groupHtml(gr,(p.prep||[]).indexOf(gr)>=0); });
 
     var notes="";
     if(p.notes&&p.notes.length){
@@ -1757,12 +1805,25 @@
         +'<i>v'+VER+'</i></div>'
       + '<div class="wkbar">'+nav+who
       + '<span class="wksp"></span>'
-      + '<span class="wkstat"><b>'+st.done+'</b>/'+st.total+(p.prep?' done':' packed')+'</span>'
+      + '<span class="wkstat"><b>'+st.done+'</b>/'+st.total+' '+(p.word||(p.prep?'done':'packed'))+'</span>'
       + '<button class="btn" id="pkAll">Expand</button>'
-      + '<button class="btn" id="pkShut">Collapse</button></div>'
+      + '<button class="btn" id="pkShut">Collapse</button>'
+      + (p.build?'<button class="btn" id="pkBuild" aria-pressed="'+(hgBuild?"true":"false")+'">'
+          +(hgBuild?"Done building":(pkAllGroups(p).length?"Edit this list":"Build the list"))
+          +'</button>':"")
+      + ((p.build&&hgBuild&&p.gen.length&&bldOwned(key))
+          ?'<button class="btn" id="pkReset">Reset to the sheet</button>':"")
+      + '</div>'
       + (key==="semi"?semiBar(w):"")
       + (p.sub?'<p class="pksub">'+esc(p.sub)+'</p>':"")
+      + (p.build&&!pkAllGroups(p).length&&!hgBuild
+          ? '<div class="bldempty"><h2>Nothing here yet</h2>'
+            + '<p>This list is yours to write. Hit <b>Build the list</b>, add a section, '
+            + 'then add rows to it. Everybody sees the same list and every home game gets '
+            + 'its own set of checkmarks.</p></div>' : "")
+      + (p.build?bldSugHtml(key):"")
       + '<div class="wkdays">'+body+notes+'</div>'
+      + (p.build?hgBuilderHtml():"")
       + howto(esc(p.name)+' off your travel sheet. '
       + (p.scope==="season"?'One list for the season.':'Boxes are keyed to the game above, so every trip starts empty on its own and past trips stay on the record.')
       + ' Checkmarks are shared: everyone with this link sees the same list.');
@@ -1811,7 +1872,8 @@
     card.classList.toggle("ddone",complete);
     var st=pkStat(TAB,pkWeek(TAB));
     var line=packroot.querySelector(".wkstat");
-    if(line) line.innerHTML="<b>"+st.done+"</b>/"+st.total+((PACKS[TAB]&&PACKS[TAB].prep)?" done":" packed");
+    if(line) line.innerHTML="<b>"+st.done+"</b>/"+st.total+" "
+      +((PACKS[TAB]&&PACKS[TAB].word)||((PACKS[TAB]&&PACKS[TAB].prep)?"done":"packed"));
   }
 
   function listPatch(box){
@@ -1846,9 +1908,47 @@
 
   if(weekroot){
     weekroot.addEventListener("change",onListChange);
+    weekroot.addEventListener("submit",function(e){
+      if(e.target.classList&&e.target.classList.contains("bldadd")){ e.preventDefault(); bldWeekSubmit(e.target); }
+    });
     weekroot.addEventListener("click",function(e){
       if(e.target.classList&&e.target.classList.contains("box")) return;
       if(!e.target.closest) return;
+
+      /* rows you typed yourself */
+      var ap=e.target.closest("[data-addday]");
+      if(ap){ e.preventDefault(); e.stopPropagation();
+              bldAdd=Number(ap.getAttribute("data-addday")); bldEdit="";
+              wkState.open[bldAdd]=true; renderWeek();
+              var f=weekroot.querySelector(".bldadd .bldt"); if(f) f.focus(); return; }
+      if(e.target.closest(".bldcancel")){ e.preventDefault(); e.stopPropagation();
+              bldAdd=-1; bldEdit=""; renderWeek(); return; }
+      var wi=e.target.closest("[data-win]");
+      if(wi){ e.preventDefault(); e.stopPropagation(); return bldWeekIndent(wi.getAttribute("data-win"),1); }
+      var wo=e.target.closest("[data-wout]");
+      if(wo){ e.preventDefault(); e.stopPropagation(); return bldWeekIndent(wo.getAttribute("data-wout"),-1); }
+      var wu=e.target.closest("[data-wup]");
+      if(wu){ e.preventDefault(); e.stopPropagation(); return bldWeekMove(wu.getAttribute("data-wup"),-1); }
+      var wdn=e.target.closest("[data-wdn]");
+      if(wdn){ e.preventDefault(); e.stopPropagation(); return bldWeekMove(wdn.getAttribute("data-wdn"),1); }
+      var we=e.target.closest("[data-wkedit]");
+      if(we){ e.preventDefault(); e.stopPropagation();
+              bldEdit=we.getAttribute("data-wkedit"); bldAdd=-1;
+              var hit=bldLook(bldEdit); if(hit) wkState.open[Number(hit.d)]=true;
+              renderWeek();
+              var f2=weekroot.querySelector(".bldadd .bldt"); if(f2) f2.focus(); return; }
+      var wd=e.target.closest("[data-wkdel]");
+      if(wd){
+        e.preventDefault(); e.stopPropagation();
+        if(wd.getAttribute("data-sure")!=="1"){
+          wd.setAttribute("data-sure","1"); wd.textContent="Really?"; wd.classList.add("bldsure");
+          setTimeout(function(){ if(wd.isConnected){ wd.removeAttribute("data-sure");
+            wd.innerHTML="&times;"; wd.classList.remove("bldsure"); } },4000);
+          return;
+        }
+        bldWeekDel(wd.getAttribute("data-wkdel")); return;
+      }
+
       var gl=e.target.closest("[data-golist]");
       if(gl){ e.preventDefault(); e.stopPropagation(); showTab(gl.getAttribute("data-golist")); return; }
       if(e.target.closest("#wkPrev")){ wkState.off--; wkDefaultOpen(); renderWeek(); return; }
@@ -1860,6 +1960,30 @@
       if(e.target.closest("#wkWhole")){ wkState.focus=false; lsSet("fpb_focus","0"); wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#ckPrint")){ window.print(); return; }
       onHeadClick(e);
+    });
+    var wDrag="";
+    weekroot.addEventListener("dragstart",function(e){
+      var row=e.target.closest&&e.target.closest("[data-wdrag]"); if(!row) return;
+      wDrag=row.getAttribute("data-wdrag"); row.classList.add("bldlift");
+      try{ e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain",wDrag); }catch(x){}
+    });
+    weekroot.addEventListener("dragend",function(){
+      wDrag="";
+      [].forEach.call(weekroot.querySelectorAll(".bldlift,.bldover"),function(n){
+        n.classList.remove("bldlift","bldover"); });
+    });
+    weekroot.addEventListener("dragover",function(e){
+      var row=e.target.closest&&e.target.closest("[data-wdrag]"); if(!row||!wDrag) return;
+      if(row.getAttribute("data-wdrag")===wDrag) return;
+      e.preventDefault();
+      [].forEach.call(weekroot.querySelectorAll(".bldover"),function(n){ n.classList.remove("bldover"); });
+      row.classList.add("bldover");
+    });
+    weekroot.addEventListener("drop",function(e){
+      var row=e.target.closest&&e.target.closest("[data-wdrag]"); if(!row||!wDrag) return;
+      e.preventDefault();
+      var a=wDrag; wDrag="";
+      bldWeekDrop(a,row.getAttribute("data-wdrag"));
     });
     weekroot.addEventListener("keydown",function(e){
       if(e.key!=="Enter"&&e.key!==" ") return;
@@ -1879,10 +2003,81 @@
       });
     });
     packroot.addEventListener("change",onListChange);
+    packroot.addEventListener("submit",function(e){
+      if(e.target.getAttribute&&e.target.getAttribute("data-hgform")!==null){ e.preventDefault(); return hgItemSubmit(e.target); }
+      if(e.target.getAttribute&&e.target.getAttribute("data-hggroup")!==null){ e.preventDefault(); return hgGroupSubmit(e.target); }
+    });
     packroot.addEventListener("click",function(e){
       if(e.target.classList&&e.target.classList.contains("box")) return;
       if(!e.target.closest) return;
       var p=PACKS[TAB]; if(!p) return;
+
+      /* building a list of your own */
+      if(e.target.closest("#pkBuild")){
+        if(!hgBuild&&p.gen&&p.gen.length&&!bldOwned(TAB)){
+          var btn=e.target.closest("#pkBuild");
+          if(btn.getAttribute("data-sure")!=="1"){
+            btn.setAttribute("data-sure","1");
+            btn.textContent="Take this list over?";
+            setTimeout(function(){ if(btn.isConnected){ btn.removeAttribute("data-sure");
+              btn.textContent="Edit this list"; } },5000);
+            return;
+          }
+          var k=TAB;
+          bldTakeOver(k).then(function(ok){
+            if(!ok) return;
+            hgBuild=true; hgAdd=""; hgEdit=""; renderPack(k);
+            flash("This list is yours now. Reset puts the sheet version back.");
+          });
+          return;
+        }
+        hgBuild=!hgBuild; hgAdd=""; hgEdit=""; renderPack(TAB); return;
+      }
+      if(e.target.closest("#bldSugBtn")){ bldSugOpen=!bldSugOpen; renderPack(TAB); return; }
+      var sa=e.target.closest("[data-sugadd]");
+      if(sa) return bldSugAdd(TAB,sa.getAttribute("data-sugadd"));
+      var sw=e.target.closest("[data-sugword]");
+      if(sw) return bldSugWord(TAB,sw.getAttribute("data-sugword"));
+      var sd=e.target.closest("[data-sugdel]");
+      if(sd) return bldSugDel(TAB,sd.getAttribute("data-sugdel"));
+      var ss=e.target.closest("[data-sugskip]");
+      if(ss) return bldSugSkip(TAB,ss.getAttribute("data-sugskip"));
+      if(e.target.closest("#pkReset")){
+        var rb=e.target.closest("#pkReset");
+        if(rb.getAttribute("data-sure")!=="1"){
+          rb.setAttribute("data-sure","1"); rb.textContent="Throw away your edits?";
+          setTimeout(function(){ if(rb.isConnected){ rb.removeAttribute("data-sure");
+            rb.textContent="Reset to the sheet"; } },5000);
+          return;
+        }
+        bldResetList(TAB); return;
+      }
+      if(e.target.closest(".bldcancel")){ e.preventDefault(); hgAdd=""; hgEdit=""; renderPack(TAB); return; }
+      var ha=e.target.closest("[data-hgadd]");
+      if(ha){ hgAdd=ha.getAttribute("data-hgadd"); hgEdit=""; renderPack(TAB);
+              var f=packroot.querySelector(".bldinline .bldt"); if(f) f.focus(); return; }
+      var hi=e.target.closest("[data-in]");
+      if(hi){ var a1=hi.getAttribute("data-in").split("|"); return hgIndent(a1[0],a1[1],1); }
+      var ho=e.target.closest("[data-out]");
+      if(ho){ var a2=ho.getAttribute("data-out").split("|"); return hgIndent(a2[0],a2[1],-1); }
+      var hu=e.target.closest("[data-up]");
+      if(hu){ var a=hu.getAttribute("data-up").split("|"); return hgMove(a[0],a[1],-1); }
+      var hdn=e.target.closest("[data-down]");
+      if(hdn){ var b2=hdn.getAttribute("data-down").split("|"); return hgMove(b2[0],b2[1],1); }
+      var he=e.target.closest("[data-edit]");
+      if(he){ hgEdit=he.getAttribute("data-edit"); hgAdd=""; renderPack(TAB);
+              var f2=packroot.querySelector(".bldinline .bldt"); if(f2) f2.focus(); return; }
+      var hd=e.target.closest("[data-del]");
+      if(hd){
+        if(hd.getAttribute("data-sure")!=="1"){
+          hd.setAttribute("data-sure","1"); hd.textContent="Really?"; hd.classList.add("bldsure");
+          setTimeout(function(){ if(hd.isConnected){ hd.removeAttribute("data-sure");
+            hd.innerHTML="&times;"; hd.classList.remove("bldsure"); } },4000);
+          return;
+        }
+        var c=hd.getAttribute("data-del").split("|");
+        return hgDel(c[0],c[1]);
+      }
       if(e.target.closest("#pkPrev")||e.target.closest("#pkNext")){
         var gs=pkGames(p.scope), w=pkWeek(TAB), idx=-1;
         gs.forEach(function(x,i){ if(w&&x.week===w.week) idx=i; });
@@ -1902,6 +2097,36 @@
       if(e.target.closest("#pkShut")){ pkAllGroups(p).forEach(function(gr){ pkState[TAB+"|shut|"+gr.g]=true; }); renderPack(TAB); return; }
       if(e.target.closest("#ckPrint")){ window.print(); return; }
       onHeadClick(e);
+    });
+    /* Drag a row onto another and it tucks underneath it. Touch screens do
+       not fire these at all, which is exactly why the arrows exist too. */
+    var dragFrom="";
+    packroot.addEventListener("dragstart",function(e){
+      var row=e.target.closest&&e.target.closest("[data-drag]"); if(!row) return;
+      dragFrom=row.getAttribute("data-drag");
+      row.classList.add("bldlift");
+      try{ e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain",dragFrom); }catch(x){}
+    });
+    packroot.addEventListener("dragend",function(){
+      dragFrom="";
+      [].forEach.call(packroot.querySelectorAll(".bldlift,.bldover"),function(n){
+        n.classList.remove("bldlift","bldover"); });
+    });
+    packroot.addEventListener("dragover",function(e){
+      var row=e.target.closest&&e.target.closest("[data-drag]"); if(!row||!dragFrom) return;
+      if(row.getAttribute("data-drag")===dragFrom) return;
+      if(row.getAttribute("data-drag").split("|")[0]!==dragFrom.split("|")[0]) return;
+      e.preventDefault();
+      [].forEach.call(packroot.querySelectorAll(".bldover"),function(n){ n.classList.remove("bldover"); });
+      row.classList.add("bldover");
+    });
+    packroot.addEventListener("drop",function(e){
+      var row=e.target.closest&&e.target.closest("[data-drag]"); if(!row||!dragFrom) return;
+      e.preventDefault();
+      var a=dragFrom.split("|"), b=row.getAttribute("data-drag").split("|");
+      dragFrom="";
+      if(a[0]!==b[0]) return;
+      hgDrop(a[0],a[1],b[1]);
     });
     packroot.addEventListener("keydown",function(e){
       if(e.key!=="Enter"&&e.key!==" ") return;
@@ -1959,6 +2184,575 @@
   [].forEach.call(document.querySelectorAll(".tabg .btn"),function(t){
     t.addEventListener("click",function(){ showTab(t.getAttribute("data-tab")); });
   });
+
+  /* ================================================================
+     Lists you build yourself.
+
+     Two uses, one engine. On the Week tab a quiet + at the end of each
+     day adds a task, either to that day this week only or to that
+     weekday from now on. On Home Game Setup the whole list is yours:
+     sections and rows, made on the page, no SQL and nothing to upload.
+
+     It all lives in the settings table the semi-load day picker
+     already uses, so everybody sees the same list. Checkmarks are
+     ordinary checkmarks in the checks table, keyed by the row's own
+     id rather than its words, so renaming a row never loses what was
+     already ticked.
+     ================================================================ */
+  var BLD_WK="wk:tasks", BLD_HG="hg:list";
+  /* Which stored list the tab you are looking at edits. Home Game Setup was
+     born on the site; the pack lists were generated off the travel sheet and
+     only move into the database the first time you take one over. */
+  function bldTabKey(k){ k=k||TAB; return k==="home"?BLD_HG:("pk:"+k); }
+  function bldSkipKey(k){ return "pkx:"+(k||TAB); }
+  /* What a section or row was called on the sheet, whatever you renamed it
+     to since. That link is the whole reason a rename does not read as a
+     row being deleted and a different one appearing. */
+  function bldSheetName(x,fallback){
+    return (x.id&&x.id.slice(0,2)==="k|")?x.id.slice(2):fallback;
+  }
+  function bldOwned(k){ return bldGet(bldTabKey(k)).length>0; }
+
+  /* The generated list, exactly as the sheet made it, kept so Reset works. */
+  function bldPack(k){
+    var stored=bldGet(bldTabKey(k));
+    if(stored.length) return stored.map(function(gr){
+      return {g:gr.g, gid:gr.id, items:bldNorm((gr.items||[]).slice()).map(function(it){
+        return {t:it.t, n:it.n||"", q:it.q||"", id:it.id, d:it.d||0}; })};
+    });
+    return (PACKS[k]&&PACKS[k].gen)||[];
+  }
+  /* Taking a list over copies it in as it stands. Every row keeps the key its
+     checkmarks were already filed under, so nothing that was ticked is lost. */
+  function bldSeed(k){
+    return ((PACKS[k]&&PACKS[k].gen)||[]).map(function(gr){
+      return {id:"k|"+gr.g, g:gr.g, items:(gr.items||[]).map(function(it,ix){
+        return {id:"k|"+pkPath(gr,ix), t:it.t, n:it.n||"", q:it.q||"", d:it.d||0}; })};
+    });
+  }
+
+  function bldGet(key){
+    try{ var v=JSON.parse(SETTINGS[key]||"[]"); return Array.isArray(v)?v:[]; }
+    catch(e){ return []; }
+  }
+  function bldId(){
+    return Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3);
+  }
+
+  /* Read the row back out of the database before changing it, so two people
+     editing different rows at the same time do not overwrite each other. */
+  async function bldSave(key,mutate){
+    var cur=bldGet(key);
+    if(sb){
+      try{
+        var r=await sb.from("settings").select("v").eq("k",key).limit(1);
+        if(!r.error&&r.data&&r.data.length){
+          var fresh=JSON.parse(r.data[0].v||"[]");
+          if(Array.isArray(fresh)) cur=fresh;
+        }
+      }catch(e){}
+    }
+    var next=mutate(cur.slice());
+    if(key!==BLD_WK) next.forEach(function(gr){ bldNorm(gr.items); });
+    var bad=await saveSetting(key,JSON.stringify(next));
+    return bad||"";
+  }
+
+  function bldMove(list,i,dir){
+    var j=i+dir;
+    if(j<0||j>=list.length) return list;
+    var t=list[i]; list[i]=list[j]; list[j]=t;
+    return list;
+  }
+
+  /* ---------------- the Week tab ---------------- */
+  function bldWeekSlot(x){ return x.every?("w"+x.d):(x.d+"|"+x.date); }
+  function bldWeekFor(i,sun){
+    var iso=sun?ckISO(wkDayDate(sun,i)):"";
+    var out=bldGet(BLD_WK).filter(function(x){
+      if(Number(x.d)!==i) return false;
+      return x.every?true:(x.date===iso);
+    });
+    /* the rows showing on one day are one outline, so clamp them together */
+    var prev=-1;
+    out.forEach(function(x){
+      var d=Math.max(0,Math.min(BLD_MAXD,Number(x.nd)||0));
+      if(d>prev+1) d=prev+1;
+      x.nd=d; prev=d;
+    });
+    return out;
+  }
+  /* index of a task inside the run of tasks that share its day and schedule */
+  function bldWeekPeers(list,x){
+    var slot=bldWeekSlot(x), out=[];
+    list.forEach(function(y,i){ if(bldWeekSlot(y)===slot) out.push(i); });
+    return out;
+  }
+  async function bldWeekMove(cid,dir){
+    var bad=await bldSave(BLD_WK,function(list){
+      var me=-1; list.forEach(function(x,i){ if(x.id===cid) me=i; });
+      if(me<0) return list;
+      var peers=bldWeekPeers(list,list[me]), at=peers.indexOf(me), to=at+dir;
+      if(to<0||to>=peers.length) return list;
+      var a=peers[at], bI=peers[to], t=list[a]; list[a]=list[bI]; list[bI]=t;
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderWeek();
+  }
+  async function bldWeekIndent(cid,dir){
+    var bad=await bldSave(BLD_WK,function(list){
+      list.forEach(function(x){
+        if(x.id===cid) x.nd=Math.max(0,Math.min(BLD_MAXD,(Number(x.nd)||0)+dir));
+      });
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderWeek();
+  }
+  async function bldWeekDrop(cid,onto){
+    if(cid===onto) return;
+    var bad=await bldSave(BLD_WK,function(list){
+      var from=-1,to=-1;
+      list.forEach(function(x,i){ if(x.id===cid) from=i; if(x.id===onto) to=i; });
+      if(from<0||to<0) return list;
+      if(bldWeekSlot(list[from])!==bldWeekSlot(list[to])) return list;
+      var moved=list.splice(from,1)[0];
+      if(from<to) to--;
+      moved.nd=Math.min(BLD_MAXD,(Number(list[to].nd)||0)+1);
+      list.splice(to+1,0,moved);
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderWeek(); flash("Nested.");
+  }
+  function bldWeekId(sun,i,cid){
+    return "wk|"+ckISO(sun)+"|"+WK_DAYS[i].k+"|x"+cid;
+  }
+  function bldLook(cid){
+    var hit=null;
+    bldGet(BLD_WK).forEach(function(x){ if(x.id===cid) hit=x; });
+    return hit;
+  }
+
+  var bldAdd=-1, bldEdit="";
+
+  function bldAddForm(i){
+    var ed=bldEdit?bldLook(bldEdit):null;
+    if(bldAdd!==i&&!(ed&&Number(ed.d)===i)) return "";
+    var day=WK_DAYS[i].n;
+    return '<form class="bldadd" data-addto="'+i+'">'
+      + '<input type="text" class="bldt" maxlength="200" autocomplete="off" placeholder="'
+        + esc((ed?"":"Add something to ")+(ed?"":day))+'" value="'+esc(ed?ed.t:"")+'">'
+      + '<input type="text" class="bldn" maxlength="300" autocomplete="off" '
+        + 'placeholder="A note, if it needs one" value="'+esc(ed&&ed.n?ed.n:"")+'">'
+      + '<div class="bldwhen">'
+      + '<label><input type="radio" name="bldwhen" value="once"'+((!ed||!ed.every)?" checked":"")+'> Just this week</label>'
+      + '<label><input type="radio" name="bldwhen" value="every"'+((ed&&ed.every)?" checked":"")+'> Every '+esc(day)+'</label>'
+      + '</div>'
+      + '<div class="blderr" role="alert"></div>'
+      + '<div class="bldrow"><button type="button" class="btn bldcancel">Cancel</button>'
+      + '<button type="submit" class="btn go">'+(ed?"Save":"Add it")+'</button></div>'
+      + '</form>';
+  }
+  function bldPlus(i){
+    if(bldAdd===i||bldEdit) return "";
+    return '<button type="button" class="bldplus" data-addday="'+i+'">'
+      + '<span aria-hidden="true">+</span> Add something to '+esc(WK_DAYS[i].n)+'</button>';
+  }
+
+  async function bldWeekSubmit(form){
+    var i=Number(form.getAttribute("data-addto"));
+    var t=form.querySelector(".bldt").value.trim();
+    var n=form.querySelector(".bldn").value.trim();
+    var every=form.querySelector('input[name="bldwhen"]:checked').value==="every";
+    var err=form.querySelector(".blderr");
+    if(!t){ err.textContent="Type what it is first."; form.querySelector(".bldt").focus(); return; }
+    err.textContent="Saving…";
+    var sun=wkSunday(), iso=ckISO(wkDayDate(sun,i));
+    var editing=bldEdit;
+    var bad=await bldSave(BLD_WK,function(list){
+      if(editing){
+        list.forEach(function(x){
+          if(x.id===editing){ x.t=t; x.n=n; x.every=every; if(!every) x.date=iso; }
+        });
+        return list;
+      }
+      list.push({id:bldId(),t:t,n:n,d:i,nd:0,every:every,date:iso,
+                 by:lsGet("fpb_who")||"",at:new Date().toISOString()});
+      return list;
+    });
+    if(bad){ err.textContent=bad; return; }
+    bldAdd=-1; bldEdit="";
+    wkState.open[i]=true;
+    renderWeek(); flash(editing?"Saved.":"Added.");
+  }
+
+  async function bldWeekDel(cid){
+    var bad=await bldSave(BLD_WK,function(list){
+      return list.filter(function(x){ return x.id!==cid; });
+    });
+    if(bad){ flash(bad); return; }
+    renderWeek(); flash("Removed.");
+  }
+
+  /* ---------------- Home Game Setup ---------------- */
+  /* Nesting is a depth on a flat list, exactly like the pack lists off the
+     travel sheet: a row sits under the nearest shallower row above it. No
+     row can jump more than one level past the one above it, so the outline
+     can never end up orphaned however you shuffle it. */
+  var BLD_MAXD=2;
+  function bldNorm(items){
+    var prev=-1;
+    (items||[]).forEach(function(it){
+      var d=Math.max(0,Math.min(BLD_MAXD,Number(it.d)||0));
+      if(d>prev+1) d=prev+1;
+      it.d=d; prev=d;
+    });
+    return items;
+  }
+  function bldHome(){ return bldPack("home"); }
+  var hgBuild=false, hgAdd="", hgEdit="";
+
+  async function bldTakeOver(k){
+    var seed=bldSeed(k);
+    var bad=await bldSave(bldTabKey(k),function(cur){ return cur.length?cur:seed; });
+    if(bad){ flash(bad); return false; }
+    return true;
+  }
+  async function bldResetList(k){
+    var bad=await saveSetting(bldTabKey(k),"");
+    if(bad){ flash(bad); return; }
+    hgBuild=false; hgAdd=""; hgEdit="";
+    renderPack(k); flash("Back to the sheet version.");
+  }
+
+  function hgRowTools(gid,iid,i,n,d,maxd){
+    var k=esc(gid)+'|'+esc(iid);
+    return '<span class="bldtools">'
+      + '<button type="button" class="bldico" data-out="'+k+'"'+(d<=0?" disabled":"")+' aria-label="Move out one level">&#8592;</button>'
+      + '<button type="button" class="bldico" data-in="'+k+'"'+(d>=maxd?" disabled":"")+' aria-label="Nest under the row above">&#8594;</button>'
+      + '<button type="button" class="bldico" data-up="'+k+'"'+(i===0?" disabled":"")+' aria-label="Move up">&#9650;</button>'
+      + '<button type="button" class="bldico" data-down="'+k+'"'+(i===n-1?" disabled":"")+' aria-label="Move down">&#9660;</button>'
+      + '<button type="button" class="bldico" data-edit="'+k+'" aria-label="Edit">&#9998;</button>'
+      + '<button type="button" class="bldico bldx" data-del="'+k+'" aria-label="Remove">&times;</button>'
+      + '</span>';
+  }
+
+  async function hgIndent(gid,iid,dir){
+    var bad=await bldSave(bldTabKey(),function(list){
+      list.forEach(function(gr){
+        if(gr.id!==gid) return;
+        (gr.items||[]).forEach(function(it){
+          if(it.id===iid) it.d=Math.max(0,Math.min(BLD_MAXD,(Number(it.d)||0)+dir));
+        });
+      });
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(TAB);
+  }
+
+  /* Drop a row on another row and it becomes a child of it. Reordering
+     without changing level is what the up and down arrows are for, so a
+     drop never has to guess which of the two you meant. */
+  async function hgDrop(gid,iid,onto){
+    if(iid===onto) return;
+    var bad=await bldSave(bldTabKey(),function(list){
+      list.forEach(function(gr){
+        if(gr.id!==gid) return;
+        var items=gr.items||[], from=-1, to=-1;
+        items.forEach(function(it,i){ if(it.id===iid) from=i; if(it.id===onto) to=i; });
+        if(from<0||to<0) return;
+        var moved=items.splice(from,1)[0];
+        if(from<to) to--;
+        var parent=items[to];
+        moved.d=Math.min(BLD_MAXD,(Number(parent.d)||0)+1);
+        items.splice(to+1,0,moved);
+        gr.items=items;
+      });
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(TAB); flash("Nested.");
+  }
+
+  function hgItemForm(gid,iid){
+    var ed=null;
+    if(iid) bldGet(bldTabKey()).forEach(function(gr){
+      if(gr.id===gid) (gr.items||[]).forEach(function(it){ if(it.id===iid) ed=it; });
+    });
+    return '<form class="bldadd bldinline" data-hgform="'+esc(gid)+'|'+esc(iid||"")+'">'
+      + '<input type="text" class="bldt" maxlength="200" autocomplete="off" placeholder="What is the step?" value="'+esc(ed?ed.t:"")+'">'
+      + '<input type="text" class="bldn" maxlength="300" autocomplete="off" placeholder="A note, if it needs one" value="'+esc(ed&&ed.n?ed.n:"")+'">'
+      + '<input type="text" class="bldq" maxlength="12" autocomplete="off" placeholder="How many" value="'+esc(ed&&ed.q?ed.q:"")+'">'
+      + '<div class="blderr" role="alert"></div>'
+      + '<div class="bldrow"><button type="button" class="btn bldcancel">Cancel</button>'
+      + '<button type="submit" class="btn go">'+(ed?"Save":"Add it")+'</button></div></form>';
+  }
+  function hgGroupForm(gid){
+    var ed=null;
+    if(gid) bldGet(bldTabKey()).forEach(function(gr){ if(gr.id===gid) ed=gr; });
+    return '<form class="bldadd bldinline" data-hggroup="'+esc(gid||"")+'">'
+      + '<input type="text" class="bldt" maxlength="120" autocomplete="off" '
+      + 'placeholder="Name the section, like Weather or Cameras" value="'+esc(ed?ed.g:"")+'">'
+      + '<div class="blderr" role="alert"></div>'
+      + '<div class="bldrow"><button type="button" class="btn bldcancel">Cancel</button>'
+      + '<button type="submit" class="btn go">'+(ed?"Save":"Add the section")+'</button></div></form>';
+  }
+
+  async function hgItemSubmit(form){
+    var bits=form.getAttribute("data-hgform").split("|");
+    var gid=bits[0], iid=bits[1];
+    var t=form.querySelector(".bldt").value.trim();
+    var n=form.querySelector(".bldn").value.trim();
+    var q=form.querySelector(".bldq").value.trim();
+    var err=form.querySelector(".blderr");
+    if(!t){ err.textContent="Type the step first."; form.querySelector(".bldt").focus(); return; }
+    err.textContent="Saving…";
+    var bad=await bldSave(bldTabKey(),function(list){
+      list.forEach(function(gr){
+        if(gr.id!==gid) return;
+        gr.items=gr.items||[];
+        if(iid) gr.items.forEach(function(it){ if(it.id===iid){ it.t=t; it.n=n; it.q=q; } });
+        else gr.items.push({id:bldId(),t:t,n:n,q:q});
+      });
+      return list;
+    });
+    if(bad){ err.textContent=bad; return; }
+    hgAdd=""; hgEdit=""; renderPack(TAB); flash(iid?"Saved.":"Added.");
+  }
+
+  async function hgGroupSubmit(form){
+    var gid=form.getAttribute("data-hggroup");
+    var t=form.querySelector(".bldt").value.trim();
+    var err=form.querySelector(".blderr");
+    if(!t){ err.textContent="Name it first."; form.querySelector(".bldt").focus(); return; }
+    err.textContent="Saving…";
+    var bad=await bldSave(bldTabKey(),function(list){
+      if(gid){ list.forEach(function(gr){ if(gr.id===gid) gr.g=t; }); return list; }
+      list.push({id:bldId(),g:t,items:[]});
+      return list;
+    });
+    if(bad){ err.textContent=bad; return; }
+    hgAdd=""; hgEdit=""; renderPack(TAB); flash(gid?"Saved.":"Section added.");
+  }
+
+  async function hgDel(gid,iid){
+    var bad=await bldSave(bldTabKey(),function(list){
+      if(!iid) return list.filter(function(gr){ return gr.id!==gid; });
+      list.forEach(function(gr){
+        if(gr.id===gid) gr.items=(gr.items||[]).filter(function(it){ return it.id!==iid; });
+      });
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(TAB); flash("Removed.");
+  }
+  async function hgMove(gid,iid,dir){
+    var bad=await bldSave(bldTabKey(),function(list){
+      if(!iid){
+        var gi=-1; list.forEach(function(gr,i){ if(gr.id===gid) gi=i; });
+        return gi<0?list:bldMove(list,gi,dir);
+      }
+      list.forEach(function(gr){
+        if(gr.id!==gid) return;
+        var ii=-1; (gr.items||[]).forEach(function(it,i){ if(it.id===iid) ii=i; });
+        if(ii>=0) gr.items=bldMove(gr.items,ii,dir);
+      });
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(TAB);
+  }
+
+  /* What the Home Game Setup tab shows under the list while you are building */
+  function hgBuilderHtml(){
+    if(!hgBuild) return "";
+    var out='<div class="bldpanel">';
+    bldGet(bldTabKey()).forEach(function(gr,gi,all){
+      out+='<div class="bldgrp"><span class="bldgname">'+esc(gr.g)+'</span>'
+        + '<span class="bldgn">'+((gr.items||[]).length)+' row'+((gr.items||[]).length===1?"":"s")+'</span>'
+        + '<span class="wksp"></span>'
+        + '<button type="button" class="bldico" data-up="'+esc(gr.id)+'|"'+(gi===0?" disabled":"")+' aria-label="Move section up">&#9650;</button>'
+        + '<button type="button" class="bldico" data-down="'+esc(gr.id)+'|"'+(gi===all.length-1?" disabled":"")+' aria-label="Move section down">&#9660;</button>'
+        + '<button type="button" class="bldico" data-edit="'+esc(gr.id)+'|" aria-label="Rename section">&#9998;</button>'
+        + '<button type="button" class="bldico bldx" data-del="'+esc(gr.id)+'|" aria-label="Remove section">&times;</button>'
+        + '</div>';
+      if(hgEdit===gr.id+"|") out+=hgGroupForm(gr.id);
+      var items=bldNorm((gr.items||[]).slice());
+      items.forEach(function(it,ii){
+        if(hgEdit===gr.id+"|"+it.id){ out+=hgItemForm(gr.id,it.id); return; }
+        var d=it.d||0, prev=ii?(items[ii-1].d||0):-1;
+        var maxd=Math.min(BLD_MAXD,prev+1);
+        var kid=!!(items[ii+1]&&(items[ii+1].d||0)>d);
+        out+='<div class="blditem bd'+d+(kid?" bdparent":"")+'" draggable="true" '
+          + 'data-drag="'+esc(gr.id)+'|'+esc(it.id)+'">'
+          + '<span class="bldgrip" aria-hidden="true">&#8942;&#8942;</span>'
+          + '<span class="blditext">'+esc(it.t)
+          + (it.q?' <i>&times;'+esc(it.q)+'</i>':"")
+          + (it.n?'<em>'+esc(it.n)+'</em>':"")+'</span>'
+          + hgRowTools(gr.id,it.id,ii,items.length,d,maxd)+'</div>';
+      });
+      if(hgAdd===gr.id) out+=hgItemForm(gr.id,"");
+      else out+='<button type="button" class="bldplus bldsub" data-hgadd="'+esc(gr.id)+'">'
+            + '<span aria-hidden="true">+</span> Add a row to '+esc(gr.g)+'</button>';
+    });
+    out+='<p class="bldhint">Drag a row onto another to tuck it underneath. '
+      + 'The arrows do the same thing without a mouse: &#8594; nests it under the row above, '
+      + '&#8592; pulls it back out. Up to two levels deep, the same as the pack lists.</p>';
+    if(hgAdd==="__g") out+=hgGroupForm("");
+    else out+='<button type="button" class="bldplus" data-hgadd="__g">'
+          + '<span aria-hidden="true">+</span> Add a section</button>';
+    return out+'</div>';
+  }
+
+  /* ================================================================
+     What the sheet says that your list does not.
+
+     Once you take a list over, the generated copy stops being the list
+     and becomes a reference. This compares the two and offers the
+     difference as suggestions: nothing is ever applied on its own.
+
+     Rows are matched on the name they had on the sheet, not the name
+     they have now, so renaming a row on the site shows up as "you call
+     it X, the sheet says Y" instead of a phantom add and delete.
+     ================================================================ */
+  function bldSkips(k){ return bldGet(bldSkipKey(k)); }
+
+  function bldDiff(k){
+    var out={add:[],gone:[],changed:[],n:0};
+    var gen=(PACKS[k]&&PACKS[k].gen)||[];
+    if(!gen.length||!bldOwned(k)) return out;
+    var mine=bldGet(bldTabKey(k)), skip=bldSkips(k);
+    var seen={}, byKey={};
+    mine.forEach(function(gr){
+      var gname=bldSheetName(gr,gr.g);
+      (gr.items||[]).forEach(function(it){
+        var nm=bldSheetName(it,null);
+        if(nm===null) return;                 /* a row you typed: not the sheet's business */
+        byKey[gname+"\u241F"+nm]={gr:gr,it:it};
+      });
+    });
+    gen.forEach(function(gr){
+      (gr.items||[]).forEach(function(it,ix){
+        var path=pkPath(gr,ix), key=gr.g+"\u241F"+path;
+        seen[key]=true;
+        if(skip.indexOf(key)>-1) return;
+        var hit=byKey[key];
+        if(!hit){ out.add.push({key:key,g:gr.g,path:path,t:it.t,n:it.n||"",q:it.q||"",d:it.d||0}); return; }
+        if(hit.it.t!==it.t||(hit.it.n||"")!==(it.n||"")||(hit.it.q||"")!==(it.q||""))
+          out.changed.push({key:key,g:gr.g,mine:hit.it.t,sheet:it.t,
+                            mineN:hit.it.n||"",sheetN:it.n||"",
+                            mineQ:hit.it.q||"",sheetQ:it.q||""});
+      });
+    });
+    Object.keys(byKey).forEach(function(key){
+      if(seen[key]||skip.indexOf(key)>-1) return;
+      out.gone.push({key:key,t:byKey[key].it.t,g:byKey[key].gr.g});
+    });
+    out.n=out.add.length+out.gone.length+out.changed.length;
+    return out;
+  }
+
+  var bldSugOpen=false;
+
+  function bldSugHtml(k){
+    var d=bldDiff(k);
+    if(!d.n) return "";
+    var bits=[];
+    if(d.add.length)     bits.push(d.add.length+" not on this list");
+    if(d.changed.length) bits.push(d.changed.length+" worded differently");
+    if(d.gone.length)    bits.push(d.gone.length+" no longer on the sheet");
+    var head='<button type="button" class="bldsug'+(bldSugOpen?" open":"")+'" id="bldSugBtn">'
+      + '<span class="bldsugn">'+d.n+'</span>'
+      + '<span>Your sheet and this list differ: '+esc(bits.join(", "))+'</span>'
+      + '<span class="caret" aria-hidden="true">&#9662;</span></button>';
+    if(!bldSugOpen) return head;
+
+    var body='<div class="bldsugbox">';
+    d.add.forEach(function(x){
+      body+='<div class="bldsugrow"><span class="bldsugwhat"><b>'+esc(x.t)+'</b>'
+        + (x.q?' <i>&times;'+esc(x.q)+'</i>':"")
+        + '<em>on the sheet under '+esc(x.g)+(x.n?", "+esc(x.n):"")+'</em></span>'
+        + '<button type="button" class="btn" data-sugadd="'+esc(x.key)+'">Add it</button>'
+        + '<button type="button" class="btn" data-sugskip="'+esc(x.key)+'">Not needed</button></div>';
+    });
+    d.changed.forEach(function(x){
+      body+='<div class="bldsugrow"><span class="bldsugwhat"><b>'+esc(x.mine)+'</b>'
+        + '<em>the sheet says &ldquo;'+esc(x.sheet)+'&rdquo;'+(x.sheetN?", "+esc(x.sheetN):"")+'</em></span>'
+        + '<button type="button" class="btn" data-sugword="'+esc(x.key)+'">Use the sheet&#39;s</button>'
+        + '<button type="button" class="btn" data-sugskip="'+esc(x.key)+'">Keep mine</button></div>';
+    });
+    d.gone.forEach(function(x){
+      body+='<div class="bldsugrow"><span class="bldsugwhat"><b>'+esc(x.t)+'</b>'
+        + '<em>was under '+esc(x.g)+' on the sheet, it is not there any more</em></span>'
+        + '<button type="button" class="btn" data-sugdel="'+esc(x.key)+'">Remove it</button>'
+        + '<button type="button" class="btn" data-sugskip="'+esc(x.key)+'">Keep it</button></div>';
+    });
+    body+='<p class="bldhint">This compares your list against the sheet copy baked into the site. '
+      + 'That copy only changes when a new travel sheet gets built in, so this is not watching anything: '
+      + 'it is here to catch what a rebuild would otherwise have buried. Nothing is applied unless you '
+      + 'press a button.</p></div>';
+    return head+body;
+  }
+
+  async function bldSugSkip(k,key){
+    var bad=await bldSave(bldSkipKey(k),function(list){
+      if(list.indexOf(key)<0) list.push(key);
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(k);
+  }
+  function bldSugFind(k,key){
+    var hit=null;
+    ((PACKS[k]&&PACKS[k].gen)||[]).forEach(function(gr){
+      (gr.items||[]).forEach(function(it,ix){
+        if(gr.g+"\u241F"+pkPath(gr,ix)===key) hit={gr:gr,it:it,ix:ix,path:pkPath(gr,ix)};
+      });
+    });
+    return hit;
+  }
+  async function bldSugAdd(k,key){
+    var src=bldSugFind(k,key); if(!src){ flash("That row is not on the sheet any more."); return; }
+    var bad=await bldSave(bldTabKey(k),function(list){
+      var into=null;
+      list.forEach(function(gr){ if(bldSheetName(gr,gr.g)===src.gr.g) into=gr; });
+      if(!into){ into={id:"k|"+src.gr.g,g:src.gr.g,items:[]}; list.push(into); }
+      into.items=into.items||[];
+      into.items.push({id:"k|"+src.path,t:src.it.t,n:src.it.n||"",q:src.it.q||"",d:src.it.d||0});
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(k); flash("Added from the sheet.");
+  }
+  async function bldSugWord(k,key){
+    var src=bldSugFind(k,key); if(!src) return;
+    var bad=await bldSave(bldTabKey(k),function(list){
+      list.forEach(function(gr){
+        if(bldSheetName(gr,gr.g)!==src.gr.g) return;
+        (gr.items||[]).forEach(function(it){
+          if(bldSheetName(it,null)===src.path){ it.t=src.it.t; it.n=src.it.n||""; it.q=src.it.q||""; }
+        });
+      });
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(k); flash("Reworded to match the sheet.");
+  }
+  async function bldSugDel(k,key){
+    var bits=key.split("\u241F");
+    var bad=await bldSave(bldTabKey(k),function(list){
+      list.forEach(function(gr){
+        if(bldSheetName(gr,gr.g)!==bits[0]) return;
+        gr.items=(gr.items||[]).filter(function(it){ return bldSheetName(it,null)!==bits[1]; });
+      });
+      return list;
+    });
+    if(bad){ flash(bad); return; }
+    renderPack(k); flash("Removed.");
+  }
 
   /* ================================================================
      Trackers: an index of the Airtable bases, tables and views, so the
@@ -2427,7 +3221,7 @@
      run in Supabase, MINOR when only index.html and app.js change. The
      check below is what actually matters: it asks the database what it
      has rather than trusting the number. */
-  var VER="5.3";
+  var VER="5.7";
   var DBNEED=[{t:"checks",sql:"setup.sql"},
               {t:"check_log",sql:"database-update.sql"},
               {t:"candidates",sql:"database-update.sql"},

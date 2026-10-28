@@ -1816,6 +1816,129 @@ body:not(.on-buy) #buyroot{display:none}
 #buyroot .ofsubs .btn{white-space:nowrap}
 @media print{ #buyroot .buyaddp{display:none !important} }
 
+/* ================= lists you build yourself ================= */
+.bldplus{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;
+  background:none;border:0;border-top:1px dashed var(--line2);cursor:pointer;
+  padding:11px 15px;text-align:left;
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--line2);transition:color .15s,background .15s}
+.bldplus span{font-size:17px;line-height:1;font-weight:400}
+.bldplus:hover{color:var(--accent);background:var(--chip)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bldplus:hover{background:var(--surface2)}}
+:root[data-theme="dark"] .bldplus:hover{background:var(--surface2)}
+.bldplus.bldsub{border-top:0;padding:8px 15px 12px;font-size:11px}
+
+.bldadd{padding:14px 15px;background:var(--chip);border-top:1px solid var(--line);
+  display:grid;gap:9px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bldadd{background:var(--surface2)}}
+:root[data-theme="dark"] .bldadd{background:var(--surface2)}
+.bldadd input{font:15px "Archivo",sans-serif;padding:9px 11px;border:1px solid var(--line2);
+  border-radius:2px;background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
+.bldadd input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.bldadd .bldn,.bldadd .bldq{font-size:13.5px}
+.bldwhen{display:flex;gap:16px;flex-wrap:wrap}
+.bldwhen label{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer}
+.bldwhen input{width:16px;height:16px;margin:0;accent-color:var(--accent);flex:0 0 auto}
+.blderr{min-height:0;font-size:12.5px;color:#b4472f}
+.blderr:empty{display:none}
+.bldrow{display:flex;justify-content:flex-end;gap:8px}
+.bldrow .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;
+  text-transform:uppercase;padding:7px 13px;border-radius:2px;cursor:pointer}
+.bldrow .btn.go{background:var(--accent);border-color:var(--accent);color:#fff}
+.bldinline{border:1px solid var(--line);border-radius:3px;margin:4px 0 10px}
+
+/* a row that came out of the + rather than off the sheet */
+.mine{font-family:var(--narrow),sans-serif;font-weight:700;font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent2);border:1px solid currentColor;
+  border-radius:2px;padding:1px 5px;white-space:nowrap}
+.bldico{background:none;border:0;padding:2px 5px;cursor:pointer;color:var(--ink3);
+  font-size:12px;line-height:1;border-radius:2px}
+.bldico:hover:not(:disabled){color:var(--accent);background:var(--chip)}
+.bldico:disabled{opacity:.25;cursor:default}
+.bldico.bldx:hover{color:#b4472f}
+.bldico.bldsure{color:#fff;background:#b4472f;font-family:var(--narrow),sans-serif;
+  font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px}
+
+/* the builder panel under a list of your own */
+.bldpanel{margin-top:18px;border-top:2px solid var(--line2);padding-top:16px}
+.bldgrp{display:flex;align-items:center;gap:9px;padding:10px 13px;background:var(--chip);
+  border:1px solid var(--line);border-radius:3px 3px 0 0;margin-top:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bldgrp{background:var(--surface2)}}
+:root[data-theme="dark"] .bldgrp{background:var(--surface2)}
+.bldgname{font-family:var(--narrow),sans-serif;font-weight:700;font-size:15px}
+.bldgn{font-size:11.5px;color:var(--ink3)}
+.blditem{display:flex;align-items:center;gap:9px;padding:9px 13px;background:var(--surface);
+  border:1px solid var(--line);border-top:0}
+.blditext{flex:1 1 auto;min-width:0;font-size:14px;color:var(--ink)}
+.blditext i{font-style:normal;font-family:var(--narrow),sans-serif;font-size:12px;color:var(--accent2)}
+.blditext em{display:block;font-style:normal;font-size:12px;color:var(--ink3);margin-top:1px}
+.bldtools{display:flex;gap:1px;flex:0 0 auto}
+
+.bldempty{text-align:center;padding:40px 20px 30px;max-width:48ch;margin:0 auto}
+.bldempty h2{font-family:var(--disp),var(--narrow),sans-serif;font-weight:800;font-size:24px;margin:0 0 8px}
+.bldempty p{margin:0;font-size:13.5px;line-height:1.65;color:var(--ink3)}
+
+@media print{
+  .bldplus,.bldadd,.bldpanel,.bldico,#pkBuild{display:none !important}
+  .mine{border:1px solid #000;color:#000}
+}
+@media (max-width:620px){
+  .bldgrp,.blditem{flex-wrap:wrap}
+  .blditext{flex:1 1 100%}
+}
+
+/* ---- nesting in the builder ---- */
+.blditem{cursor:grab}
+.blditem.bd1{padding-left:36px}
+.blditem.bd2{padding-left:60px}
+.blditem.bdparent .blditext{font-weight:700}
+.bldgrip{flex:0 0 auto;color:var(--line2);font-size:11px;letter-spacing:-2px;
+  line-height:1;cursor:grab;user-select:none}
+.blditem:hover .bldgrip{color:var(--ink3)}
+.blditem.bldlift{opacity:.45}
+.blditem.bldover{box-shadow:inset 3px 0 0 var(--accent);background:var(--chip)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .blditem.bldover{background:var(--surface2)}}
+:root[data-theme="dark"] .blditem.bldover{background:var(--surface2)}
+.bldhint{margin:10px 0 0;font-size:12px;color:var(--ink3);line-height:1.6}
+
+/* ---- rows you added, on the Week tab ---- */
+#weekroot .trow.mineRow.d1{padding-left:46px}
+#weekroot .trow.mineRow.d2{padding-left:70px}
+#weekroot .trow.mineRow{cursor:grab}
+#weekroot .trow.tlate.mineRow{cursor:default}
+#weekroot .trow.bldlift{opacity:.45}
+#weekroot .trow.bldover{box-shadow:inset 3px 0 0 var(--accent)}
+
+/* ---- what the sheet says that your list does not ---- */
+.bldsug{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;
+  margin:4px 0 12px;padding:9px 13px;cursor:pointer;text-align:left;
+  background:var(--awaybg);border:0;border-left:3px solid var(--away);border-radius:0 2px 2px 0;
+  font:13.5px "Archivo",sans-serif;color:var(--ink2)}
+.bldsug:hover{color:var(--ink)}
+.bldsugn{flex:0 0 auto;min-width:21px;height:21px;border-radius:99px;background:var(--away);color:#fff;
+  display:grid;place-items:center;font-family:var(--narrow),sans-serif;font-weight:700;font-size:12px}
+.bldsug .caret{margin-left:auto;transition:transform .15s}
+.bldsug.open .caret{transform:rotate(180deg)}
+.bldsugbox{margin:-6px 0 14px;border:1px solid var(--line);border-radius:3px;background:var(--surface);
+  box-shadow:var(--shadow);overflow:hidden}
+.bldsugrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:11px 14px;border-bottom:1px solid var(--line)}
+.bldsugrow:last-of-type{border-bottom:0}
+.bldsugwhat{flex:1 1 260px;min-width:0;font-size:14px}
+.bldsugwhat b{font-family:var(--narrow),sans-serif;font-weight:700}
+.bldsugwhat i{font-style:normal;font-family:var(--narrow),sans-serif;font-size:12px;color:var(--accent2)}
+.bldsugwhat em{display:block;font-style:normal;font-size:12.5px;color:var(--ink3);margin-top:2px;line-height:1.5}
+.bldsugrow .btn{flex:0 0 auto;border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.bldsugrow .btn:first-of-type{border-color:var(--accent);color:var(--accent)}
+.bldsugrow .btn:hover{border-color:var(--ink3);color:var(--ink)}
+.bldsugbox .bldhint{padding:11px 14px;margin:0;border-top:1px solid var(--line);background:var(--chip)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bldsugbox .bldhint{background:var(--surface2)}}
+:root[data-theme="dark"] .bldsugbox .bldhint{background:var(--surface2)}
+@media print{.bldsug,.bldsugbox{display:none !important}}
+
 </style>
 </head>
 <body>
@@ -1858,6 +1981,7 @@ body:not(.on-buy) #buyroot{display:none}
       <button class="btn" data-tab="road" aria-pressed="false">Away Game</button>
       <button class="btn" data-tab="stay" aria-pressed="false">Staycation</button>
       <button class="btn" data-tab="bowl" aria-pressed="false">Bowl</button>
+      <button class="btn" data-tab="home" aria-pressed="false">Home Setup</button>
       <button class="btn" data-tab="air" aria-pressed="false">Trackers</button>
       <button class="btn" data-tab="buy" aria-pressed="false">Buy List</button>
       <button class="btn" data-tab="office" aria-pressed="false">Office</button>
@@ -1994,8 +2118,8 @@ body:not(.on-buy) #buyroot{display:none}
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=5.3"></script>
-<script src="app.js?v=5.3"></script>
+<script src="config.js?v=5.7"></script>
+<script src="app.js?v=5.7"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
@@ -2050,7 +2174,10 @@ body:not(.on-buy) #buyroot{display:none}
   /* Next plays. A next button that silently selects a song and waits for a
      second click is not what anybody expects of a next button. */
   if(nx) nx.addEventListener("click",function(){ load(at+1,true); });
-  b.addEventListener("click",function(){if(a.paused){a.play()}else{a.pause()}});
+  b.addEventListener("click",function(){
+    if(!a.paused){ a.pause(); return; }
+    var pr=a.play(); if(pr&&pr.catch) pr.catch(function(){ bad(); paint(); });
+  });
   a.addEventListener("play",paint);a.addEventListener("pause",paint);
   /* Loop repeats this song. With it off a song simply ends, it does not run
      on into the next one: nobody wants a jukebox starting up mid practice. */
