@@ -877,15 +877,15 @@
   function whoTip(id,label){
     var w=STATE.checks[id]?STATE.who[id]:null;
     if(!w||!w.by) return "";
-    if(isListId(id)) return "Done by "+w.by+(w.at?" · "+shortDate(w.at):"");
-    return (label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):"");
+    if(isListId(id)) return "Done by "+whoName(w.by)+(w.at?" · "+shortDate(w.at):"");
+    return (label?label+" pulled by ":"Pulled by ")+whoName(w.by)+(w.at?" · "+shortDate(w.at):"");
   }
   function whoTag(id,label){
     var w=STATE.checks[id]?STATE.who[id]:null;
     if(!w||!w.by) return '<span class="who-tag" aria-hidden="true"></span>';
-    var tip=isListId(id)?("Done by "+w.by+(w.at?" · "+shortDate(w.at):""))
-      :((label?label+" pulled by ":"Pulled by ")+w.by+(w.at?" · "+shortDate(w.at):""));
-    return '<span class="who-tag on" title="'+esc(tip)+'">'+esc(initials(w.by))+'</span>';
+    var tip=isListId(id)?("Done by "+whoName(w.by)+(w.at?" · "+shortDate(w.at):""))
+      :((label?label+" pulled by ":"Pulled by ")+whoName(w.by)+(w.at?" · "+shortDate(w.at):""));
+    return '<span class="who-tag on" title="'+esc(tip)+'">'+esc(initials(whoName(w.by)))+'</span>';
   }
   function refreshTag(box){
     var cell=box.parentNode; if(!cell) return;
@@ -1273,10 +1273,24 @@
   async function loadSettings(){
     if(!sb) return;
     var r=await sb.from("settings").select("k,v");
+    if(r.error){ logRead("the shared settings",r.error); return; }
     SETTINGS={};
-    if(!r.error) (r.data||[]).forEach(function(x){ SETTINGS[x.k]=x.v; });
+    (r.data||[]).forEach(function(x){ SETTINGS[x.k]=x.v; });
   }
-  function applySetting(row){ if(row&&row.k) SETTINGS[row.k]=row.v; }
+  /* A realtime payload only carries the columns Postgres felt like sending.
+     Taking row.v on faith wrote undefined into the cache, which read back as
+     an empty list and made a list you had just added to look wiped. Only
+     trust a payload that actually brought the value; otherwise go and ask. */
+  function applySetting(row){
+    if(!row||!row.k) return false;
+    if(typeof row.v!=="string") return false;
+    SETTINGS[row.k]=row.v;
+    return true;
+  }
+  async function settingChanged(msg){
+    if(!applySetting(msg&&msg.new)){ try{ await loadSettings(); }catch(e){} }
+    renderCurrentList();
+  }
   async function saveSetting(k,v){
     if(!sb) return "Not connected.";
     if(!lsGet("fpb_code")){ var ok=await askLogin(); if(!ok) return "Sign in to change this."; }
@@ -1291,6 +1305,29 @@
     return "";
   }
   function semiKey(w){ return w?("semi:w"+w.week):""; }
+
+  /* People sign in with whatever they feel like typing. This is the one
+     place that decides what the rest of the site calls them, so a name is
+     fixed everywhere at once: the board, the checklists, notes, the buy
+     list, the worker log and the history. What was typed is left alone in
+     the database; only the display changes, so fixing a name later also
+     fixes every record already written under it. */
+  var WHO_BUILTIN={"sh":"Bulldog"};
+  function whoMap(){
+    var m={}, k;
+    for(k in WHO_BUILTIN) m[k]=WHO_BUILTIN[k];
+    try{
+      var o=JSON.parse(SETTINGS["who:alias"]||"{}");
+      Object.keys(o).forEach(function(x){ m[String(x).trim().toLowerCase()]=String(o[x]); });
+    }catch(e){}
+    return m;
+  }
+  function whoName(s){
+    s=String(s==null?"":s).trim();
+    if(!s) return s;
+    var hit=whoMap()[s.toLowerCase()];
+    return hit||s;
+  }
 
   /* ---------------- week helpers ---------------- */
   function wkSunday(off){
@@ -1597,6 +1634,7 @@
         + (g&&!g.bye?'<span class="wkctx">'+esc(gameLabel(g))+', '+WK_DAYS[g.i].n+'</span>':'')
         + '<span class="wksp"></span>'
         + '<button class="btn" id="wkWhole">Whole week</button></div>'
+        + bldUndoHtml()
         + '<div class="wkdays">'+cards+'</div>';
       return;
     }
@@ -1618,6 +1656,7 @@
       + '<button class="btn" id="wkFocus">Today only</button>'
       + '</div>'
       + banner
+      + bldUndoHtml()
       + '<div class="wkdays">'+cards+'</div>'
       + howto('Straight off your <b>DO NOT FORGET THIS SHIZ</b> sheet. <b>STUDENT</b> marks the items the sheet flags as a weekly student task. '
       + 'Anything left unticked from earlier in the week rides along at the top of today, under Past due, and ticking it there ticks it on its own day too. '
@@ -1811,6 +1850,8 @@
       + (p.build?'<button class="btn" id="pkBuild" aria-pressed="'+(hgBuild?"true":"false")+'">'
           +(hgBuild?"Done building":(pkAllGroups(p).length?"Edit this list":"Build the list"))
           +'</button>':"")
+      + ((p.build&&hgBuild)
+          ?'<button class="btn" id="pkHist" aria-pressed="'+(hgHist?"true":"false")+'">Earlier versions</button>':"")
       + ((p.build&&hgBuild&&p.gen.length&&bldOwned(key))
           ?'<button class="btn" id="pkReset">Reset to the sheet</button>':"")
       + '</div>'
@@ -1823,7 +1864,7 @@
             + 'its own set of checkmarks.</p></div>' : "")
       + (p.build?bldSugHtml(key):"")
       + '<div class="wkdays">'+body+notes+'</div>'
-      + (p.build?hgBuilderHtml():"")
+      + (p.build?bldHistHtml(bldTabKey(key))+hgBuilderHtml():"")
       + howto(esc(p.name)+' off your travel sheet. '
       + (p.scope==="season"?'One list for the season.':'Boxes are keyed to the game above, so every trip starts empty on its own and past trips stay on the record.')
       + ' Checkmarks are shared: everyone with this link sees the same list.');
@@ -1940,17 +1981,14 @@
       var wd=e.target.closest("[data-wkdel]");
       if(wd){
         e.preventDefault(); e.stopPropagation();
-        if(wd.getAttribute("data-sure")!=="1"){
-          wd.setAttribute("data-sure","1"); wd.textContent="Really?"; wd.classList.add("bldsure");
-          setTimeout(function(){ if(wd.isConnected){ wd.removeAttribute("data-sure");
-            wd.innerHTML="&times;"; wd.classList.remove("bldsure"); } },4000);
-          return;
-        }
+        if(bldArm(wd,"Remove it?")) return;
         bldWeekDel(wd.getAttribute("data-wkdel")); return;
       }
 
       var gl=e.target.closest("[data-golist]");
       if(gl){ e.preventDefault(); e.stopPropagation(); showTab(gl.getAttribute("data-golist")); return; }
+      if(e.target.closest("#bldUndoBtn")) return bldDoUndo();
+      if(e.target.closest("#bldUndoNo")){ bldUndo=null; renderWeek(); return; }
       if(e.target.closest("#wkPrev")){ wkState.off--; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkNext")){ wkState.off++; wkDefaultOpen(); renderWeek(); return; }
       if(e.target.closest("#wkNow")){ wkState.off=0; wkState.todayOnly=true; wkDefaultOpen(); renderWeek(); return; }
@@ -2016,13 +2054,7 @@
       if(e.target.closest("#pkBuild")){
         if(!hgBuild&&p.gen&&p.gen.length&&!bldOwned(TAB)){
           var btn=e.target.closest("#pkBuild");
-          if(btn.getAttribute("data-sure")!=="1"){
-            btn.setAttribute("data-sure","1");
-            btn.textContent="Take this list over?";
-            setTimeout(function(){ if(btn.isConnected){ btn.removeAttribute("data-sure");
-              btn.textContent="Edit this list"; } },5000);
-            return;
-          }
+          if(bldArm(btn,"Take this list over?")) return;
           var k=TAB;
           bldTakeOver(k).then(function(ok){
             if(!ok) return;
@@ -2034,6 +2066,19 @@
         hgBuild=!hgBuild; hgAdd=""; hgEdit=""; renderPack(TAB); return;
       }
       if(e.target.closest("#bldSugBtn")){ bldSugOpen=!bldSugOpen; renderPack(TAB); return; }
+      if(e.target.closest("#pkHist")){ hgHist=!hgHist; renderPack(TAB); return; }
+      var hr=e.target.closest("[data-hrest]");
+      if(hr){
+        if(bldArm(hr,"Go back to it?")) return;
+        var kk=bldTabKey(TAB), ii=Number(hr.getAttribute("data-hrest"));
+        bldRestore(kk,ii).then(function(bad){
+          if(bad){ flash(bad); return; }
+          hgHist=false; bldUndo=null; renderPack(TAB); flash("Back to that version.");
+        });
+        return;
+      }
+      if(e.target.closest("#bldUndoBtn")) return bldDoUndo();
+      if(e.target.closest("#bldUndoNo")){ bldUndo=null; renderPack(TAB); return; }
       var sa=e.target.closest("[data-sugadd]");
       if(sa) return bldSugAdd(TAB,sa.getAttribute("data-sugadd"));
       var sw=e.target.closest("[data-sugword]");
@@ -2044,12 +2089,7 @@
       if(ss) return bldSugSkip(TAB,ss.getAttribute("data-sugskip"));
       if(e.target.closest("#pkReset")){
         var rb=e.target.closest("#pkReset");
-        if(rb.getAttribute("data-sure")!=="1"){
-          rb.setAttribute("data-sure","1"); rb.textContent="Throw away your edits?";
-          setTimeout(function(){ if(rb.isConnected){ rb.removeAttribute("data-sure");
-            rb.textContent="Reset to the sheet"; } },5000);
-          return;
-        }
+        if(bldArm(rb,"Throw away your edits?")) return;
         bldResetList(TAB); return;
       }
       if(e.target.closest(".bldcancel")){ e.preventDefault(); hgAdd=""; hgEdit=""; renderPack(TAB); return; }
@@ -2069,13 +2109,10 @@
               var f2=packroot.querySelector(".bldinline .bldt"); if(f2) f2.focus(); return; }
       var hd=e.target.closest("[data-del]");
       if(hd){
-        if(hd.getAttribute("data-sure")!=="1"){
-          hd.setAttribute("data-sure","1"); hd.textContent="Really?"; hd.classList.add("bldsure");
-          setTimeout(function(){ if(hd.isConnected){ hd.removeAttribute("data-sure");
-            hd.innerHTML="&times;"; hd.classList.remove("bldsure"); } },4000);
-          return;
-        }
         var c=hd.getAttribute("data-del").split("|");
+        /* a section takes everything in it, so say how much before you nod */
+        var n=c[1]?0:hgCount(c[0]);
+        if(bldArm(hd,c[1]?"Remove it?":(n?("Remove it and "+n+" row"+(n===1?"":"s")+"?"):"Remove it?"))) return;
         return hgDel(c[0],c[1]);
       }
       if(e.target.closest("#pkPrev")||e.target.closest("#pkNext")){
@@ -2168,7 +2205,7 @@
     document.title=(tb?tb.textContent.trim()+" \u00b7 ":"")+"Football Video Ops";
     lsSet("fpb_tab",which);
     if(onWeek) renderWeek();
-    if(onPack) renderPack(which);
+    if(onPack){ hgBuild=false; hgAdd=""; hgEdit=""; bldSugOpen=false; renderPack(which); }
     if(onAir) renderAir();
     if(onOffice){ renderOffice(); if(officeCode()&&!OFF) officeBoot(); }
     if(onBuy) renderBuy();
@@ -2205,6 +2242,7 @@
      only move into the database the first time you take one over. */
   function bldTabKey(k){ k=k||TAB; return k==="home"?BLD_HG:("pk:"+k); }
   function bldSkipKey(k){ return "pkx:"+(k||TAB); }
+  function bldHistKey(k){ return "pkh:"+(k||TAB); }
   /* What a section or row was called on the sheet, whatever you renamed it
      to since. That link is the whole reason a rename does not read as a
      row being deleted and a different one appearing. */
@@ -2242,20 +2280,95 @@
   /* Read the row back out of the database before changing it, so two people
      editing different rows at the same time do not overwrite each other. */
   async function bldSave(key,mutate){
-    var cur=bldGet(key);
-    if(sb){
-      try{
-        var r=await sb.from("settings").select("v").eq("k",key).limit(1);
-        if(!r.error&&r.data&&r.data.length){
-          var fresh=JSON.parse(r.data[0].v||"[]");
-          if(Array.isArray(fresh)) cur=fresh;
-        }
-      }catch(e){}
+    if(!sb) return "Not connected.";
+    /* The read has to succeed. It used to fall back to whatever was in the
+       local cache, which meant that if the cache was empty or stale, the
+       next save wrote a short list straight over a good one and the work
+       was gone for good. Better to refuse the change than to lose the list. */
+    var cur=null, r;
+    try{ r=await sb.from("settings").select("v").eq("k",key).limit(1); }
+    catch(e){ r={error:e}; }
+    if(!r||r.error){
+      logRead("the list before changing it",r&&r.error);
+      return "Could not reach the list to change it. Nothing was saved.";
     }
+    if(r.data&&r.data.length){
+      try{
+        var fresh=JSON.parse(r.data[0].v||"[]");
+        if(!Array.isArray(fresh)) return "That list is stored oddly. Nothing was changed.";
+        cur=fresh;
+      }catch(e){ return "That list is stored oddly. Nothing was changed."; }
+    } else cur=[];
+    SETTINGS[key]=JSON.stringify(cur);          /* the cache was wrong, fix it */
+    /* Snapshot BEFORE the change. cur.slice() is a shallow copy, so a mutate
+       that edits a row in place changes cur too: taken afterwards, before and
+       after were identical and nothing was ever filed in the history. */
+    var before=JSON.stringify(cur);
     var next=mutate(cur.slice());
+    if(!Array.isArray(next)) return "Nothing was changed.";
     if(key!==BLD_WK) next.forEach(function(gr){ bldNorm(gr.items); });
-    var bad=await saveSetting(key,JSON.stringify(next));
-    return bad||"";
+    var after=JSON.stringify(next);
+    var bad=await saveSetting(key,after);
+    if(bad) return bad;
+    if(before!==after) await bldKeep(key,before);
+    return "";
+  }
+
+  /* The last ten versions of a list, so a bad afternoon is a click to undo
+     rather than an evening of retyping. Put it back covers the click you
+     just regretted; this covers the one you made on Tuesday. */
+  var BLD_HIST=10;
+  function bldHistFor(key){
+    var hk=key===BLD_WK?"wkh:tasks":bldHistKey(key.replace(/^pk:/,"").replace(/^hg:list$/,"home"));
+    return hk;
+  }
+  async function bldKeep(key,prevJson){
+    var hk=bldHistFor(key);
+    var list=bldGet(hk);
+    list.unshift({at:new Date().toISOString(),by:lsGet("fpb_who")||"",v:prevJson});
+    list=list.slice(0,BLD_HIST);
+    /* ten copies of a ninety row list is a lot of text to keep in one row */
+    while(list.length>2&&JSON.stringify(list).length>180000) list.pop();
+    var json=JSON.stringify(list);
+    /* write the cache before the await: two saves in quick succession used
+       to each read the old value and the second wiped the first */
+    SETTINGS[hk]=json;
+    try{ await saveSetting(hk,json); }catch(e){}
+  }
+  function bldHistRows(v){
+    var n=0;
+    try{
+      var d=JSON.parse(v);
+      if(!Array.isArray(d)) return 0;
+      d.forEach(function(x){ n+=Array.isArray(x.items)?x.items.length:1; });
+    }catch(e){}
+    return n;
+  }
+  async function bldRestore(key,i){
+    var hk=bldHistFor(key), list=bldGet(hk);
+    var pick=list[i]; if(!pick) return "That version is gone.";
+    var now=SETTINGS[key]||"";
+    var bad=await saveSetting(key,pick.v);
+    if(bad) return bad;
+    bldKeep(key,now);
+    return "";
+  }
+
+  var hgHist=false;
+  function bldHistHtml(key){
+    if(!hgHist) return "";
+    var list=bldGet(bldHistFor(key));
+    var out='<div class="bldhist"><h4>Earlier versions of this list</h4>';
+    if(!list.length) out+='<p class="dempty">No earlier versions yet. One gets kept every time the list changes.</p>';
+    list.forEach(function(h,i){
+      var n=bldHistRows(h.v);
+      out+='<div class="bldhrow"><span class="bldhwhen">'+esc(shortDate(h.at))+'</span>'
+        + '<span class="bldhwho">'+esc(whoName(h.by)||"someone")+'</span>'
+        + '<span class="bldhn">'+n+' row'+(n===1?"":"s")+'</span>'
+        + '<span class="wksp"></span>'
+        + '<button type="button" class="btn" data-hrest="'+i+'">Go back to this</button></div>';
+    });
+    return out+'</div>';
   }
 
   function bldMove(list,i,dir){
@@ -2389,6 +2502,7 @@
   }
 
   async function bldWeekDel(cid){
+    bldStash(BLD_WK,"Task removed.");
     var bad=await bldSave(BLD_WK,function(list){
       return list.filter(function(x){ return x.id!==cid; });
     });
@@ -2421,6 +2535,7 @@
     return true;
   }
   async function bldResetList(k){
+    bldStash(bldTabKey(k),"Reset to the sheet version.");
     var bad=await saveSetting(bldTabKey(k),"");
     if(bad){ flash(bad); return; }
     hgBuild=false; hgAdd=""; hgEdit="";
@@ -2539,6 +2654,7 @@
   }
 
   async function hgDel(gid,iid){
+    bldStash(bldTabKey(), iid?"Row removed.":"Section removed.");
     var bad=await bldSave(bldTabKey(),function(list){
       if(!iid) return list.filter(function(gr){ return gr.id!==gid; });
       list.forEach(function(gr){
@@ -2567,9 +2683,14 @@
   }
 
   /* What the Home Game Setup tab shows under the list while you are building */
+  function hgCount(gid){
+    var n=0;
+    bldGet(bldTabKey()).forEach(function(gr){ if(gr.id===gid) n=(gr.items||[]).length; });
+    return n;
+  }
   function hgBuilderHtml(){
     if(!hgBuild) return "";
-    var out='<div class="bldpanel">';
+    var out='<div class="bldpanel">'+bldUndoHtml();
     bldGet(bldTabKey()).forEach(function(gr,gi,all){
       out+='<div class="bldgrp"><span class="bldgname">'+esc(gr.g)+'</span>'
         + '<span class="bldgn">'+((gr.items||[]).length)+' row'+((gr.items||[]).length===1?"":"s")+'</span>'
@@ -2657,6 +2778,50 @@
 
   var bldSugOpen=false;
 
+  /* ---------------- not losing work ----------------
+     Arming a button is no protection at all against a keyboard: Enter on a
+     focused button fires a click, so two taps of Enter walked straight
+     through "Really?" and took a section and everything in it. Three
+     changes: a confirm cannot land in the same breath as the arming, the
+     button says how much it is about to take, and anything destructive can
+     be put back. */
+  function bldArm(btn,label){
+    var now=Date.now();
+    if(btn.getAttribute("data-sure")==="1")
+      return (now-Number(btn.getAttribute("data-armed")||0))<500;   /* too quick, ignore */
+    btn.setAttribute("data-sure","1");
+    btn.setAttribute("data-armed",String(now));
+    btn.setAttribute("data-was",btn.innerHTML);
+    btn.innerHTML=esc(label);
+    btn.classList.add("bldsure");
+    function off(){
+      if(!btn.isConnected) return;
+      btn.removeAttribute("data-sure"); btn.removeAttribute("data-armed");
+      btn.innerHTML=btn.getAttribute("data-was")||"&times;";
+      btn.classList.remove("bldsure");
+      btn.removeEventListener("blur",off);
+    }
+    btn.addEventListener("blur",off);
+    setTimeout(off,5000);
+    return true;
+  }
+
+  var bldUndo=null;
+  function bldStash(key,what){ bldUndo={key:key,prev:SETTINGS[key]||"",what:what,tab:TAB}; }
+  function bldUndoHtml(){
+    if(!bldUndo||bldUndo.tab!==TAB) return "";
+    return '<div class="bldundo"><span>'+esc(bldUndo.what)+'</span>'
+      + '<button type="button" class="btn" id="bldUndoBtn">Put it back</button>'
+      + '<button type="button" class="btn" id="bldUndoNo">Dismiss</button></div>';
+  }
+  async function bldDoUndo(){
+    if(!bldUndo) return;
+    var u=bldUndo; bldUndo=null;
+    var bad=await saveSetting(u.key,u.prev);
+    if(bad){ flash(bad); bldUndo=u; return; }
+    renderCurrentList(); flash("Put back.");
+  }
+
   function bldSugHtml(k){
     var d=bldDiff(k);
     if(!d.n) return "";
@@ -2742,6 +2907,7 @@
     renderPack(k); flash("Reworded to match the sheet.");
   }
   async function bldSugDel(k,key){
+    bldStash(bldTabKey(k),"Row removed.");
     var bits=key.split("\u241F");
     var bad=await bldSave(bldTabKey(k),function(list){
       list.forEach(function(gr){
@@ -2906,6 +3072,7 @@
     if(!sb) return;
     var r=await sb.from("notes").select("id,ref,label,body,who,done,created_at")
                   .order("created_at",{ascending:false}).limit(2000);
+    if(r.error) logRead("the notes",r.error);
     NOTES=r.error?[]:(r.data||[]);
     NOTES_OK=!r.error;
   }
@@ -2964,7 +3131,7 @@
     box.innerHTML=list.map(function(n){
       return '<div class="n-row'+(n.done?" ndone":"")+'">'
         + '<span class="n-main"><span class="n-body">'+esc(n.body)+'</span>'
-        + '<span class="n-meta">'+esc(n.who||"Someone")+' &middot; '+esc(shortDate(n.created_at))
+        + '<span class="n-meta">'+esc(whoName(n.who)||"Someone")+' &middot; '+esc(shortDate(n.created_at))
         + (n.done?' &middot; <b>handled</b>':"")+'</span></span>'
         + '<button type="button" class="btn n-del" data-note-del="'+n.id+'" aria-label="Delete note">Delete</button>'
         + '</div>';
@@ -3052,7 +3219,7 @@
     list.forEach(function(n){
       out.push((n.done?"[x] ":"[ ] ")+(n.label||GENLABEL));
       out.push("    "+n.body.replace(/\n/g,"\n    "));
-      out.push("    "+(n.who||"Someone")+", "+shortDate(n.created_at));
+      out.push("    "+(whoName(n.who)||"Someone")+", "+shortDate(n.created_at));
       out.push("");
     });
     return out.join("\n");
@@ -3072,7 +3239,7 @@
         + '<input type="checkbox" class="nchk" data-note-id="'+n.id+'"'+(n.done?" checked":"")+' aria-label="Mark handled">'
         + '<span class="h-what"><b>'+esc(n.label||GENLABEL)+'</b>'
         + '<span class="n-body">'+esc(n.body)+'</span>'
-        + '<span class="h-when">'+esc((n.who||"Someone")+" · "+shortDate(n.created_at))+'</span></span>'
+        + '<span class="h-when">'+esc((whoName(n.who)||"Someone")+" · "+shortDate(n.created_at))+'</span></span>'
         + '<button type="button" class="btn n-del" data-note-del="'+n.id+'">Delete</button></div>';
     }).join("");
   }
@@ -3221,7 +3388,7 @@
      run in Supabase, MINOR when only index.html and app.js change. The
      check below is what actually matters: it asks the database what it
      has rather than trusting the number. */
-  var VER="5.7";
+  var VER="5.9";
   var DBNEED=[{t:"checks",sql:"setup.sql"},
               {t:"check_log",sql:"database-update.sql"},
               {t:"candidates",sql:"database-update.sql"},
@@ -3255,9 +3422,12 @@
   var gMenu=document.getElementById("gMenu"), gBtn=document.getElementById("fGear");
   function syncGearBadge(){
     var n=openNoteTotal();
-    if(gBtn) gBtn.classList.toggle("hasnote",n>0);
+    var pn=(typeof probCount==="function")?probCount():0;
+    if(gBtn) gBtn.classList.toggle("hasnote",n>0||pn>0);
     var lab=document.getElementById("gNoteN");
     if(lab) lab.textContent=n?String(n):"";
+    var pl=document.getElementById("gProbN");
+    if(pl){ pl.textContent=pn?String(pn):""; pl.classList.toggle("bad",pn>0); }
   }
   function closeGear(){ if(gMenu){ gMenu.hidden=true; gBtn.setAttribute("aria-expanded","false"); } }
   if(gBtn){
@@ -3270,7 +3440,7 @@
         gMenu.querySelector('[data-g="undo"]').disabled=!u||u.disabled;
         gMenu.querySelector('[data-g="redo"]').disabled=!r||r.disabled;
         var who=lsGet("fpb_who");
-        gMenu.querySelector('[data-g="who"]').textContent=who?("Signed in as "+who):"Sign in";
+        gMenu.querySelector('[data-g="who"]').textContent=who?("Signed in as "+whoName(who)):"Sign in";
         gMenu.querySelector('[data-g="theme"]').textContent=
           (document.documentElement.getAttribute("data-theme")==="dark")?"Light mode":"Dark mode";
         syncGearBadge();
@@ -3287,6 +3457,8 @@
       var g=b.getAttribute("data-g");
       closeGear();
       if(g==="notes") return openAllNotes();
+      if(g==="find") return openFind();
+      if(g==="prob") return openProblems();
       if(g==="print") return window.print();
       if(g==="who") return askLogin();
       if(g==="theme"){
@@ -3768,7 +3940,7 @@
       + '<div class="dbody oflogb">'
       + '<p class="ofwhat">'+esc(e.what||"(nothing written down)")+'</p>'
       + (e.outcome?'<p class="ofout"><b>Follow-up</b> '+esc(e.outcome)+'</p>':"")
-      + '<p class="ofby">'+esc(e.logged_by||"Someone")+'</p>'
+      + '<p class="ofby">'+esc(whoName(e.logged_by)||"Someone")+'</p>'
       + '</div></section>';
   }
 
@@ -4054,6 +4226,7 @@
     var r=await sb.from("buy")
       .select("id,what,qty,note,status,prices,bought_at,spent,vendor,po,added_by,added_at,sort")
       .order("added_at",{ascending:false}).limit(1000);
+    if(r.error) logRead("the purchase list",r.error);
     BUY=r.error?[]:(r.data||[]);
     BUY_OK=!r.error;
   }
@@ -4187,7 +4360,7 @@
     }
     body+='<div class="vgrid">'+VENDORS.map(function(v){
         return '<div class="vcell'+(buyPrice===(b.id+"|"+v[0])?" vopen":"")+'">'+vChip(b,v[0])+'</div>'; }).join("")+'</div>';
-    body+='<div class="buyfoot"><span>'+esc(b.added_by||"Someone")+' added this'
+    body+='<div class="buyfoot"><span>'+esc(whoName(b.added_by)||"Someone")+' added this'
       + (b.added_at?" "+esc(shortDate(b.added_at)):"")+'</span><span class="wksp"></span>'
       + '<button type="button" class="btn ofclear" data-buyedit="'+b.id+'">Edit</button>'
       + '<button type="button" class="btn ofclear" data-buydrop="'+b.id+'">'
@@ -4406,6 +4579,270 @@
     });
   }
 
+  /* ================================================================
+     Problems, and finding things.
+
+     A log of every click would have caught one of the three bugs that
+     cost real work this week. What it would not have caught is the two
+     that mattered, because neither started with a click: one was a
+     message arriving from the server, the other was a read that failed
+     quietly inside an ordinary-looking save.
+
+     So this logs what FAILS. Every call to the database goes through
+     one wrapper, so a failure anywhere gets written down whether or not
+     the code that made the call bothered to check.
+     ================================================================ */
+  var PKEY="fvo_problems", PMAX=50;
+  var PROB=[];
+  try{ PROB=JSON.parse(lsGet(PKEY)||"[]"); if(!Array.isArray(PROB)) PROB=[]; }catch(e){ PROB=[]; }
+
+  function probSave(){
+    try{ lsSet(PKEY,JSON.stringify(PROB.slice(0,PMAX))); }catch(e){}
+  }
+  function logProblem(what,detail){
+    var last=PROB[0];
+    /* the same thing failing in a loop should read as one line with a count */
+    if(last&&last.what===what&&last.detail===detail&&Date.now()-last.t<60000){
+      last.n=(last.n||1)+1; last.at=new Date().toISOString(); probSave(); syncGearBadge(); return;
+    }
+    PROB.unshift({what:String(what).slice(0,120),detail:String(detail||"").slice(0,400),
+                  at:new Date().toISOString(),t:Date.now(),n:1,
+                  tab:TAB,who:lsGet("fpb_who")||"",ver:VER});
+    PROB=PROB.slice(0,PMAX);
+    probSave();
+    try{ syncGearBadge(); }catch(e){}
+  }
+  function probCount(){ return PROB.length; }
+
+  window.addEventListener("error",function(e){
+    logProblem("the page hit an error",(e&&e.message||"")+" ("+((e&&e.filename||"").split("/").pop())+":"+(e&&e.lineno)+")");
+  });
+  window.addEventListener("unhandledrejection",function(e){
+    var r=e&&e.reason;
+    logProblem("something failed in the background",(r&&r.message)||String(r||""));
+  });
+
+  /* One wrapper over the database handle, put on as soon as it exists.
+     Nothing has to remember to report a failure: they all come through here. */
+  function watchDb(){
+    if(!sb||sb.__watched) return;
+    sb.__watched=true;
+    var rpc=sb.rpc.bind(sb), from=sb.from.bind(sb);
+    sb.rpc=function(n,a){
+      var p;
+      try{ p=rpc(n,a); }catch(e){ logProblem("could not send "+n,String(e&&e.message||e)); throw e; }
+      return Promise.resolve(p).then(function(r){
+        if(r&&r.error) logProblem(n+" was refused",r.error.message||String(r.error));
+        return r;
+      },function(e){ logProblem(n+" never came back",String(e&&e.message||e)); throw e; });
+    };
+    /* Reads are reported by the code that makes them, through logRead below.
+       Wrapping sb.from cannot work: .select() and .eq() each hand back a new
+       builder, so a wrapper put on the first one is gone by the time the
+       query actually runs. */
+  }
+
+  function logRead(what,err){
+    if(!err) return false;
+    logProblem("could not read "+what,(err&&err.message)||String(err));
+    return true;
+  }
+
+  function probLines(){
+    var out=["Tulane Football Video  -  Problems  (Football Video Ops v"+VER+")",
+             "Copied "+new Date().toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",
+               year:"numeric",hour:"numeric",minute:"2-digit"}),""];
+    if(!PROB.length) out.push("(nothing has gone wrong on this computer)");
+    PROB.forEach(function(p){
+      out.push(shortDate(p.at)+"  "+p.what+(p.n>1?"  (x"+p.n+")":""));
+      if(p.detail) out.push("    "+p.detail);
+      out.push("    on the "+(p.tab||"?")+" tab"+(p.who?", "+whoName(p.who):"")+", v"+(p.ver||"?"));
+      out.push("");
+    });
+    return out.join("\n");
+  }
+
+  function drawProblems(){
+    var box=document.getElementById("pbList"); if(!box) return;
+    var c=document.getElementById("pbCount");
+    if(c) c.textContent=PROB.length?(PROB.length+" on this computer"):"";
+    if(!PROB.length){
+      box.innerHTML='<p class="h-empty">Nothing has gone wrong on this computer. '
+        + 'If something does, it lands here with what it was doing at the time.</p>';
+      return;
+    }
+    box.innerHTML=PROB.map(function(p){
+      return '<div class="h-row pbrow"><span class="h-what"><b>'+esc(p.what)
+        + (p.n>1?' <i class="pbn">&times;'+p.n+'</i>':"")+'</b>'
+        + (p.detail?'<span class="pbdetail">'+esc(p.detail)+'</span>':"")
+        + '<span class="h-when">'+esc(shortDate(p.at)+" \u00b7 "+(p.tab||"?")+" tab"
+            +(p.who?" \u00b7 "+whoName(p.who):"")+" \u00b7 v"+(p.ver||"?"))+'</span></span></div>';
+    }).join("");
+  }
+  function openProblems(){
+    var d=document.getElementById("probDlg"); if(!d) return;
+    drawProblems();
+    if(d.showModal) d.showModal(); else d.setAttribute("open","");
+  }
+
+  /* ================================================================
+     Find anything. Three hundred odd rows across ten tabs is past what
+     anybody keeps in their head.
+     ================================================================ */
+  var findQ="", findHit=null;
+
+  function findAll(q){
+    q=String(q||"").trim().toLowerCase();
+    var out=[];
+    if(q.length<2) return out;
+    function hit(where,tab,what,sub,go){
+      out.push({where:where,tab:tab,what:what,sub:sub||"",go:go});
+    }
+    /* the week, sheet rows and your own */
+    var sun=wkSunday();
+    WK_DAYS.forEach(function(D,i){
+      D.t.forEach(function(x){
+        if((x.t+" "+(x.n||"")).toLowerCase().indexOf(q)<0) return;
+        hit("Week",  "week", x.t, D.n+(x.n?" \u00b7 "+x.n:""), {tab:"week",day:i});
+      });
+    });
+    bldGet(BLD_WK).forEach(function(x){
+      if((x.t+" "+(x.n||"")).toLowerCase().indexOf(q)<0) return;
+      hit("Week","week",x.t,WK_DAYS[Number(x.d)].n+" \u00b7 added"+(x.every?", every week":""),
+          {tab:"week",day:Number(x.d)});
+    });
+    /* every pack list, as it stands now */
+    Object.keys(PACKS).forEach(function(k){
+      var p=PACKS[k];
+      pkAllGroups(p).forEach(function(gr){
+        (gr.items||[]).forEach(function(it){
+          if((it.t+" "+(it.n||"")).toLowerCase().indexOf(q)<0) return;
+          hit(p.tab,k,it.t,gr.g+(it.q?" \u00b7 \u00d7"+it.q:"")+(it.n?" \u00b7 "+it.n:""),
+              {tab:k,grp:gr.g});
+        });
+      });
+    });
+    /* the purchase list */
+    (typeof BUY!=="undefined"?BUY:[]).forEach(function(b){
+      if((b.what+" "+(b.note||"")).toLowerCase().indexOf(q)<0) return;
+      hit("Buy List","buy",b.what,
+          (b.status==="bought"?"bought":(b.status==="dropped"?"dropped":"still want"))
+          +(b.note?" \u00b7 "+b.note:""),{tab:"buy",buy:b.id});
+    });
+    /* notes */
+    (typeof NOTES!=="undefined"?NOTES:[]).forEach(function(n){
+      if((n.body+" "+(n.label||"")).toLowerCase().indexOf(q)<0) return;
+      hit("Notes","", n.body.slice(0,80), (n.label||"General note")+" \u00b7 "+(n.who||""),{notes:true});
+    });
+    return out.slice(0,60);
+  }
+
+  function drawFind(){
+    var box=document.getElementById("fdList"); if(!box) return;
+    var list=findAll(findQ);
+    var c=document.getElementById("fdCount");
+    if(findQ.trim().length<2){
+      if(c) c.textContent="";
+      box.innerHTML='<p class="h-empty">Type two letters or more. This looks through every day list, '
+        + 'every pack list, the purchase list and your notes at once.</p>';
+      return;
+    }
+    if(c) c.textContent=list.length?(list.length+(list.length===60?"+":"")+" found"):"";
+    if(!list.length){ box.innerHTML='<p class="h-empty">Nothing matches that.</p>'; return; }
+    box.innerHTML=list.map(function(r,i){
+      return '<button type="button" class="h-row fdrow" data-find="'+i+'">'
+        + '<span class="fdwhere">'+esc(r.where)+'</span>'
+        + '<span class="h-what"><b>'+esc(r.what)+'</b>'
+        + (r.sub?'<span class="h-when">'+esc(r.sub)+'</span>':"")+'</span>'
+        + '<span class="fdgo" aria-hidden="true">&#8599;</span></button>';
+    }).join("");
+    findHit=list;
+  }
+  function openFind(){
+    var d=document.getElementById("findDlg"); if(!d) return;
+    findQ="";
+    var inp=document.getElementById("fdQ"); if(inp) inp.value="";
+    drawFind();
+    if(d.showModal) d.showModal(); else d.setAttribute("open","");
+    setTimeout(function(){ if(inp) inp.focus(); },40);
+  }
+  function closeFind(){
+    var d=document.getElementById("findDlg");
+    if(d) d.close?d.close():d.removeAttribute("open");
+  }
+  function gotoHit(r){
+    closeFind();
+    if(!r) return;
+    if(r.go&&r.go.notes){ openAllNotes(); return; }
+    var g=r.go||{};
+    if(g.tab==="week"){
+      wkState.off=0; wkState.todayOnly=false; wkState.focus=false;
+      wkState.open[g.day]=true;
+      showTab("week");
+      setTimeout(function(){ flashRow('#weekroot .dcard[data-day="'+g.day+'"]'); },80);
+      return;
+    }
+    if(g.tab==="buy"){ showTab("buy"); setTimeout(function(){
+      flashRow('#buyroot .buyline[data-buy="'+g.buy+'"]'); },80); return; }
+    if(PACKS[g.tab]){
+      pkState[g.tab+"|shut|"+g.grp]=false;
+      showTab(g.tab);
+      setTimeout(function(){ flashRow('#packroot .pkgroup[data-grp="'+cssq(g.grp)+'"]'); },80);
+      return;
+    }
+  }
+  function cssq(s){ return String(s).replace(/["\\]/g,"\\$&"); }
+  function flashRow(sel){
+    var el=null;
+    try{ el=document.querySelector(sel); }catch(e){}
+    if(!el) return;
+    el.scrollIntoView({block:"center",behavior:"smooth"});
+    el.classList.add("fdflash");
+    setTimeout(function(){ el.classList.remove("fdflash"); },2200);
+  }
+
+  /* ---------------- wiring ---------------- */
+  (function(){
+    var pd=document.getElementById("probDlg");
+    if(pd){
+      document.getElementById("pbClose").addEventListener("click",function(){
+        pd.close?pd.close():pd.removeAttribute("open"); });
+      document.getElementById("pbClear").addEventListener("click",function(){
+        PROB=[]; probSave(); drawProblems(); syncGearBadge(); });
+      document.getElementById("pbCopy").addEventListener("click",function(){
+        var txt=probLines(), btn=document.getElementById("pbCopy");
+        function ok(){ btn.textContent="Copied"; setTimeout(function(){ btn.textContent="Copy all"; },1600); }
+        if(navigator.clipboard&&navigator.clipboard.writeText)
+          navigator.clipboard.writeText(txt).then(ok,function(){ fb2(txt,ok); });
+        else fb2(txt,ok);
+      });
+      function fb2(txt,ok){
+        var ta=document.getElementById("pbFallback");
+        ta.value=txt; ta.hidden=false; ta.focus(); ta.select();
+        try{ document.execCommand("copy"); ok(); }catch(e){}
+      }
+    }
+    var fd=document.getElementById("findDlg");
+    if(fd){
+      document.getElementById("fdClose").addEventListener("click",closeFind);
+      document.getElementById("fdQ").addEventListener("input",function(e){
+        findQ=e.target.value; drawFind(); });
+      document.getElementById("fdList").addEventListener("click",function(e){
+        var r=e.target.closest&&e.target.closest("[data-find]"); if(!r) return;
+        gotoHit(findHit&&findHit[Number(r.getAttribute("data-find"))]);
+      });
+      fd.addEventListener("click",function(e){ if(e.target===fd) closeFind(); });
+    }
+    /* "/" anywhere that is not a text box opens it, the way search always has */
+    document.addEventListener("keydown",function(e){
+      if(e.key!=="/"||e.ctrlKey||e.metaKey||e.altKey) return;
+      var t=e.target&&e.target.tagName;
+      if(t==="INPUT"||t==="TEXTAREA"||t==="SELECT") return;
+      if(document.querySelector("dialog[open]")) return;
+      e.preventDefault(); openFind();
+    });
+  })();
+
   /* ---------- start ---------- */
   setSync("busy","Loading…");
   try{
@@ -4449,6 +4886,7 @@
   try{ await loadSettings(); renderCurrentList(); }catch(e){}
   try{ await checkDb(); }catch(e){}
   try{ await officeBoot(); }catch(e){}
+  watchDb();
   try{ await loadBuy(); renderBuy(); }catch(e){}
   paintNoteMarks(); syncGearBadge();
   flushQueue();
@@ -4468,7 +4906,7 @@
       await loadCandidates(); render();
     })
     .on("postgres_changes",{event:"*",schema:"public",table:"notes"},function(msg){ applyNoteRow(msg); })
-    .on("postgres_changes",{event:"*",schema:"public",table:"settings"},function(msg){ applySetting(msg.new); renderCurrentList(); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"settings"},function(msg){ settingChanged(msg); })
     .on("postgres_changes",{event:"*",schema:"public",table:"buy"},function(msg){ applyBuyRow(msg); })
     .subscribe(function(status){
       if(status==="SUBSCRIBED"){ if(!qGet().length) setSync("ok","Live"); else showQueue(); }

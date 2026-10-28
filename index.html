@@ -1939,6 +1939,58 @@ body:not(.on-buy) #buyroot{display:none}
 :root[data-theme="dark"] .bldsugbox .bldhint{background:var(--surface2)}
 @media print{.bldsug,.bldsugbox{display:none !important}}
 
+/* ---- putting back something you did not mean to remove ---- */
+.bldundo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;
+  padding:10px 13px;background:var(--awaybg);border-left:3px solid var(--away);
+  border-radius:0 2px 2px 0;font-size:13.5px;color:var(--ink)}
+.bldundo span{flex:1 1 auto}
+.bldundo .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.bldundo .btn:first-of-type{border-color:var(--away);color:var(--away)}
+@media print{.bldundo{display:none !important}}
+
+/* ---- earlier versions ---- */
+.bldhist{margin:14px 0 0;border:1px solid var(--line);border-radius:3px;background:var(--surface);
+  box-shadow:var(--shadow);overflow:hidden}
+.bldhist h4{margin:0;padding:10px 13px;background:var(--chip);border-bottom:1px solid var(--line);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink3)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bldhist h4{background:var(--surface2)}}
+:root[data-theme="dark"] .bldhist h4{background:var(--surface2)}
+.bldhrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 13px;
+  border-bottom:1px solid var(--line);font-size:13.5px}
+.bldhrow:last-child{border-bottom:0}
+.bldhwhen{font-family:var(--narrow),sans-serif;font-weight:700;color:var(--ink)}
+.bldhwho,.bldhn{font-size:12.5px;color:var(--ink3)}
+.bldhrow .btn{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);
+  font-family:var(--narrow),sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.bldhrow .btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---- problems, and find ---- */
+#gProbN.bad{display:inline-block;margin-left:7px;min-width:17px;padding:0 5px;border-radius:99px;
+  background:#b4472f;color:#fff;font-family:var(--narrow),sans-serif;font-weight:700;
+  font-size:10.5px;text-align:center}
+.pbrow .h-what b{color:#b4472f}
+.pbdetail{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;
+  color:var(--ink2);margin:3px 0;word-break:break-word}
+.pbn{font-style:normal;font-size:11px;color:var(--ink3)}
+.fdrow{display:grid;grid-template-columns:96px minmax(0,1fr) 20px;gap:11px;align-items:center;
+  width:100%;text-align:left;background:none;border:0;cursor:pointer;font:inherit;color:inherit}
+.fdwhere{font-family:var(--narrow),sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fdgo{color:var(--ink3);font-size:14px}
+.fdrow:hover .fdgo{color:var(--accent)}
+#fdQ{flex:1 1 220px;font:15px "Archivo",sans-serif;padding:8px 11px;border:1px solid var(--line2);
+  border-radius:3px;background:var(--surface);color:var(--ink)}
+#fdQ:focus{outline:2px solid var(--accent2);outline-offset:1px}
+.fdflash{animation:fdpulse 2.2s ease-out}
+@keyframes fdpulse{
+  0%,22%{box-shadow:0 0 0 3px var(--accent);}
+  100%{box-shadow:0 0 0 3px transparent;}
+}
+
 </style>
 </head>
 <body>
@@ -1994,7 +2046,7 @@ body:not(.on-buy) #buyroot{display:none}
       <button class="btn ibtn" id="fUndo" disabled aria-label="Undo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3 2.5 6.5 6 10M3 6.5h6.5a4 4 0 0 1 0 8H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button class="btn ibtn" id="fRedo" disabled aria-label="Redo"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3l3.5 3.5L10 10M13 6.5H6.5a4 4 0 0 0 0 8H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="sync"><span class="dot" id="sdot"></span><span id="stext">Loading…</span></div>
-      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="hist">History</button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button><button type="button" data-g="lock" hidden>Lock the office</button><div class="gver" id="gVer"></div></div></span>
+      <span class="gear"><button class="btn ibtn" id="fGear" aria-haspopup="true" aria-expanded="false" aria-label="More"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button><div class="gmenu" id="gMenu" hidden role="menu"><button type="button" data-g="notes">Notes<span id="gNoteN"></span></button><button type="button" data-g="print">Print</button><button type="button" data-g="find">Find anything</button><button type="button" data-g="hist">History</button><button type="button" data-g="prob">Problems<span id="gProbN"></span></button><button type="button" data-g="export" class="bdonly">Export</button><hr><button type="button" data-g="undo">Undo</button><button type="button" data-g="redo">Redo</button><hr><button type="button" data-g="who">Sign in</button><button type="button" data-g="theme">Dark mode</button><button type="button" data-g="lock" hidden>Lock the office</button><div class="gver" id="gVer"></div></div></span>
     </div>
   </div>
 
@@ -2117,9 +2169,38 @@ body:not(.on-buy) #buyroot{display:none}
   </div>
 </dialog>
 
+<dialog class="login hist" id="probDlg">
+  <div class="h-wrap">
+    <div class="h-top"><h2>Problems</h2>
+      <span class="n-acts">
+        <button type="button" class="btn" id="pbCopy">Copy all</button>
+        <button type="button" class="btn" id="pbClear">Clear</button>
+        <button type="button" class="btn" id="pbClose">Close</button>
+      </span>
+    </div>
+    <div class="n-filter"><span class="n-count" id="pbCount"></span></div>
+    <p>Anything that failed on this computer, newest first, with what it was doing at the time. This is kept on this computer only, it is not shared, and it is the fastest way to tell me what went wrong: hit Copy all and paste it into the chat.</p>
+    <textarea id="pbFallback" hidden readonly aria-label="Problems text"></textarea>
+    <div class="h-list" id="pbList"></div>
+  </div>
+</dialog>
+
+<dialog class="login hist" id="findDlg">
+  <div class="h-wrap">
+    <div class="h-top"><h2>Find anything</h2>
+      <span class="n-acts"><button type="button" class="btn" id="fdClose">Close</button></span>
+    </div>
+    <div class="n-filter">
+      <input id="fdQ" type="search" placeholder="UMR, projector, hotspot, Skycast&hellip;" aria-label="Find" autocomplete="off">
+      <span class="n-count" id="fdCount"></span>
+    </div>
+    <div class="h-list" id="fdList"></div>
+  </div>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=5.7"></script>
-<script src="app.js?v=5.7"></script>
+<script src="config.js?v=5.9"></script>
+<script src="app.js?v=5.9"></script>
 <script>
 (function(){
   var a=document.getElementById("songAudio"),b=document.getElementById("songBtn"),
